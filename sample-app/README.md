@@ -6,6 +6,6 @@
 
 ## Getting Started
 
-1. Build idlgen
-2. Copy output to `./SampleApp`
-3. Open the solution and build `SampleApp` project
+1. Run `./scripts/build-nuget.ps1 -version 0.0.0` at project root
+2. Copy the generated nuget to `LocalPackages`
+3. Build `SampleApp` project

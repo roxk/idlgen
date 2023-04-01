@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
+        <Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
+		<IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
+    </PropertyGroup>
+	<PropertyGroup>
+		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuildThisFileDirectory)..\..\include</IdlGenCppIncludeDirs>
+	</PropertyGroup>
+	<Target Name="GenerateIDLfromCppHeaders" BeforeTargets="ClCompile" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<ItemGroup>
+			<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
+		</ItemGroup>
+		<Message Text="Running idlgen on C++ header" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen %(IdlGenCppInclude.Identity) @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+	</Target>
+</Project>

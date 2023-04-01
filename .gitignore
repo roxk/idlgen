@@ -3,3 +3,5 @@
 .vs
 test-data/src/*.idl
 test-data/src/*.testidl
+*.nupkg
+.nuspec

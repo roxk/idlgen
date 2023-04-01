@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Rule Name="IdlGenCpp" DisplayName="C++/IdlGen" Order="75" PageTemplate="generic" xmlns="http://schemas.microsoft.com/build/2009/properties">
+
+  <Rule.Categories>
+    <Category Name="General" DisplayName="General"/>
+  </Rule.Categories>
+
+  <Rule.DataSource>
+    <DataSource Persistence="ProjectFile" HasConfigurationCondition="false" Label="Globals" />
+  </Rule.DataSource>
+
+  <BoolProperty Name="IdlGenCppGenerateIDL"
+                DisplayName="Generate IDL"
+                Description="Generate IDL for C++ headers"
+                Category="General" />
+
+</Rule>

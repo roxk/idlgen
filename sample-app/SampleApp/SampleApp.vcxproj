@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props')" />
+  <Import Project="..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props" Condition="Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props')" />
   <PropertyGroup Label="Globals">
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
@@ -106,9 +107,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <PropertyGroup>
-    <IdlGenIncludeDirs>$(GeneratedFilesDir),$(VC_IncludePath),$(WindowsSDK_IncludePath),$(ProjectDir)idlgen</IdlGenIncludeDirs>
-  </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.h">
@@ -162,7 +160,6 @@
     <Midl Include="Status.idl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="gen-idl.ps1" />
     <None Include="packages.config" />
     <None Include="PropertySheet.props" />
     <Text Include="readme.txt">
@@ -170,21 +167,22 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <IdlGenInclude Include="@(ClInclude)" Exclude="pch.h;App.h" />
+    <IdlGenCppInclude Include="@(ClInclude)" Exclude="pch.h;App.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
-  <Target Name="Generate IDL" BeforeTargets="ClCompile">
-    <Message Text="Running idlgen on C++ header" />
-    <Exec Command="powershell -c &quot;./gen-idl.ps1 -file %(IdlGenInclude.Identity) -includeDirs '$(IdlGenIncludeDirs)' &quot;" StandardOutputImportance="High" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets" Condition="Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets')" />
+  </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
+    <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props'))" />
+    <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets'))" />
   </Target>
 </Project>

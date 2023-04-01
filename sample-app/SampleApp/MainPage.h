@@ -6,7 +6,9 @@
 
 namespace winrt::SampleApp::implementation
 {
-    struct MainPage : MainPageT<MainPage>
+    struct
+    [[clang::annotate("idlgen::import=Status.idl")]]
+    MainPage : MainPageT<MainPage>
     {
         MainPage() {}
 

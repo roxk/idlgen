@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>IdlGen.IdlGen.Cpp</id>
+    <version>VERSION</version>
+    <title>IdlGen.IdlGen.Cpp</title>
+    <authors>Roxk Yiu</authors>
+    <owners>Roxk Yiu</owners>
+    <description>This package generates idl from C++ header file.</description>
+    <copyright>Copyright 2023</copyright>
+    <tags>IDL MIDL C++/WinRT WinRT</tags>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="file">LICENSE</license>
+    <projectUrl>https://github.com/roxk/SwipeNavigator</projectUrl>
+  </metadata>
+  <files>
+    <file src="README.md"/>
+    <file src="..\LICENSE"/>
+
+    <file target="bin\x64\idlgen.exe" src="..\dev\out\build\x64-Release\idlgen.exe"/>
+	<file target="include" src="include\**\*.*"/>
+	<file target="build\native\IdlGenCppRules.Project.xml" src="IdlGenCppRules.Project.xml"/>
+	<file target="build\native\IdlGen.IdlGen.Cpp.props" src="IdlGen-Cpp.props"/>
+	<file target="build\native\IdlGen.IdlGen.Cpp.targets" src="IdlGen-Cpp-Native.targets"/>
+  </files>
+</package>
