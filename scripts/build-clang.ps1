@@ -5,7 +5,6 @@ if (!($config -eq "Release" -or $config -eq "Debug")) {
 	exit 1
 }
 
-$originalDir = $(get-location)
 $scriptDir = $PSScriptRoot
 $rootDir = "$scriptDir/.."
 $ninjaBuildDir = "$rootDir/build-ninja/$config"

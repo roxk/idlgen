@@ -1,10 +1,13 @@
 # idlgen, an IDL Generator for WinRT
 
+[![nuget](https://img.shields.io/nuget/v/IdlGen.IdlGen.Cpp)](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/)
+[![CI](https://github.com/roxk/idlgen/actions/workflows/ci.yaml/badge.svg)](https://github.com/roxk/idlgen/actions/workflows/ci.yaml)
+
 A library for generating idl files when implementing WinRT components. Currently, only C++ is supported.
 
 ## Installation
 
-Use your preferred way (cli/GUI) to install the nuget package `IdlGen.IdlGen.Cpp`, which can be found on [nuget gallery](TODO:insert-link).
+Use your preferred way (cli/GUI) to install the nuget package `IdlGen.IdlGen.Cpp`, which can be found on [nuget gallery](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/).
 
 ## Usage (C++)
 
@@ -42,7 +45,7 @@ The library currently utilize clang's annotate attribute to specify an inner att
 Below is a table for all attributes and their usage.
 
 |Attribute|Args|Description|Example Declaration|Resultant idl|
-|--|--|--|--|
+|--|--|--|--|--|
 |`import`|`value,value,...`|Add import statement(s)|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
 |`attribute`|`value`|Add an attribute|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
 |`extend`|`value`|Add base class and interfaces|`[[clang::annotate("idlgen::extend=WUXC.Page,WUXD.INotifyPropertyChanged]]`|`$yourClass : WUXC.Page,WUXD.INotifyPropertyChanged`|

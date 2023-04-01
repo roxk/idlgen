@@ -6,12 +6,13 @@
     <title>IdlGen.IdlGen.Cpp</title>
     <authors>Roxk Yiu</authors>
     <owners>Roxk Yiu</owners>
-    <description>This package generates idl from C++ header file.</description>
+    <description>This package generates WinRT idl from C++ header file.</description>
     <copyright>Copyright 2023</copyright>
     <tags>IDL MIDL C++/WinRT WinRT</tags>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="file">LICENSE</license>
-    <projectUrl>https://github.com/roxk/SwipeNavigator</projectUrl>
+    <projectUrl>https://github.com/roxk/idlgen</projectUrl>
+	<readme>README.md</readme>
   </metadata>
   <files>
     <file src="README.md"/>

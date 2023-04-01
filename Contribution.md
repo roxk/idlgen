@@ -15,13 +15,14 @@
 
 ## Getting Started
 
-1. Clone llvm-project to root folder.
-2. Run
+1. Run the following
 ```
-./scripts/populate-build-ninja.ps1
-# After cmake is finished
-./scripts/build-clang.ps1
+./scripts/clone-llvm
+./scripts/populate-build-ninja -config Debug
+./scripts/build-clang -config Debug
 ```
 Current script always build for `x64` on `x64` host.
 
-3. Open `dev` with VS and starts building.
+2. Open `dev` with VS and starts building `x64-Debug`. Or, run `./scripts/build-idlgen`.
+3. Test by `./scripts/run-test-code -config Debug -gen stdout`. Inspect the output manually.
+4. Or, test in sample app. See [sample-app/README.md](sample-app/README.md)

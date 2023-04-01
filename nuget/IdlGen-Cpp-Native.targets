@@ -10,6 +10,9 @@
 	</PropertyGroup>
 	<Target Name="GenerateIDLfromCppHeaders" BeforeTargets="ClCompile" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<ItemGroup>
+			<IdlGenCppInclude Include="@(ClInclude)" Exclude="pch.h;App.h" />
+		</ItemGroup>
+		<ItemGroup>
 			<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
 		</ItemGroup>
 		<Message Text="Running idlgen on C++ header" />

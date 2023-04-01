@@ -14,8 +14,7 @@ if (test-path $ninjaBuildDir) {
 	exit 0
 }
 new-item -path $ninjaBuildDir -itemtype Directory
-cd $ninjaBuildDir
 $pythonPath=$(where.exe python)
 echo "pythonPath=$pythonPath"
-cmd /c "vcvars64.bat && cmake -G Ninja '-DPython3_EXECUTABLE=$pythonPath' -DCMAKE_BUILD_TYPE=$config -DLLVM_ENABLE_PROJECTS=clang ../../llvm-project/llvm"
-cd $originalDir
+. "$scriptDir\get-vcvars"
+cmd /c "cd `"$ninjaBuildDir`" && `"$vcvars`" && cmake -G Ninja '-DPython3_EXECUTABLE=$pythonPath' -DCMAKE_BUILD_TYPE=$config -DLLVM_ENABLE_PROJECTS=clang ../../llvm-project/llvm"
