@@ -3,6 +3,16 @@ project(idlgen)
 
 include(env.cmake)
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	set(CLANG_CONFIG_TYPE "Debug")
+elseif (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+	set(CLANG_CONFIG_TYPE "Release")
+else()
+	message(FATAL_ERROR "Unknown build type ${CMAKE_BUILD_TYPE}")
+endif()
+
+set(CLANG_BUILD_OUT_DIR "${CLANG_BUILD_OUT_ROOT_DIR}/${CLANG_CONFIG_TYPE}")
+
 set(CLANG_LIB_DIR "${CLANG_BUILD_OUT_DIR}/lib")
 set(CLANG_INCLUDE_DIR "${LLVM_PROJECT_SRC_DIR}/clang/include")
 set(CLANG_GEN_INCLUDE_DIR "${CLANG_BUILD_OUT_DIR}/tools/clang/include")
