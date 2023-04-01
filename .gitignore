@@ -1,3 +1,5 @@
 /llvm-project
 /build-ninja
 .vs
+test-data/src/*.idl
+test-data/src/*.testidl

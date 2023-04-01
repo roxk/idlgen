@@ -13,25 +13,35 @@
 #include <memory>
 #include <iostream>
 
+namespace llvm
+{
+    class raw_ostream;
+}
+
 namespace lc = llvm::cl;
 namespace ct = clang::tooling;
+namespace lfs = llvm::sys::fs;
 
 namespace idlgen
 {
     class GenIdlFrontendAction : public clang::ASTFrontendAction
     {
     private:
-        llvm::StringRef fileName;
+        llvm::raw_ostream& out;
     public:
-        GenIdlFrontendAction(llvm::StringRef fileName) : fileName(fileName) {}
+        GenIdlFrontendAction(llvm::raw_ostream& out) : out(out) {}
         std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
         {
-            return std::make_unique<GenIdlAstConsumer>(ci, fileName);
+            return std::make_unique<GenIdlAstConsumer>(ci, out);
         }
     };
 }
 
 static lc::opt<bool> Help("h", lc::desc("Alias for -help"), lc::Hidden);
+
+static lc::opt<bool> Generate("gen", lc::desc("generate IDL next to the input file"));
+
+static lc::opt<std::string> GenerateOutputPath("gen-out", lc::desc("if specified and --gen is applied, control the output path of the generated IDL"));
 
 static lc::list<std::string> Includes("include", lc::desc("include folder(s)"));
 
@@ -76,10 +86,26 @@ int main(int argc, const char** argv)
     {
         clangArgs.emplace_back("-I" + include);
     }
+    if (FileNames.size() > 1 && Generate && GenerateOutputPath.hasArgStr())
+    {
+        std::cerr << "gen-out is specified with more than 1 input file. "
+            "Please only specify 1 input file if gen-out is specified" << std::endl;
+        return 1;
+    }
+    std::optional<llvm::raw_fd_ostream> genOutputStream;
+    if (Generate && !GenerateOutputPath.empty())
+    {
+        std::error_code ec;
+        genOutputStream.emplace(GenerateOutputPath, ec);
+        if (ec)
+        {
+            std::cerr << ec.message() << std::endl;
+            return 1;
+        }
+    }
     for (auto&& filePath : FileNames)
     {
-        std::cout << "Generating idl for " << filePath << std::endl;
-        auto codeOrErr = llvm::MemoryBuffer::getFileAsStream(filePath);
+        auto codeOrErr{ llvm::MemoryBuffer::getFileAsStream(filePath) };
         if (std::error_code ec = codeOrErr.getError())
         {
             std::cerr << ec.message() << std::endl;
@@ -90,9 +116,30 @@ int main(int argc, const char** argv)
         {
             continue;
         }
-        auto buffer = code->getBuffer();
-        auto fileName = llvm::sys::path::filename(filePath);
-        ct::runToolOnCodeWithArgs(std::make_unique<idlgen::GenIdlFrontendAction>(fileName), buffer, clangArgs, filePath);
+        auto buffer{ code->getBuffer() };
+        auto fileName{ llvm::sys::path::filename(filePath) };
+        std::optional<llvm::raw_fd_ostream> fileOutputStreamOpt;
+        auto out = [&]() -> std::optional<std::reference_wrapper<llvm::raw_ostream>>
+        {
+            if (!Generate) { return llvm::outs(); }
+            if (genOutputStream) { return *genOutputStream; }
+            auto extension = llvm::sys::path::extension(filePath);
+            if (auto extensionIndex = filePath.find(extension); extensionIndex != std::string::npos)
+            {
+                filePath.erase(extensionIndex);
+            }
+            filePath += ".idl";
+            std::error_code ec;
+            fileOutputStreamOpt.emplace(filePath, ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None);
+            if (ec)
+            {
+                std::cerr << ec.message() << std::endl;
+                return std::nullopt;
+            }
+            return *fileOutputStreamOpt;
+        }();
+        if (!out) { return 1; }
+        ct::runToolOnCodeWithArgs(std::make_unique<idlgen::GenIdlFrontendAction>(out.value().get()), buffer, clangArgs, filePath);
     }
     return 0;
 }

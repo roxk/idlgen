@@ -1,8 +1,8 @@
 #include "GenIdlAstConsumer.h"
 #include "RuntimeClassVisitor.h"
 
-idlgen::GenIdlAstConsumer::GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::StringRef fileName) :
-    visitor(std::make_unique<RuntimeClassVisitor>(ci))
+idlgen::GenIdlAstConsumer::GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::raw_ostream& out) :
+    visitor(std::make_unique<RuntimeClassVisitor>(ci, out))
 {
 }
 

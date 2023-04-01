@@ -7,8 +7,9 @@
 #include <string>
 #include <cassert>
 
-idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci) :
-    astContext(ci.getASTContext())
+idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out) :
+    astContext(ci.getASTContext()),
+    out(std::move(out))
 {
 }
 
@@ -117,79 +118,79 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     // Generate idl
     for (auto&& include : includes)
     {
-        std::cout << "import \"" << include << "\";" << std::endl;
+        out << "import \"" << include << "\";" << "\n";
     }
-    std::cout << "namespace ";
+    out << "namespace ";
     const auto namespaceCount = namespaces.size();
     for (size_t i = 0; i < namespaceCount; ++i)
     {
-        std::cout << namespaces[i];
-        if (i + 1 < namespaceCount) { std::cout << "."; }
+        out << namespaces[i];
+        if (i + 1 < namespaceCount) { out << "."; }
     }
-    std::cout << std::endl;
-    std::cout << "{" << std::endl;
+    out << "\n";
+    out << "{" << "\n";
     for (auto&& attr : attrs)
     {
         if (attr.type != IdlGenAttrType::Attribute) { continue; }
         auto& args{ attr.args };
         for (auto&& arg : args)
         {
-            std::cout << "[" << arg << "]" << std::endl;
+            out << "[" << arg << "]" << "\n";
         }
     }
-    std::cout << "runtimeclass " << record->getNameAsString();
+    out << "runtimeclass " << record->getNameAsString();
     if (extend)
     {
-        std::cout << " : " << *extend;
+        out << " : " << *extend;
     }
-    std::cout << std::endl;
-    std::cout << "{" << std::endl;
-    auto printMethodParams = [](clang::CXXMethodDecl* method)
+    out << "\n";
+    out << "{" << "\n";
+    auto printMethodParams = [&](clang::CXXMethodDecl* method)
     {
-        std::cout << "(";
+        out << "(";
         auto params{ method->parameters() };
         const auto paramCount = params.size();
         for (size_t i = 0; i < paramCount; ++i)
         {
             auto param{ params[i] };
-            std::cout << TranslateCxxTypeToWinRtType(param->getType()) << " " << param->getNameAsString();
-            if (i + 1 < paramCount) { std::cout << ", "; }
+            out << TranslateCxxTypeToWinRtType(param->getType()) << " " << param->getNameAsString();
+            if (i + 1 < paramCount) { out << ", "; }
         }
-        std::cout << ");";
+        out << ");";
     };
     for (auto&& ctor : ctors)
     {
-        std::cout << ctor->getNameAsString();
+        out << ctor->getNameAsString();
         printMethodParams(ctor);
-        std::cout << std::endl;
+        out << "\n";
     }
     for (auto&& entry : methodGroups)
     {
         auto& group{ entry.second };
         auto returnType{ TranslateCxxTypeToWinRtType(group.getterOrElse()->getReturnType())};
-        std::cout << returnType << " " << entry.first;
+        out << returnType << " " << entry.first;
         if (group.IsGetter())
         {
-            std::cout << "{get;};";
+            out << "{get;};";
         }
         else if (group.IsProperty())
         {
-            std::cout << ";";
+            out << ";";
         }
         else
         {
             printMethodParams(group.setterOrElse());
         }
-        std::cout << std::endl;
+        out << "\n";
     }
     for (auto&& ev : events)
     {
         assert(ev->parameters().size() > 0);
         auto handler{ TranslateCxxTypeToWinRtType(ev->parameters().front()->getType()) };
-        std::cout << "event " << handler << " " << ev->getNameAsString() << ";" << std::endl;
+        out << "event " << handler << " " << ev->getNameAsString() << ";" << "\n";
     }
-    std::cout << "}" << std::endl;
-    std::cout << "}" << std::endl;
+    out << "}" << "\n";
+    out << "}" << "\n";
     return true;
 }
 
@@ -381,12 +382,12 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
     if (record == nullptr)
     {
         auto rawType{ type.getNonReferenceType().getUnqualifiedType().getAsString() };
-        std::cout << rawType
+        out << rawType
             << " struct=" << type->isStructureType()
             << " class=" << type->isClassType()
             << " incomplete=" << type->isIncompleteType()
             << " reference=" << type->isReferenceType()
-            << std::endl;
+            << "\n";
         return false;
     }
     if (!record->isCompleteDefinition()) { return false; }

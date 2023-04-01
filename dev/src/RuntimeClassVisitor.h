@@ -9,6 +9,11 @@
 #include <optional>
 #include <set>
 
+namespace llvm
+{
+    class raw_ostream;
+}
+
 namespace clang
 {
     class ASTContext;
@@ -70,11 +75,12 @@ namespace idlgen
     {
     private:
         clang::ASTContext& astContext;
+        llvm::raw_ostream& out;
         static std::unordered_map<std::string, std::string> cxxTypeToWinRtTypeMap;
         std::unordered_map<std::string, clang::CXXRecordDecl*> implementationTypes;
 
     public:
-        explicit RuntimeClassVisitor(clang::CompilerInstance& ci);
+        explicit RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out);
 
         void Reset();
 

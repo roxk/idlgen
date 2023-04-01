@@ -1,7 +1,13 @@
-param([string]$config)
+param([string]$config, [string]$gen)
 
 if (!($config -eq "Release" -or $config -eq "Debug")) {
 	echo "Uknown config: $config. -config [Release|Debug]"
+	exit 1
+}
+
+if (!($gen -eq "stdout" -or $gen -eq "default" -or $gen -eq "custom"))
+{
+	echo "Unknown gen: $gen. -config [stdout|default|custom]"
 	exit 1
 }
 
@@ -17,5 +23,18 @@ foreach($code in $testCodes) {
 	if ($code.PSisContainer) {
 		continue
 	}
-	&$idlgen $includes $code.FullName
+	$filePath = $code.FullName
+	$headerExtensionIndex = $filePath.IndexOf(".h")
+	if ($headerExtensionIndex -eq -1 -or $headerExtensionIndex -ne $filePath.Length - 2) {
+		continue
+	}
+	$out = $filePath.Replace(".h","")
+	$out += ".testidl"
+	if ($gen -eq "default") {
+		$genArgs = "--gen"
+	} elseif ($gen -eq "custom") {
+		$genArgs = "--gen"
+		$genOutArgs = "--gen-out=`"$out`""
+	}
+	&$idlgen $includes $filePath $genArgs $genOutArgs
 }

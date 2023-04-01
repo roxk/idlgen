@@ -2,6 +2,11 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include <memory>
 
+namespace llvm
+{
+    class raw_ostream;
+}
+
 namespace idlgen
 {
     class RuntimeClassVisitor;
@@ -12,7 +17,7 @@ namespace idlgen
         std::unique_ptr<RuntimeClassVisitor> visitor;
 
     public:
-        explicit GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::StringRef fileName);
+        explicit GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::raw_ostream& out);
 
         virtual void HandleTranslationUnit(clang::ASTContext& context) override;
     };
