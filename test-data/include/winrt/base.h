@@ -31,4 +31,9 @@ namespace winrt
 			};
 		}
 	}
+
+	namespace Windows::UI::Xaml
+	{
+		struct DependencyProperty : Windows::Foundation::IInspectable {};
+	}
 }

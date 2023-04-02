@@ -53,6 +53,7 @@ namespace winrt::Root::A::implementation
 		void NamespaceSame(Root::A::SameViewModel a);
 		void NamespaceShallower(Root::ShallowerViewModel a);
 		void NamespaceSibling(Root::B::SiblingViewModel a);
+		static Windows::UI::Xaml::DependencyProperty DependencyProperty();
 		SameViewModel ReturnAllowImpl();
 		SameViewModel ImplPropertyOnlyExposeGetter();
 		void ImplPropertyOnlyExposeGetter(SameViewModel a);
