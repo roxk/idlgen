@@ -4,13 +4,14 @@
         <Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
         <Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
 		<IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
+		<IdlGenExclude Condition="'$(IdlGenExclude)' == ''">App.h;pch.h</IdlGenExclude>
     </PropertyGroup>
 	<PropertyGroup>
 		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuildThisFileDirectory)..\..\include</IdlGenCppIncludeDirs>
 	</PropertyGroup>
 	<Target Name="GenerateIDLfromCppHeaders" BeforeTargets="ClCompile" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<ItemGroup>
-			<IdlGenCppInclude Include="@(ClInclude)" Exclude="pch.h;App.h" />
+			<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenExclude)" />
 		</ItemGroup>
 		<ItemGroup>
 			<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>

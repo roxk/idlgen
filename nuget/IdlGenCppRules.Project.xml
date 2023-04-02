@@ -14,4 +14,9 @@
                 Description="Generate IDL for C++ headers"
                 Category="General" />
 
+  <StringListProperty Name="IdlGenExclude" 
+                      DisplayName="Exclude files" 
+                      Description="Exclude files from generating idl"
+                      Category="General"/>
+
 </Rule>
