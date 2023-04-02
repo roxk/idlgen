@@ -22,7 +22,7 @@ The library would generate the whole runtimm class definition for you. There sho
 
 The library could automatically generate the following structures in an idl files:
 1. Runtime class definition, if an implementation type is found
-2. All getters, setters, methods, events
+2. All (static) getters, setters, methods, events
 3. Import file for an implementation type, if the implementation type is referenced in the runtime class' properties/methods, etc
 
 The library would not generate the following:
