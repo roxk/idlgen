@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include <windows.h>
 #include "App.xaml.g.h"
 
 namespace winrt::SampleApp::implementation

@@ -1,7 +1,6 @@
 ﻿#pragma once
 
-#include <windows.h>
-#include <winrt/Windows.UI.Xaml.Markup.h>
+#include "pch.h"
 #include "MainPage.g.h"
 
 namespace winrt::SampleApp::implementation
