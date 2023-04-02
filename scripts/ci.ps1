@@ -11,6 +11,6 @@ function run {
 # Disable error exit code detection for now
 . "$PSScriptRoot\build-idlgen" -config Release
 run -func {
-	. "$PSScriptRoot\test" -config Release -gen stdout
+	. "$PSScriptRoot\test" -config Release
 }
 # TODO: Add test to validate output...
