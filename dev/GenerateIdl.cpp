@@ -99,6 +99,7 @@ int main(int argc, const char** argv)
         genOutputStream.emplace(GenerateOutputPath, ec);
         if (ec)
         {
+            std::cerr << "fatal: Failed to open specified output" << std::endl;
             std::cerr << ec.message() << std::endl;
             return 1;
         }
@@ -133,6 +134,7 @@ int main(int argc, const char** argv)
             fileOutputStreamOpt.emplace(filePath, ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None);
             if (ec)
             {
+                std::cerr << "fatal: Failed to open default idl output" << std::endl;
                 std::cerr << ec.message() << std::endl;
                 return std::nullopt;
             }

@@ -17,9 +17,14 @@ $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
 # Test generated output
 
-function genToStdOut {
+function gen {
 	param([string]$filePath)
-	&$idlgen $includes $filePath
+	$LASTEXITCODE = 0
+	&$idlgen $includes $filePath --gen
+	if ($LASTEXITCODE -ne 0) {
+		echo "idlgen returned $LASTEXITCODE"
+		exit 1
+	}
 }
 
 function expect {
@@ -41,18 +46,24 @@ function assert {
 
 function exists {
 	param([string]$src, [string]$line)
-	assert "$line exists" -actual ($src.IndexOf($line) -ne -1)
+	assert "`"$line`" exists" -actual ($src.IndexOf($line) -ne -1)
 }
 
 function absent {
 	param([string]$src, [string]$line)
-	assert "$line absent" -actual ($src.IndexOf($line) -eq -1)
+	assert "`"$line`" is absent" -actual ($src.IndexOf($line) -eq -1)
 }
 
 # Test BlankPage
-$blankPageOutput = genToStdOut -filePath $blankPageSrc
-$blankPageOutput = $blankPageOutput -join "`n"
+gen -filePath $blankPageSrc
+
+$blankPageIdlPath = "$testCodeDir\BlankPage.idl"
+$blankPageOutput = get-content $blankPageIdlPath
+
+get-childitem $testCodeDir
+
 echo $blankPageOutput
+
 # Import
 exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"ShallowerViewModel.idl`";"
@@ -104,6 +115,9 @@ absent -src $blankPageOutput -line "void ParamDisallowImpl(Root.A.SameViewModel 
 absent -src $blankPageOutput -line "Root.A.SameViewModel ParamDisallowImplEvenReturnAllow(Root.A.SameViewModel a);"
 absent -src $blankPageOutput -line "void MethodMixingImplAndProjected(Root.A.SameViewModel a, Root.A.SameViewModel b);"
 absent -src $blankPageOutput -line "void PrivateMethod();"
+absent -src $blankPageOutput -line "Root.A.factory_implementation";
+
+echo "All test passed"
 
 #foreach($code in $testCodes) {
 #	$out = $filePath.Replace(".h","")

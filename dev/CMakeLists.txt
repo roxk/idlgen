@@ -37,6 +37,9 @@ set_target_properties(idlgen PROPERTIES
 		CXX_STANDARD_REQUIRED ON
 		CMAKE_CXX_STANDARD 17
 		CMAKE_CXX_STANDARD_REQUIRED ON)
+# All clang header errors
+target_compile_options(idlgen PRIVATE /wd4624)
+target_compile_options(idlgen PRIVATE /wd4291)
 target_link_libraries(idlgen "version.lib")
 MATH(EXPR LIB_COUNT "0")
 foreach(file ${LIBS})
