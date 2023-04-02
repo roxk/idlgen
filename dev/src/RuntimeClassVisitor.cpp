@@ -167,6 +167,10 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     for (auto&& entry : methodGroups)
     {
         auto& group{ entry.second };
+        if (group.getterOrElse()->isStatic() && group.setterOrElse()->isStatic())
+        {
+            out << "static ";
+        }
         auto returnType{ TranslateCxxTypeToWinRtType(group.getterOrElse()->getReturnType())};
         out << returnType << " " << entry.first;
         if (group.IsGetter())
