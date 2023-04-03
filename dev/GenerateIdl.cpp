@@ -144,6 +144,24 @@ int main(int argc, const char** argv)
         }();
         if (!out) { return 1; }
         ct::runToolOnCodeWithArgs(std::make_unique<idlgen::GenIdlFrontendAction>(out.value().get()), buffer, clangArgs, filePath);
+        if (fileOutputStreamOpt)
+        {
+            if (fileOutputStreamOpt->has_error())
+            {
+                std::cerr << "fatal: File output for " << filePath << " has error" << std::endl;
+                std::cerr << fileOutputStreamOpt->error().message() << std::endl;
+                return 1;
+            }
+        }
+    }
+    if (genOutputStream)
+    {
+        if (genOutputStream->has_error())
+        {
+            std::cerr << "fatal: File output for " << GenerateOutputPath << " has error" << std::endl;
+            std::cerr << genOutputStream->error().message() << std::endl;
+            return 1;
+        }
     }
     return 0;
 }

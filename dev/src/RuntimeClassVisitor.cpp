@@ -45,7 +45,9 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         return true;
     }
+    std::cout << "is main file" << std::endl;
     if (!GetRuntimeClassKind(record)) { return true; }
+    std::cout << "is runtime class" << std::endl;
     std::vector<std::string> namespaces{ GetWinRtNamespaces(record) };
     if (!namespaces.empty() && namespaces.back() == "factory_implementation") { return true; }
     std::set<std::string> includes;
@@ -486,6 +488,7 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
 std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::CXXRecordDecl* record, bool implementationOnly)
 {
     auto className{ record->getNameAsString() };
+    std::cout << "Checking if " << className << " is runtime class" << std::endl;
     auto filePathOpt{ GetLocFilePath(record) };
     if (implementationOnly)
     {
@@ -495,10 +498,15 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
         auto namespaceDecl = static_cast<clang::NamespaceDecl*>(parentContext);
         if (namespaceDecl->getNameAsString() != "implementation") { return std::nullopt; }
     }
-    if (!record->isCompleteDefinition()) { return std::nullopt; }
+    if (!record->isCompleteDefinition())
+    {
+        std::cout << className << " is not complete" << std::endl;
+        return std::nullopt;
+    }
     auto bases{ record->bases() };
     for (auto&& base : bases)
     {
+        std::cout << "Checking base " << base.getType().getAsString() << std::endl;
         auto baseType{ base.getType().getTypePtrOrNull() };
         if (baseType == nullptr) { continue; }
         auto cxxType{ baseType->getAsCXXRecordDecl() };
@@ -512,14 +520,21 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
         {
             auto spec{ static_cast<clang::ClassTemplateSpecializationDecl*>(cxxType) };
             auto templateName{ spec->getNameAsString() };
+            std::cout << templateName << " is a template specialization" << std::endl;
             auto params{ spec->getTemplateArgs().asArray() };
             for (auto&& param : params)
             {
                 auto paramKind = param.getKind();
-                if (paramKind != clang::TemplateArgument::ArgKind::Type) { continue; }
+                if (paramKind != clang::TemplateArgument::ArgKind::Type)
+                {
+                    std::cout << "Tempalte param is not a type" << std::endl;
+                    continue;
+                }
+                std::cout << "Checking param " << param.getAsType().getAsString() << std::endl;
                 auto type{ param.getAsType()->getAsCXXRecordDecl() };
                 if (type == nullptr) { continue; }
                 auto templateParamTypeName{ type->getNameAsString() };
+                std::cout << "templateParamTypeName=" << templateParamTypeName << " className=" << className << " templateName=" << templateName << std::endl;
                 if (templateParamTypeName == std::string_view(templateName).substr(0, templateName.size() - 1) && 
                     templateParamTypeName == className)
                 {

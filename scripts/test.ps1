@@ -12,7 +12,6 @@ $testDataDir = "$srcDir\..\test-data"
 $testCodeDir = "$testDataDir\src"
 $testIncludeDirs = "$testDataDir\include\", "$testDataDir\include B\"
 $idlgen = "$srcDir/../dev/out/build/x64-$config/idlgen.exe"
-$blankPageSrc = "$testCodeDir\BlankPage.h"
 $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
 # Test generated output
@@ -55,12 +54,11 @@ function absent {
 }
 
 # Test BlankPage
+$blankPageSrc = "$testCodeDir\BlankPage.h"
 gen -filePath $blankPageSrc
 
 $blankPageIdlPath = "$testCodeDir\BlankPage.idl"
 $blankPageOutput = get-content $blankPageIdlPath
-
-get-childitem $testCodeDir
 
 echo $blankPageOutput
 
@@ -116,6 +114,15 @@ absent -src $blankPageOutput -line "Root.A.SameViewModel ParamDisallowImplEvenRe
 absent -src $blankPageOutput -line "void MethodMixingImplAndProjected(Root.A.SameViewModel a, Root.A.SameViewModel b);"
 absent -src $blankPageOutput -line "void PrivateMethod();"
 absent -src $blankPageOutput -line "Root.A.factory_implementation";
+absent -src $blankPageOutput -line "warning";
+
+$sameVmSrc = "$testCodeDir\SameViewModel.h"
+gen -filePath $sameVmSrc
+
+$sameVmIdlPath = "$testCodeDir\SameViewModel.idl"
+$sameVmOutput = get-content $sameVmIdlPath
+
+exists -src $sameVmOutput -line "runtimeclass SameViewModel"
 
 echo "All test passed"
 
