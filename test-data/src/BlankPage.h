@@ -1,7 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include "BlankPage.g.h"
+// Test inconsistent file name case
+#include "blankpage.g.h"
 #include "SameViewModel.h"
 
 namespace winrt::Root::A::implementation

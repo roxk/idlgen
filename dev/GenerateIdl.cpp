@@ -74,6 +74,8 @@ int main(int argc, const char** argv)
         "-Wno-unknown-attributes",
         // winrt/base.h QueryInterface etc no override
         "-Wno-inconsistent-missing-override",
+        // Xaml compiler use windows.foundation instead of Windows.Foundation
+        "-Wno-nonportable-include-path",
         "-std=c++20",
         "-DWIN32_LEAN_AND_MEAN", 
         "-DWINRT_LEAN_AND_MEAN", 
