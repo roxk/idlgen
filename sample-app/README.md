@@ -6,6 +6,6 @@
 
 ## Getting Started
 
-1. Run `./scripts/build-nuget -version 0.0.0` at project root
+1. Run `./scripts/build-nuget -version 0.0.1` at project root
 2. Copy the generated nuget to `LocalPackages`
 3. Build `SampleApp` project

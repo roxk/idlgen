@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.props" Condition="Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.props')" />
   <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props')" />
-  <Import Project="..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props" Condition="Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props')" />
   <PropertyGroup Label="Globals">
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
@@ -171,7 +171,7 @@
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets" Condition="Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets')" />
+    <Import Project="..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets" Condition="Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -179,7 +179,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
-    <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.props'))" />
-    <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.0\build\native\IdlGen.IdlGen.Cpp.targets'))" />
+    <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.props'))" />
+    <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets'))" />
   </Target>
 </Project>
