@@ -516,10 +516,12 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
         {
             return idlgen::RuntimeClassKind::Projected;
         }
-        if (cxxType->getDeclKind() == clang::Decl::Kind::ClassTemplateSpecialization)
+        auto templateSpecType{ baseType->getAs<clang::TemplateSpecializationType>() };
+        auto spec{ clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxxType) };
+        if (templateSpecType != nullptr && spec != nullptr)
         {
-            auto spec{ static_cast<clang::ClassTemplateSpecializationDecl*>(cxxType) };
-            auto templateName{ spec->getNameAsString() };
+            auto templateDecl{ templateSpecType->getTemplateName().getAsTemplateDecl() };
+            auto templateName{ templateDecl->getNameAsString() };
             std::cout << templateName << " is a template specialization" << std::endl;
             auto params{ spec->getTemplateArgs().asArray() };
             for (auto&& param : params)
@@ -527,15 +529,23 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
                 auto paramKind = param.getKind();
                 if (paramKind != clang::TemplateArgument::ArgKind::Type)
                 {
-                    std::cout << "Tempalte param is not a type" << std::endl;
+                    std::cout << "Template param ";
+                    param.print(clang::LangOptions(), llvm::outs(), true);
+                    std::cout << " is not a type" << std::endl;
                     continue;
                 }
                 std::cout << "Checking param " << param.getAsType().getAsString() << std::endl;
                 auto type{ param.getAsType()->getAsCXXRecordDecl() };
                 if (type == nullptr) { continue; }
                 auto templateParamTypeName{ type->getNameAsString() };
-                std::cout << "templateParamTypeName=" << templateParamTypeName << " className=" << className << " templateName=" << templateName << std::endl;
-                if (templateParamTypeName == std::string_view(templateName).substr(0, templateName.size() - 1) && 
+                auto expectedParamTypeName{ std::string_view(templateName).substr(0, templateName.size() - 1) };
+                std::cout << "templateParamTypeName=" << templateParamTypeName
+                    << " className=" << className
+                    << " templateName=" << templateName
+                    << " expectedParamTypeName=" << expectedParamTypeName
+                    << " cxxTypeName=" << cxxType->getName().data()
+                    << std::endl;
+                if (templateParamTypeName == expectedParamTypeName &&
                     templateParamTypeName == className)
                 {
                     return idlgen::RuntimeClassKind::Implementation;
