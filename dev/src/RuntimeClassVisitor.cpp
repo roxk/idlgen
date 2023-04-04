@@ -61,6 +61,10 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     auto thisClassFileName = GetLocFileName(record);
     for (auto&& method : methods)
     {
+        debugPrint([&]()
+            {
+                std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl;
+            });
         auto methodKind{ GetRuntimeClassMethodKind(method) };
         if (!methodKind) { continue; }
         if (IsDestructor(method)) { continue; }
@@ -75,7 +79,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             events.insert(method);
             continue;
         }
-        auto& group = GetMethodGroup(methodGroups, method->getNameAsString());
+        auto& group = GetMethodGroup(methodGroups, method);
         auto findIncludeForParams = [&]()
         {
             auto params{ method->parameters() };
@@ -175,7 +179,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             out << "static ";
         }
         auto returnType{ TranslateCxxTypeToWinRtType(group.getterOrElse()->getReturnType())};
-        out << returnType << " " << entry.first;
+        out << returnType << " " << group.methodName;
         if (group.IsGetter())
         {
             out << "{get;};";
@@ -255,13 +259,35 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     return std::nullopt;
 }
 
-idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, std::string const& methodName)
+idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method)
 {
-    if (auto result{ methodGroups.find(methodName) }; result != methodGroups.end())
+    auto methodName{ method->getNameAsString() };
+    auto tryPrintParamName = [](std::string& name, clang::QualType type)
+    {
+        if (!type->isVoidType())
+        {
+            name += "_";
+            name += TranslateCxxTypeToWinRtType(type);
+        }
+    };
+    auto paramStrGetter = [&]()
+    {
+        std::string name;
+        auto returnType{ method->getReturnType() };
+        tryPrintParamName(name, returnType);
+        auto params{ method->parameters() };
+        for (auto&& param : params)
+        {
+            tryPrintParamName(name, param->getType());
+        }
+        return name;
+    };
+    auto key{ methodName + paramStrGetter() };
+    if (auto result{ methodGroups.find(key) }; result != methodGroups.end())
     {
         return result->second;
     }
-    auto entry{ methodGroups.insert({ methodName, MethodGroup{nullptr, nullptr} }) };
+    auto entry{ methodGroups.insert({ std::move(key), MethodGroup{ std::move(methodName), nullptr, nullptr } }) };
     return entry.first->second;
 }
 

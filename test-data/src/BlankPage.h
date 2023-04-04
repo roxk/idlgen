@@ -51,6 +51,10 @@ namespace winrt::Root::A::implementation
 		void MethodObject(Windows::Foundation::IInspectable const& a);
 		void MethodConst(const winrt::hstring a);
 		void MethodIncomplete(IncompleteViewModel const&);
+		void MethodOverload(bool a);
+		void MethodOverload(uint64_t a);
+		void MethodOverload(bool a, uint64_t b);
+		void MethodOverload(uint64_t a, bool b);
 		void NamespaceSame(Root::A::SameViewModel a);
 		void NamespaceShallower(Root::ShallowerViewModel a);
 		void NamespaceSibling(Root::B::SiblingViewModel a);

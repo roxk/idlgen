@@ -36,6 +36,7 @@ namespace idlgen
     };
     struct MethodGroup
     {
+        std::string methodName;
         clang::CXXMethodDecl* method;
         clang::CXXMethodDecl* getter;
         clang::CXXMethodDecl* setter;
@@ -88,7 +89,7 @@ namespace idlgen
         bool VisitCXXRecordDecl(clang::CXXRecordDecl* record);
     private:
         static std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
-        static MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, std::string const& methodName);
+        static MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method);
         void FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type);
         static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
         static std::string TranslateCxxTypeToWinRtType(clang::QualType type);
