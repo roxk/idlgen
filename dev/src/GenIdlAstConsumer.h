@@ -17,7 +17,7 @@ namespace idlgen
         std::unique_ptr<RuntimeClassVisitor> visitor;
 
     public:
-        explicit GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::raw_ostream& out);
+        explicit GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose);
 
         virtual void HandleTranslationUnit(clang::ASTContext& context) override;
     };

@@ -7,9 +7,10 @@
 #include <string>
 #include <cassert>
 
-idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out) :
+idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose) :
     astContext(ci.getASTContext()),
-    out(std::move(out))
+    out(std::move(out)),
+    verbose(verbose)
 {
 }
 
@@ -45,9 +46,9 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         return true;
     }
-    std::cout << "is main file" << std::endl;
+    debugPrint([]() { std::cout << "is main file" << std::endl; });
     if (!GetRuntimeClassKind(record)) { return true; }
-    std::cout << "is runtime class" << std::endl;
+    debugPrint([]() { std::cout << "is runtime class" << std::endl; });
     std::vector<std::string> namespaces{ GetWinRtNamespaces(record) };
     if (!namespaces.empty() && namespaces.back() == "factory_implementation") { return true; }
     std::set<std::string> includes;
@@ -488,7 +489,7 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
 std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::CXXRecordDecl* record, bool implementationOnly)
 {
     auto className{ record->getNameAsString() };
-    std::cout << "Checking if " << className << " is runtime class" << std::endl;
+    debugPrint([&]() {std::cout << "Checking if " << className << " is runtime class" << std::endl; });
     auto filePathOpt{ GetLocFilePath(record) };
     if (implementationOnly)
     {
@@ -500,13 +501,13 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
     }
     if (!record->isCompleteDefinition())
     {
-        std::cout << className << " is not complete" << std::endl;
+        debugPrint([&]() {std::cout << className << " is not complete" << std::endl; });
         return std::nullopt;
     }
     auto bases{ record->bases() };
     for (auto&& base : bases)
     {
-        std::cout << "Checking base " << base.getType().getAsString() << std::endl;
+        debugPrint([&]() { std::cout << "Checking base " << base.getType().getAsString() << std::endl; });
         auto baseType{ base.getType().getTypePtrOrNull() };
         if (baseType == nullptr) { continue; }
         auto cxxType{ baseType->getAsCXXRecordDecl() };
@@ -522,29 +523,38 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
         {
             auto templateDecl{ templateSpecType->getTemplateName().getAsTemplateDecl() };
             auto templateName{ templateDecl->getNameAsString() };
-            std::cout << templateName << " is a template specialization" << std::endl;
+            debugPrint([&]() { std::cout << templateName << " is a template specialization" << std::endl; });
             auto params{ spec->getTemplateArgs().asArray() };
             for (auto&& param : params)
             {
                 auto paramKind = param.getKind();
                 if (paramKind != clang::TemplateArgument::ArgKind::Type)
                 {
-                    std::cout << "Template param ";
-                    param.print(clang::LangOptions(), llvm::outs(), true);
-                    std::cout << " is not a type" << std::endl;
+                    debugPrint([&]()
+                        {
+                            std::cout << "Template param ";
+                            param.print(clang::LangOptions(), llvm::outs(), true);
+                            std::cout << " is not a type" << std::endl;
+                        });
                     continue;
                 }
-                std::cout << "Checking param " << param.getAsType().getAsString() << std::endl;
                 auto type{ param.getAsType()->getAsCXXRecordDecl() };
-                if (type == nullptr) { continue; }
+                if (type == nullptr)
+                {
+                    debugPrint([&]() { std::cout << param.getAsType().getAsString() << " is not a CXXRecord" << std::endl; });
+                    continue;
+                }
                 auto templateParamTypeName{ type->getNameAsString() };
                 auto expectedParamTypeName{ std::string_view(templateName).substr(0, templateName.size() - 1) };
-                std::cout << "templateParamTypeName=" << templateParamTypeName
-                    << " className=" << className
-                    << " templateName=" << templateName
-                    << " expectedParamTypeName=" << expectedParamTypeName
-                    << " cxxTypeName=" << cxxType->getName().data()
-                    << std::endl;
+                debugPrint([&]()
+                    {
+                        std::cout << "templateParamTypeName=" << templateParamTypeName
+                            << " className=" << className
+                            << " templateName=" << templateName
+                            << " expectedParamTypeName=" << expectedParamTypeName
+                            << " cxxTypeName=" << cxxType->getName().data()
+                            << std::endl;
+                    });
                 if (templateParamTypeName == expectedParamTypeName &&
                     templateParamTypeName == className)
                 {

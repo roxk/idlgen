@@ -28,11 +28,12 @@ namespace idlgen
     {
     private:
         llvm::raw_ostream& out;
+        bool verbose;
     public:
-        GenIdlFrontendAction(llvm::raw_ostream& out) : out(out) {}
+        GenIdlFrontendAction(llvm::raw_ostream& out, bool verbose) : out(out), verbose(verbose) {}
         std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
         {
-            return std::make_unique<GenIdlAstConsumer>(ci, out);
+            return std::make_unique<GenIdlAstConsumer>(ci, out, verbose);
         }
     };
 }
@@ -46,6 +47,8 @@ static lc::opt<std::string> GenerateOutputPath("gen-out", lc::desc("if specified
 static lc::list<std::string> Includes("include", lc::desc("include folder(s)"));
 
 static lc::list<std::string> FileNames(lc::Positional, lc::desc("[<file> ...]"));
+
+static lc::opt<bool> Verbose("verbose", lc::desc("Enable verbose printing for debug. Note this breaks printing into stdout"));
 
 static void PrintVersion(llvm::raw_ostream& OS)
 {
@@ -143,25 +146,7 @@ int main(int argc, const char** argv)
             return *fileOutputStreamOpt;
         }();
         if (!out) { return 1; }
-        ct::runToolOnCodeWithArgs(std::make_unique<idlgen::GenIdlFrontendAction>(out.value().get()), buffer, clangArgs, filePath);
-        if (fileOutputStreamOpt)
-        {
-            if (fileOutputStreamOpt->has_error())
-            {
-                std::cerr << "fatal: File output for " << filePath << " has error" << std::endl;
-                std::cerr << fileOutputStreamOpt->error().message() << std::endl;
-                return 1;
-            }
-        }
-    }
-    if (genOutputStream)
-    {
-        if (genOutputStream->has_error())
-        {
-            std::cerr << "fatal: File output for " << GenerateOutputPath << " has error" << std::endl;
-            std::cerr << genOutputStream->error().message() << std::endl;
-            return 1;
-        }
+        ct::runToolOnCodeWithArgs(std::make_unique<idlgen::GenIdlFrontendAction>(out.value().get(), Verbose), buffer, clangArgs, filePath);
     }
     return 0;
 }

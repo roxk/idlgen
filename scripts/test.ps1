@@ -1,10 +1,14 @@
-param([string]$config)
+param([string]$config, [bool]$verbose)
 
 # TODO: Write in C# instead with Process...? Or just unit test in cpp?
 
 if (!($config -eq "Release" -or $config -eq "Debug")) {
 	echo "Uknown config: $config. -config [Release|Debug]"
 	exit 1
+}
+
+if ($verbose) {
+	$verboseFlag = "--verbose"
 }
 
 $srcDir = $PSScriptRoot
@@ -19,7 +23,7 @@ $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
 function gen {
 	param([string]$filePath)
 	$LASTEXITCODE = 0
-	&$idlgen $includes $filePath --gen
+	&$idlgen $includes $verboseFlag $filePath --gen
 	if ($LASTEXITCODE -ne 0) {
 		echo "idlgen returned $LASTEXITCODE"
 		exit 1
@@ -45,12 +49,20 @@ function assert {
 
 function exists {
 	param([string]$src, [string]$line)
-	assert "`"$line`" exists" -actual ($src.IndexOf($line) -ne -1)
+	$actual = ($src.IndexOf($line) -ne -1)
+	if (!$actual) {
+		echo $src
+	}
+	assert "`"$line`" exists" -actual $actual
 }
 
 function absent {
 	param([string]$src, [string]$line)
-	assert "`"$line`" is absent" -actual ($src.IndexOf($line) -eq -1)
+	$actual = ($src.IndexOf($line) -eq -1)
+	if (!$actual) {
+		echo $src
+	}
+	assert "`"$line`" is absent" -actual $actual
 }
 
 # Test BlankPage
@@ -59,8 +71,6 @@ gen -filePath $blankPageSrc
 
 $blankPageIdlPath = "$testCodeDir\BlankPage.idl"
 $blankPageOutput = get-content $blankPageIdlPath
-
-echo $blankPageOutput
 
 # Import
 exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"

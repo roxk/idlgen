@@ -78,9 +78,10 @@ namespace idlgen
         llvm::raw_ostream& out;
         static std::unordered_map<std::string, std::string> cxxTypeToWinRtTypeMap;
         std::unordered_map<std::string, clang::CXXRecordDecl*> implementationTypes;
+        bool verbose;
 
     public:
-        explicit RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out);
+        explicit RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose);
 
         void Reset();
 
@@ -104,5 +105,10 @@ namespace idlgen
         static std::vector<std::string> GetWinRtNamespaces(clang::NamedDecl* decl);
         std::optional<std::string> GetLocFilePath(clang::CXXRecordDecl* record);
         std::string GetLocFileName(clang::CXXRecordDecl* record);
+        template<typename Func>
+        void debugPrint(Func&& func)
+        {
+            if (verbose) { func(); }
+        }
     };
 }
