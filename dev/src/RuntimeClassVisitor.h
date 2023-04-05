@@ -105,6 +105,7 @@ namespace idlgen
         std::optional<RuntimeClassKind> GetRuntimeClassKind(clang::QualType type);
         std::optional<RuntimeClassKind> GetRuntimeClassKind(clang::CXXRecordDecl* record, bool implementationOnly = false);
         static std::vector<std::string> GetWinRtNamespaces(clang::NamedDecl* decl);
+        static std::string GetQualifiedName(clang::CXXRecordDecl* record);
         std::optional<std::string> GetLocFilePath(clang::CXXRecordDecl* record);
         std::string GetLocFileName(clang::CXXRecordDecl* record);
         template<typename Func>

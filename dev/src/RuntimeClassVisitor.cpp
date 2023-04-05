@@ -477,17 +477,17 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
 bool idlgen::RuntimeClassVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
 {
     auto params{ method->parameters() };
-    if (params.empty()) { return false; }
-    if (params.front()->getType().getNonReferenceType().getUnqualifiedType().getAsString() == "winrt::event_token")
-    {
-        return true;
-    }
-    return false;
+    if (params.size() != 1) { return false; }
+    auto record = params.front()->getType()->getAsCXXRecordDecl();
+    if (record == nullptr) { return false; }
+    return GetQualifiedName(record) == "winrt::event_token";
 }
 
 bool idlgen::RuntimeClassVisitor::IsEventRegistrar(clang::CXXMethodDecl* method)
 {
-    return method->getReturnType().getNonReferenceType().getUnqualifiedType().getAsString() == "winrt::event_token";
+    auto returnRecord = method->getReturnType()->getAsCXXRecordDecl();
+    if (returnRecord == nullptr) { return false; }
+    return GetQualifiedName(returnRecord) == "winrt::event_token";
 }
 
 bool idlgen::RuntimeClassVisitor::IsConstructor(clang::CXXMethodDecl* method)
@@ -643,6 +643,14 @@ std::vector<std::string> idlgen::RuntimeClassVisitor::GetWinRtNamespaces(clang::
     }
     std::reverse(namespaces.begin(), namespaces.end());
     return namespaces;
+}
+
+std::string idlgen::RuntimeClassVisitor::GetQualifiedName(clang::CXXRecordDecl* record)
+{
+    std::string qualifiedName;
+    llvm::raw_string_ostream typeOs{ qualifiedName };
+    record->printQualifiedName(typeOs);
+    return qualifiedName;
 }
 
 std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::CXXRecordDecl* record)
