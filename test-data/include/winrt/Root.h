@@ -15,6 +15,8 @@ namespace winrt::Root
 
 		struct SameViewModel : Base {};
 
+		struct TestIncludeImpl : Base {};
+
 		enum class Category : int32_t
 		{
 			Doc,

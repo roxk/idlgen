@@ -76,6 +76,7 @@ $blankPageOutput = get-content $blankPageIdlPath
 exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"ShallowerViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"SiblingViewModel.idl`";"
+exists -src $blankPageOutput -line "import `"TestIncludeImpl.idl`";"
 # Namespace
 exists -src $blankPageOutput -line "namespace Root.A"
 # Attributes
@@ -114,6 +115,7 @@ exists -src $blankPageOutput -line "static Windows.UI.Xaml.DependencyProperty De
 exists -src $blankPageOutput -line "String Property;"
 exists -src $blankPageOutput -line "Root.A.SameViewModel ReturnAllowImpl{get;};"
 exists -src $blankPageOutput -line "Windows.Foundation.Numerics.Vector2 Struct{get;};"
+exists -src $blankPageOutput -line "Root.A.TestIncludeImpl TestIncludeImplWithOnlyImplUse{get;};"
 exists -src $blankPageOutput -line "String UnqualifiedType{get;};"
 exists -src $blankPageOutput -line "event Windows.Foundation.EventHandler Event;"
 exists -src $blankPageOutput -line "event Windows.Foundation.TypedEventHandler<Root.A.BlankPage, UInt32> TypedEvent;"

@@ -4,6 +4,7 @@
 // Test inconsistent file name case
 #include "blankpage.g.h"
 #include "SameViewModel.h"
+#include "TestIncludeImpl.h"
 
 namespace winrt::Root::A::implementation
 {
@@ -64,6 +65,7 @@ namespace winrt::Root::A::implementation
 		SameViewModel ReturnAllowImpl();
 		SameViewModel ImplPropertyOnlyExposeGetter();
 		void ImplPropertyOnlyExposeGetter(SameViewModel const& a);
+		TestIncludeImpl TestIncludeImplWithOnlyImplUse();
 		ImplStruct InternalMethod();
 		void InternalMethod(ImplStruct const& s);
 		void ParamDisallowImpl(SameViewModel const& a);
