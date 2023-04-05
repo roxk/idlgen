@@ -5,7 +5,7 @@
 namespace winrt::Root
 {
 	template<typename T>
-	struct ShallowerViewModelT
+	struct ShallowerViewModelT : winrt::ProduceBase
 	{
 	};
 }

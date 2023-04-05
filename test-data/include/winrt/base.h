@@ -16,11 +16,32 @@ namespace winrt
 	struct event_token {};
 	namespace Windows::Foundation
 	{
-		struct IInspectable : IUnknown
+		struct IUnknown
 		{
+			virtual void Release() = 0;
+			virtual void AddRef() = 0;
 		};
-		struct IEventHandler : Windows::Foundation::IInspectable {};
-		struct EventHandler : IEventHandler {};
+		struct IInspectable : Windows::Foundation::IUnknown {};
+	}
+	struct Base : Windows::Foundation::IInspectable
+	{
+		void Release() {}
+		void AddRef() {}
+	};
+	struct ProduceBase : Windows::Foundation::IInspectable
+	{
+		void Release() {}
+		void AddRef() override {}
+	};
+	namespace Windows::Foundation
+	{
+		struct EventHandler : Windows::Foundation::IUnknown {};
+
+		template<typename T, typename A>
+		struct TypedEventHandler : Windows::Foundation::IUnknown
+		{
+			void operator()(const T& sender, const A& args) {}
+		};
 
 		namespace Numerics
 		{
@@ -34,6 +55,6 @@ namespace winrt
 
 	namespace Windows::UI::Xaml
 	{
-		struct DependencyProperty : Windows::Foundation::IInspectable {};
+		struct DependencyProperty : Base {};
 	}
 }

@@ -5,7 +5,7 @@
 namespace winrt::Root::A
 {
 	template<typename T>
-	struct SameViewModelT
+	struct SameViewModelT : winrt::ProduceBase
 	{
 	};
 }
