@@ -1,5 +1,7 @@
 #include "clang/AST/ASTContext.h"
+#include "clang/Sema/Template.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Parse/RAIIObjectsForParser.h"
 #include "RuntimeClassVisitor.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/Lex/Preprocessor.h"
@@ -8,6 +10,7 @@
 #include <cassert>
 
 idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose) :
+    ci(ci),
     astContext(ci.getASTContext()),
     out(std::move(out)),
     verbose(verbose)
@@ -262,7 +265,7 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
 idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method)
 {
     auto methodName{ method->getNameAsString() };
-    auto tryPrintParamName = [](std::string& name, clang::QualType type)
+    auto tryPrintParamName = [&](std::string& name, clang::QualType type)
     {
         if (!type->isVoidType())
         {
@@ -326,7 +329,6 @@ std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCx
         {"void", "void"},
         {"winrt::hstring", "String"},
         {"winrt::guid", "Guid"},
-        {"winrt::Windows::Foundation::EventHandler", "Windows.Foundation.EventHandler"},
         {"winrt::Windows::Foundation::IInspectable", "Object"},
         {"winrt::Windows::Foundation::TimeSpan", "Windows.Foundation.TimeSpan"},
         {"winrt::Windows::Foundation::DateTime", "Windows.Foundation.DateTime"},
@@ -382,6 +384,7 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     }
     if (decl == nullptr) { return "error-type"; }
     auto name{ decl->getNameAsString() };
+    // TODO: Handle template
     const auto namespaces{ GetWinRtNamespaces(decl) };
     std::string qualifiedWinRtName;
     qualifiedWinRtName.reserve(name.size() + 20);
@@ -392,6 +395,27 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
         qualifiedWinRtName += ".";
     }
     qualifiedWinRtName += name;
+    if (auto templateSpec = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(decl))
+    {
+        auto params{ templateSpec->getTemplateArgs().asArray() };
+        std::string paramString;
+        for (auto&& param : params)
+        {
+            if (param.getKind() != clang::TemplateArgument::ArgKind::Type) { continue; }
+            auto type{ param.getAsType() };
+            paramString += TranslateCxxTypeToWinRtType(type);
+            paramString += ", ";
+        }
+        if (!paramString.empty())
+        {
+            const auto expectedLastCommaSpaceIndex = paramString.size() - 2;
+            const auto lastCommaSpaceIndex = paramString.rfind(", ");
+            if (lastCommaSpaceIndex == expectedLastCommaSpaceIndex) { paramString.erase(expectedLastCommaSpaceIndex); }
+            qualifiedWinRtName += "<";
+            qualifiedWinRtName += paramString;
+            qualifiedWinRtName += ">";
+        }
+    }
     return qualifiedWinRtName;
 }
 
@@ -414,23 +438,36 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
     auto record{ StripReferenceAndGetClassDecl(type) };
     if (record == nullptr)
     {
-        auto rawType{ type.getNonReferenceType().getUnqualifiedType().getAsString() };
-        out << rawType
-            << " struct=" << type->isStructureType()
-            << " class=" << type->isClassType()
-            << " incomplete=" << type->isIncompleteType()
-            << " reference=" << type->isReferenceType()
-            << "\n";
+        debugPrint([&]()
+            {
+                auto rawType{ type.getNonReferenceType().getUnqualifiedType().getAsString() };
+                std::cout << rawType
+                    << " struct=" << type->isStructureType()
+                    << " class=" << type->isClassType()
+                    << " incomplete=" << type->isIncompleteType()
+                    << " reference=" << type->isReferenceType()
+                    << "\n";
+            });
         return false;
     }
-    if (!record->isCompleteDefinition()) { return false; }
+    if (!record->isCompleteDefinition())
+    {
+        debugPrint([&]()
+            {
+                std::cout << record->getNameAsString() << " is not complete" << std::endl;
+            });
+        // We have to count incomplete type as OK since clang's AST wouldn't make template reference
+        // (e.g. TypedHandler<T, A> const&) a complete type but we definitely want to support these
+        // class...
+        return true;
+    }
     if (record->isPOD()) { return true; }
     std::string qualifiedName;
     llvm::raw_string_ostream typeOs{ qualifiedName };
     record->printQualifiedName(typeOs);
     if (IsCppWinRtPrimitive(qualifiedName)) { return true; }
-    if (auto kindOpt = GetRuntimeClassKind(record); 
-        kindOpt && (!projectedOnly || *kindOpt == idlgen::RuntimeClassKind::Projected))
+    auto kindOpt = GetRuntimeClassKind(record);
+    if (kindOpt && (!projectedOnly || *kindOpt == idlgen::RuntimeClassKind::Projected))
     {
         return true;
     }
@@ -439,21 +476,17 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
 
 bool idlgen::RuntimeClassVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
 {
-    if (!GetRuntimeClassMethodKind(method)) return false;
     auto params{ method->parameters() };
-    for (auto&& param : params)
+    if (params.empty()) { return false; }
+    if (params.front()->getType().getNonReferenceType().getUnqualifiedType().getAsString() == "winrt::event_token")
     {
-        if (param->getType().getNonReferenceType().getUnqualifiedType().getAsString() == "winrt::event_token")
-        {
-            return true;
-        }
+        return true;
     }
     return false;
 }
 
 bool idlgen::RuntimeClassVisitor::IsEventRegistrar(clang::CXXMethodDecl* method)
 {
-    if (!GetRuntimeClassMethodKind(method)) return false;
     return method->getReturnType().getNonReferenceType().getUnqualifiedType().getAsString() == "winrt::event_token";
 }
 
@@ -539,7 +572,7 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
         auto cxxType{ baseType->getAsCXXRecordDecl() };
         if (cxxType == nullptr) { continue; }
         // TODO: Need to check full name as Windows::Foundation::IInspectable instead
-        if (cxxType->getName() == "IInspectable")
+        if (cxxType->getName() == "IInspectable" || cxxType->getName() == "IUnknown")
         {
             return idlgen::RuntimeClassKind::Projected;
         }

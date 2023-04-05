@@ -38,7 +38,7 @@ namespace winrt::Root::A::implementation
 		void Property(winrt::hstring const& a);
 		winrt::event_token Event(winrt::Windows::Foundation::EventHandler const& handler);
 		void Event(winrt::event_token token);
-		winrt::event_token TypedEvent(winrt::Windows::Foundation::TypedEventHandler<uint32_t, uint32_t> const& handler);
+		winrt::event_token TypedEvent(winrt::Windows::Foundation::TypedEventHandler<BlankPage, uint32_t> const& handler);
 		void TypedEvent(winrt::event_token token);
 		void NoSetterOnlyProperty(bool a);
 		Category Enum();

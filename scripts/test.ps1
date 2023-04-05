@@ -116,6 +116,7 @@ exists -src $blankPageOutput -line "Root.A.SameViewModel ReturnAllowImpl{get;};"
 exists -src $blankPageOutput -line "Windows.Foundation.Numerics.Vector2 Struct{get;};"
 exists -src $blankPageOutput -line "String UnqualifiedType{get;};"
 exists -src $blankPageOutput -line "event Windows.Foundation.EventHandler Event;"
+exists -src $blankPageOutput -line "event Windows.Foundation.TypedEventHandler<Root.A.BlankPage, UInt32> TypedEvent;"
 # Stuff that should be hidden
 absent -src $blankPageOutput -line "BlankPage(BlankPage that);"
 absent -src $blankPageOutput -line "void operator=(BlankPage that);"

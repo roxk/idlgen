@@ -75,6 +75,7 @@ namespace idlgen
     class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisitor>
     {
     private:
+        clang::CompilerInstance& ci;
         clang::ASTContext& astContext;
         llvm::raw_ostream& out;
         static std::unordered_map<std::string, std::string> cxxTypeToWinRtTypeMap;
@@ -89,10 +90,10 @@ namespace idlgen
         bool VisitCXXRecordDecl(clang::CXXRecordDecl* record);
     private:
         static std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
-        static MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method);
+        MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method);
         void FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type);
         static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
-        static std::string TranslateCxxTypeToWinRtType(clang::QualType type);
+        std::string TranslateCxxTypeToWinRtType(clang::QualType type);
         static bool IsCppWinRtPrimitive(std::string const& type);
         bool IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly = false);
         bool IsEventRevoker(clang::CXXMethodDecl* method);
