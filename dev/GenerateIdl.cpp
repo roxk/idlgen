@@ -97,17 +97,10 @@ int main(int argc, const char** argv)
             "Please only specify 1 input file if gen-out is specified" << std::endl;
         return 1;
     }
-    std::optional<llvm::raw_fd_ostream> genOutputStream;
+    std::optional<std::reference_wrapper<std::string>> outputFile;
     if (Generate && !GenerateOutputPath.empty())
     {
-        std::error_code ec;
-        genOutputStream.emplace(GenerateOutputPath, ec);
-        if (ec)
-        {
-            std::cerr << "fatal: Failed to open specified output" << std::endl;
-            std::cerr << ec.message() << std::endl;
-            return 1;
-        }
+        outputFile = GenerateOutputPath;
     }
     for (auto&& filePath : FileNames)
     {
@@ -123,20 +116,26 @@ int main(int argc, const char** argv)
             continue;
         }
         auto buffer{ code->getBuffer() };
-        auto fileName{ llvm::sys::path::filename(filePath) };
+        auto fileName{ llvm::sys::path::filename(filePath).str() };
+        std::optional<std::string> fileBackup;
+        std::optional<std::string> genFile;
+        std::optional<std::string> idlFile;
         std::optional<llvm::raw_fd_ostream> fileOutputStreamOpt;
         auto out = [&]() -> std::optional<std::reference_wrapper<llvm::raw_ostream>>
         {
             if (!Generate) { return llvm::outs(); }
-            if (genOutputStream) { return *genOutputStream; }
+            if (!outputFile) { outputFile = filePath; }
             auto extension = llvm::sys::path::extension(filePath);
-            if (auto extensionIndex = filePath.find(extension); extensionIndex != std::string::npos)
+            idlFile.emplace(outputFile->get());
+            if (auto extensionIndex = outputFile->get().find(extension); extensionIndex != std::string::npos)
             {
-                filePath.erase(extensionIndex);
+                idlFile->erase(extensionIndex);
             }
-            filePath += ".idl";
+            *idlFile += ".idl";
+            fileBackup = *idlFile + ".bak";
+            genFile = *idlFile + ".gen";
             std::error_code ec;
-            fileOutputStreamOpt.emplace(filePath, ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None);
+            fileOutputStreamOpt.emplace(*genFile, ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None);
             if (ec)
             {
                 std::cerr << "fatal: Failed to open default idl output" << std::endl;
@@ -146,7 +145,19 @@ int main(int argc, const char** argv)
             return *fileOutputStreamOpt;
         }();
         if (!out) { return 1; }
-        ct::runToolOnCodeWithArgs(std::make_unique<idlgen::GenIdlFrontendAction>(out.value().get(), Verbose), buffer, clangArgs, filePath);
+        const auto result = ct::runToolOnCodeWithArgs(std::make_unique<idlgen::GenIdlFrontendAction>(out.value().get(), Verbose), buffer, clangArgs, filePath);
+        if (Generate)
+        {
+            // Flush the file ostream
+            fileOutputStreamOpt.reset();
+            if (result && fileBackup && genFile && idlFile)
+            {
+                llvm::sys::fs::rename(*idlFile, *fileBackup);
+                llvm::sys::fs::rename(*genFile, *idlFile);
+            }
+            if (genFile) { llvm::sys::fs::remove(*genFile); }
+        }
+        outputFile.reset();
     }
     return 0;
 }
