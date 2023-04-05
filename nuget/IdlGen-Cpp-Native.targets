@@ -9,18 +9,25 @@
 	<PropertyGroup>
 		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuildThisFileDirectory)..\..\include</IdlGenCppIncludeDirs>
 	</PropertyGroup>
-	<Target Name="GenerateIDLfromCppHeaders" BeforeTargets="ClCompile" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-		<ItemGroup Condition="'$(IdlGenInclude)' == ''">
-			<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenExclude)" />
-		</ItemGroup>
-		<ItemGroup Condition="'$(IdlGenInclude)' != ''">
-			<IdlGenCppInclude Include="$(IdlGenInclude)" Exclude="$(IdlGenExclude)" />
-		</ItemGroup>
-		<ItemGroup>
-			<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
-		</ItemGroup>
-		<Message Text="Running idlgen on C++ header" Importance="high" />
+	<ItemGroup Condition="'$(IdlGenInclude)' == ''">
+		<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenExclude)" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(IdlGenInclude)' != ''">
+		<IdlGenCppInclude Include="$(IdlGenInclude)" Exclude="$(IdlGenExclude)" />
+	</ItemGroup>
+	<ItemGroup>
+		<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
+	</ItemGroup>
+	<ItemDefinitionGroup>
+		<IdlGenCppInclude>
+			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
+		</IdlGenCppInclude>
+	</ItemDefinitionGroup>
+	<Target Name="GenerateIDLfromCppHeaders" BeforeTargets="ClCompile" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
 		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen %(IdlGenCppInclude.Identity) @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+	</Target>
+	<Target Name="StartGenerateIDLfromCppHeaders" BeforeTargets="GenerateIDLfromCppHeaders" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<Message Text="Running idlgen on C++ header" Importance="high" />
 	</Target>
 </Project>
