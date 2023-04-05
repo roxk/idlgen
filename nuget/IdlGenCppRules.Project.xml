@@ -14,9 +14,14 @@
                 Description="Generate IDL for C++ headers"
                 Category="General" />
 
+  <StringListProperty Name="IdlGenInclude"
+						DisplayName="Include files"
+						Description="Include C++ header files when generating idl. Override the default behavior where all C++ headers are included."
+						Category="General"/>
+
   <StringListProperty Name="IdlGenExclude" 
                       DisplayName="Exclude files" 
-                      Description="Exclude files from generating idl"
+                      Description="Exclude C++ header files from generating idl. Override the default behavior where App.h and pch.h are excluded."
                       Category="General"/>
 
 </Rule>

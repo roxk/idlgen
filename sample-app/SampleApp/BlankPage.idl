@@ -1,0 +1,9 @@
+namespace SampleApp
+{
+runtimeclass BlankPage
+{
+BlankPage();
+void ClickHandler(Object sender, Windows.UI.Xaml.RoutedEventArgs args);
+Int32 MyProperty;
+}
+}
