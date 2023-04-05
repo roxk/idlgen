@@ -77,6 +77,7 @@ exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"ShallowerViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"SiblingViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"TestIncludeImpl.idl`";"
+exists -src $blankPageOutput -line "import `"TestIncludeInTemplate.idl`";"
 # Namespace
 exists -src $blankPageOutput -line "namespace Root.A"
 # Attributes

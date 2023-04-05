@@ -17,6 +17,8 @@ namespace winrt::Root
 
 		struct TestIncludeImpl : Base {};
 
+		struct TestIncludeInTemplate : Base {};
+
 		enum class Category : int32_t
 		{
 			Doc,

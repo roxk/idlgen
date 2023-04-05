@@ -70,6 +70,11 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             });
         auto methodKind{ GetRuntimeClassMethodKind(method) };
         if (!methodKind) { continue; }
+        auto params{ method->parameters() };
+        for (auto&& param : params)
+        {
+            FindFileToInclude(includes, thisClassFileName, param->getType());
+        }
         if (IsDestructor(method)) { continue; }
         if (IsConstructor(method))
         {
@@ -83,18 +88,9 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             continue;
         }
         auto& group = GetMethodGroup(methodGroups, method);
-        auto findIncludeForParams = [&]()
-        {
-            auto params{ method->parameters() };
-            for (auto&& param : params)
-            {
-                FindFileToInclude(includes, thisClassFileName, param->getType());
-            }
-        };
         if (methodKind == idlgen::MethodKind::Setter)
         {
             group.setter = method;
-            findIncludeForParams();
         }
         else if (methodKind == idlgen::MethodKind::Getter)
         {
@@ -105,7 +101,6 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             group.method = method;
             FindFileToInclude(includes, thisClassFileName, method->getReturnType());
-            findIncludeForParams();
         }
     }
     auto cxxAttrs{ record->attrs() };
@@ -298,23 +293,28 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(std::set<std::string>& inclu
 {
     auto paramRecord{ StripReferenceAndGetClassDecl(type) };
     if (paramRecord == nullptr) { return; }
-    if (GetRuntimeClassKind(paramRecord))
+    debugPrint([&]() { std::cout << "Looking for include for " << paramRecord->getNameAsString() << std::endl; });
+    if (IsRuntimeClassMethodType(type))
     {
+        if (auto templateSpec = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(paramRecord))
+        {
+            debugPrint([&]() { std::cout << "Looking also for include for template params" << std::endl; });
+            auto params{ templateSpec->getTemplateArgs().asArray() };
+            for (auto&& param : params)
+            {
+                if (param.getKind() != clang::TemplateArgument::ArgKind::Type) { continue; }
+                FindFileToInclude(includes, thisClassFileName, param.getAsType());
+            }
+        }
         auto implType = implementationTypes.find(paramRecord->getNameAsString());
         if (implType == implementationTypes.end()) { return; }
         auto paramClassFileName{ GetLocFileName(implType->second) };
         if (thisClassFileName != paramClassFileName)
         {
-            while (true)
+            auto extension{ llvm::sys::path::extension(paramClassFileName) };
+            if (auto extensionIndex = paramClassFileName.rfind(extension); extensionIndex != std::string::npos)
             {
-                auto extension{ llvm::sys::path::extension(paramClassFileName) };
-                if (extension.empty()) { break; }
-                if (auto extensionIndex = paramClassFileName.rfind(extension); extensionIndex != std::string::npos)
-                {
-                    paramClassFileName.erase(extensionIndex);
-                    continue;
-                }
-                break;
+                paramClassFileName.erase(extensionIndex);
             }
             includes.insert(paramClassFileName + ".idl");
         }
