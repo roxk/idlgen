@@ -3,6 +3,7 @@
     <PropertyGroup>
         <Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
         <Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
+		<IdlGenDisableUnknownAttributeWarning Condition="'$(IdlGenDisableUnknownAttributeWarning)' == ''">true</IdlGenDisableUnknownAttributeWarning>
 		<IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
 		<IdlGenExclude Condition="'$(IdlGenExclude)' == ''">App.h;pch.h</IdlGenExclude>
     </PropertyGroup>
@@ -19,6 +20,9 @@
 		<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
 	</ItemGroup>
 	<ItemDefinitionGroup>
+		<ClCompile Condition="'$(IdlGenDisableUnknownAttributeWarning)' == 'true'">
+			<DisableSpecificWarnings>%(DisableSpecificWarnings);5030;</DisableSpecificWarnings>
+		</ClCompile>
 		<IdlGenCppInclude>
 			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
 		</IdlGenCppInclude>
