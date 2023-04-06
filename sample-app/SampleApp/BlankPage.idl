@@ -1,6 +1,6 @@
 namespace SampleApp
 {
-runtimeclass BlankPage
+runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 {
 BlankPage();
 void ClickHandler(Object sender, Windows.UI.Xaml.RoutedEventArgs args);

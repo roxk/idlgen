@@ -5,9 +5,12 @@
 
 namespace winrt::SampleApp::implementation
 {
-    struct BlankPage : BlankPageT<BlankPage>
+    
+    struct
+    [[clang::annotate("idlgen::extend=Windows.UI.Xaml.Controls.Page")]] 
+    BlankPage : BlankPageT<BlankPage>
     {
-        BlankPage() 
+        BlankPage()
         {
             // Xaml objects should not call InitializeComponent during construction.
             // See https://github.com/microsoft/cppwinrt/tree/master/nuget#initializecomponent

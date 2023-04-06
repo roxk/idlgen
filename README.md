@@ -11,27 +11,41 @@ Use your preferred way (cli/GUI) to install the nuget package `IdlGen.IdlGen.Cpp
 
 ## Usage (C++)
 
-### Overview
-
-1. Edit the header file of your implementation type.
-2. Build the project. A custom build step would run before compilation.
-3. Viola! The idl file of the implementation type has been updated.
-4. Try deleting the idl file and re-run, you should see the idl file being generated again.
+1. Make sure your project can compile and build.
+2. Add `pch.h`, and other necessary includes in the header of your implementation type.
+3. Edit a header file of your implementation type.
+4. Build the project. A custom build step would run before compilation.
+5. Viola! The idl file of the implementation type has been generated.
 
 The library would generate the whole runtimm class definition for you. There should be literally zero edit you need to make on the resultant idl file.
 
-The library could automatically generate the following structures in an idl files:
-1. Runtime class definition, if an implementation type is found
-2. All (static) getters, setters, methods, events
-3. Import file for an implementation type, if the implementation type is referenced in the runtime class' properties/methods, etc
+### Automatically Generated Structures
 
-The library would not generate the following:
+The library could automatically generate the following structures in an idl files:
+- Runtime class definition, if an implementation type is found
+- All (static) getters, setters, methods, events
+- Import for another implementation type.
+  - Suppose `A.h` includes `B.h`, and `B.h` contains the definition of the implementation type of `B`, any reference to `B` in `A.h` (projected or implementation), would cause `A.idl` to import `B.idl`.
+
+### Structures Requiring Author Help
+
 1. Attributes
 2. Interfaces and base class
-3. Import file of projected types, value types, and enum referenced in the runtime class' properties/methods, etc
-4. Structs
+3. Import file of projected types, structs, and enum referenced in the runtime class
 
-To help the tool generate these missing pieces, the library defined the following custom attributes, which, when declared for a class, would cause the library to generate the missing pieces.
+The above structures require the help of class author to generate. The library defined a set of custom attributes, which, when declared on a class or methods, would allow the library to generate the missing pieces.
+
+Please see [Idlgen Custom Attributes](#Idlgen-Custom-Attributes) for more details.
+
+### Structures Not Generated
+
+- Interface
+- delegate
+- struct
+- enum. 
+- Or anything thing that doesn't need an implementation in C++
+
+Please define them in idl directly. They don't need any implementation in the first place.
 
 ### Idlgen Custom Attributes
 
@@ -49,29 +63,36 @@ Below is a table for all attributes and their usage.
 |`import`|`value,value,...`|Add import statement(s)|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
 |`attribute`|`value`|Add an attribute|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
 |`extend`|`value`|Add base class and interfaces|`[[clang::annotate("idlgen::extend=WUXC.Page,WUXD.INotifyPropertyChanged]]`|`$yourClass : WUXC.Page,WUXD.INotifyPropertyChanged`|
+|`hide`|N/A|Hide class or methods|`[[clang::annotate("idlgen::hide")]]`|
 
-### Other Tips
+You can apply them on a class definition or methods.
 
-#### Header Modification
+## Tips
+
+### Header Modification
 
 |What to achieve in IDL|What to do in header|
 |--|--|
-|Hide event handler in XAML|Make the handler private, set `friend struct ClassT<Class>`|
-|Hide event handler for any other runtime class|Make the handler private, add `friend ClassT<Class>`|
+|Hide public event handler in XAML|Make the handler private, set `friend struct ClassT<Class>`|
+|Hide public event handler for any other runtime class|Make the handler private, add `friend ClassT<Class>`|
+|Hide public overriden methods|Use `[[clang::annotate("hide")]]` on the method|
 
-This is because for XAML `ClassT` is a struct, for any other runtime class it is an alias template.
+Note: The friend syntax is different because for XAML `ClassT` is a struct, for any other runtime class it is an alias template.
 
-#### Generate IDL for Only One Header
+### Generate IDL for Only One Header
 
-Only compile the cpp file of the header file (e.g. via right click -> compile in solution explorer). Since the idl generation target is configured to run before `ClCompile`, idl generated would kick in before compilation.
+Run ` msbuild -target:GenerateIDLfromCppHeaders -p:IdlGenInclude=MyClass.h -p:Platform=x64`.
 
-### Property property
+If `MyClass.h` is excluded globally in property page, add `-p:IdlGenExclude=""` to the command.
+
+## Build Property
 
 |Name|Description|
 |--|--|
 |`IdlGenCppGenerateIDL`|Master control to configure whether idl files are generated|
 |`IdlGenInclude`|Control which and only files to include|
 |`IdlGenExclude`|Exclude the files from generating idl|
+|`IdlGenDisableUnknownAttributeWarning`|Disable unknown attribute warning|
 
 ## Troubleshooting
 
@@ -85,6 +106,15 @@ Relax. First, copy the old content from `.idl.bak` generated by the library so t
 
 If you are in the heat of refactoring a class in a header file and do not want the tool to generate idl at all, you can add the header file to property `IdlGenExclude`, either manually or via VS's project property page.
 
+## Incremental Adoption in Existing Codebase
+
+In a large code base, it is difficult to edit all existing header files to make them generate correct idl. It is suggested that large code base strictly follows the edit-one-header-at-a-time workflow to avoid generating a bunch of invalid idl files which stop the project from building.
+
+Follow these steps to configure the project for an edit-one-header-at-a-time workflow:
+1. Set `IdlGenCppGenerateIDL` to true.
+2. Set `IdlGenExclude` to `*.h` to exclude all headers by default.
+3. Follow the instruction in [Generate IDL for Only One Header](#Generate-IDL-for-Only One-Header) to generate only one header file at at time.
+
 ## CI Consideration
 
 Since idl files are meant to be included in the source, there is no need to generate these idl files in CI (Continuous Integration). The library provide an option to control generating idl files (`IdlGenCppGenerateIDL` for C++). .Make sure you set this property to `false` in CI.
@@ -93,7 +123,6 @@ Since idl files are meant to be included in the source, there is no need to gene
 
 1. Edit as little as 1 header at a time with clean commit
 2. If something goes wrong, copy the idl from .bak directly to start over
-3. Generate 1 idl at a time for a header file by compiling only the cpp file of the header file (e.g. via right click) to isolate change
 
 ## Contribution
 
