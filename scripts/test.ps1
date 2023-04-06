@@ -131,6 +131,7 @@ absent -src $blankPageOutput -line "void ParamDisallowImpl(Root.A.SameViewModel 
 absent -src $blankPageOutput -line "Root.A.SameViewModel ParamDisallowImplEvenReturnAllow(Root.A.SameViewModel a);"
 absent -src $blankPageOutput -line "void MethodMixingImplAndProjected(Root.A.SameViewModel a, Root.A.SameViewModel b);"
 absent -src $blankPageOutput -line "void PrivateMethod();"
+absent -src $blankPageOutput -line "void HideMethod();"
 absent -src $blankPageOutput -line "Root.A.factory_implementation";
 absent -src $blankPageOutput -line "warning";
 

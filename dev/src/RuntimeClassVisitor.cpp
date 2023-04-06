@@ -82,6 +82,19 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     auto thisClassFileName = GetLocFileName(record);
     for (auto&& method : methods)
     {
+        auto methodAttrs{ method->attrs() };
+        auto skip = false;
+        for (auto&& attr : methodAttrs)
+        {
+            auto idlGenAttr = GetIdlGenAttr(attr);
+            if (!idlGenAttr) { continue; }
+            if (idlGenAttr->type == IdlGenAttrType::Hide)
+            {
+                skip = true;
+                break;
+            }
+        }
+        if (skip) { continue; }
         debugPrint([&]()
             {
                 std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl;
