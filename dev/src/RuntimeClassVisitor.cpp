@@ -60,6 +60,24 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     std::set<clang::CXXMethodDecl*> ctors;
     std::map<std::string, MethodGroup> methodGroups;
     std::set<clang::CXXMethodDecl*> events;
+    auto cxxAttrs{ record->attrs() };
+    for (auto&& attr : cxxAttrs)
+    {
+        auto idlGenAttr = GetIdlGenAttr(attr);
+        if (!idlGenAttr) { continue; }
+        if (idlGenAttr->type == IdlGenAttrType::Hide) { return true; }
+        assert(!idlGenAttr->args.empty());
+        if (idlGenAttr->type == IdlGenAttrType::Attribute) { attrs.emplace_back(std::move(*idlGenAttr)); }
+        else if (idlGenAttr->type == IdlGenAttrType::Extend) { extend = idlGenAttr->args[0]; }
+        else if (idlGenAttr->type == IdlGenAttrType::Import)
+        {
+            auto imports{ idlGenAttr->args };
+            for (auto&& importFile : imports)
+            {
+                includes.insert(importFile);
+            }
+        }
+    }
     auto methods(record->methods());
     auto thisClassFileName = GetLocFileName(record);
     for (auto&& method : methods)
@@ -101,23 +119,6 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             group.method = method;
             FindFileToInclude(includes, thisClassFileName, method->getReturnType());
-        }
-    }
-    auto cxxAttrs{ record->attrs() };
-    for (auto&& attr : cxxAttrs)
-    {
-        auto idlGenAttr = GetIdlGenAttr(attr);
-        if (!idlGenAttr) { continue; }
-        assert(!idlGenAttr->args.empty());
-        if (idlGenAttr->type == IdlGenAttrType::Attribute) { attrs.emplace_back(std::move(*idlGenAttr)); }
-        else if (idlGenAttr->type == IdlGenAttrType::Extend) { extend = idlGenAttr->args[0]; }
-        else if (idlGenAttr->type == IdlGenAttrType::Import)
-        {
-            auto imports{ idlGenAttr->args };
-            for (auto&& importFile : imports)
-            {
-                includes.insert(importFile);
-            }
         }
     }
     // Generate idl
@@ -226,11 +227,11 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     auto& annotation{ *annotationOpt };
     if (annotation.find("idlgen::") != 0) { return std::nullopt; }
     auto equalIndex = annotation.find("=");
-    if (equalIndex == std::string::npos) { return std::nullopt; }
+    if (equalIndex == std::string::npos) { equalIndex = annotation.size(); }
     auto idlGenAttr{ std::string_view(annotation) };
     constexpr auto idlgenAttrHeaderCount = 8;
     idlGenAttr = idlGenAttr.substr(idlgenAttrHeaderCount, equalIndex - idlgenAttrHeaderCount);
-    auto args{ annotation.substr(equalIndex + 1) };
+    std::string args{ equalIndex >= annotation.size() ? "" : annotation.substr(equalIndex + 1)};
     if (idlGenAttr == "attribute")
     {
         if (args.empty()) { return std::nullopt; }
@@ -253,6 +254,10 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
             result.emplace_back(importFile.str());
         }
         return IdlGenAttr{ IdlGenAttrType::Import, result };
+    }
+    else if (idlGenAttr == "hide")
+    {
+        return IdlGenAttr{ IdlGenAttrType::Hide, {} };
     }
     return std::nullopt;
 }

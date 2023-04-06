@@ -15,6 +15,8 @@ namespace winrt::Root
 
 		struct SameViewModel : Base {};
 
+		struct SameViewModelHide : Base {};
+
 		struct TestIncludeImpl : Base {};
 
 		struct TestIncludeInTemplate : Base {};

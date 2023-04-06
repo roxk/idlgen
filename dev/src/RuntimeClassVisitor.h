@@ -27,7 +27,8 @@ namespace idlgen
     {
         Import,
         Attribute,
-        Extend
+        Extend,
+        Hide
     };
     struct IdlGenAttr
     {
@@ -89,7 +90,7 @@ namespace idlgen
 
         bool VisitCXXRecordDecl(clang::CXXRecordDecl* record);
     private:
-        static std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
+        std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
         MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method);
         void FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type);
         static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();

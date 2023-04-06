@@ -8,4 +8,9 @@ namespace winrt::Root::A
 	struct SameViewModelT : winrt::ProduceBase
 	{
 	};
+
+	template<typename T>
+	struct SameViewModelHideT : winrt::ProduceBase
+	{
+	};
 }
