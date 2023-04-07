@@ -3,24 +3,24 @@
 	<PropertyGroup>
 		<Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
 		<Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
-		<IdlGenDisableUnknownAttributeWarning Condition="'$(IdlGenDisableUnknownAttributeWarning)' == ''">true</IdlGenDisableUnknownAttributeWarning>
+		<IdlGenCppDisableUnknownAttributeWarning Condition="'$(IdlGenCppDisableUnknownAttributeWarning)' == ''">true</IdlGenCppDisableUnknownAttributeWarning>
 		<IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
-		<IdlGenExclude Condition="'$(IdlGenExclude)' == ''">App.h;pch.h</IdlGenExclude>
+		<IdlGenCppExclude Condition="'$(IdlGenCppExclude)' == ''">App.h;pch.h</IdlGenCppExclude>
 	</PropertyGroup>
 	<PropertyGroup>
 		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\include\idlgen</IdlGenCppIncludeDirs>
 	</PropertyGroup>
-	<ItemGroup Condition="'$(IdlGenInclude)' == ''">
-		<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenExclude)" />
+	<ItemGroup Condition="'$(IdlGenCppInclude)' == ''">
+		<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenCppExclude)" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(IdlGenInclude)' != ''">
-		<IdlGenCppInclude Include="$(IdlGenInclude)" Exclude="$(IdlGenExclude)" />
+	<ItemGroup Condition="'$(IdlGenCppInclude)' != ''">
+		<IdlGenCppInclude Include="$(IdlGenCppInclude)" Exclude="$(IdlGenCppExclude)" />
 	</ItemGroup>
 	<ItemGroup>
 		<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
 	</ItemGroup>
 	<ItemDefinitionGroup>
-		<ClCompile Condition="'$(IdlGenDisableUnknownAttributeWarning)' == 'true'">
+		<ClCompile Condition="'$(IdlGenCppDisableUnknownAttributeWarning)' == 'true'">
 			<DisableSpecificWarnings>%(DisableSpecificWarnings);5030;</DisableSpecificWarnings>
 		</ClCompile>
 		<ClCompile>
@@ -30,11 +30,11 @@
 			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
-	<Target Name="GenerateIDLfromCppHeaders" BeforeTargets="ClCompile" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="ClCompile" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
 		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen %(IdlGenCppInclude.Identity) @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
-	<Target Name="StartGenerateIDLfromCppHeaders" BeforeTargets="GenerateIDLfromCppHeaders" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateIDL" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="Running idlgen on C++ header" Importance="high" />
 	</Target>
 </Project>

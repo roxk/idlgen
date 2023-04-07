@@ -14,17 +14,17 @@
                 Description="Generate IDL for C++ headers. Default is true."
                 Category="General" />
 
-  <StringListProperty Name="IdlGenInclude"
+  <StringListProperty Name="IdlGenCppInclude"
 						DisplayName="Include files"
 						Description="Include C++ header files when generating idl. Override the default behavior where all C++ headers are included."
 						Category="General"/>
 
-  <StringListProperty Name="IdlGenExclude" 
+  <StringListProperty Name="IdlGenCppExclude" 
                       DisplayName="Exclude files" 
                       Description="Exclude C++ header files from generating idl. Override the default behavior where App.h and pch.h are excluded."
                       Category="General"/>
 
-  <BoolProperty Name="IdlGenDisableUnknownAttributeWarning"
+  <BoolProperty Name="IdlGenCppDisableUnknownAttributeWarning"
                 DisplayName="Disable unknown attribute warning"
 			    Description="Disable unknown attribute warning caused by [[clang::annotate]]. Default is true."
 			    Category="General"/>
