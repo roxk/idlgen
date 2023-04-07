@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <PropertyGroup>
-        <Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
-        <Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
+	<PropertyGroup>
+		<Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
+		<Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
 		<IdlGenDisableUnknownAttributeWarning Condition="'$(IdlGenDisableUnknownAttributeWarning)' == ''">true</IdlGenDisableUnknownAttributeWarning>
 		<IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
 		<IdlGenExclude Condition="'$(IdlGenExclude)' == ''">App.h;pch.h</IdlGenExclude>
-    </PropertyGroup>
+	</PropertyGroup>
 	<PropertyGroup>
-		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuildThisFileDirectory)..\..\include</IdlGenCppIncludeDirs>
+		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\include\idlgen</IdlGenCppIncludeDirs>
 	</PropertyGroup>
 	<ItemGroup Condition="'$(IdlGenInclude)' == ''">
 		<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenExclude)" />
@@ -22,6 +22,9 @@
 	<ItemDefinitionGroup>
 		<ClCompile Condition="'$(IdlGenDisableUnknownAttributeWarning)' == 'true'">
 			<DisableSpecificWarnings>%(DisableSpecificWarnings);5030;</DisableSpecificWarnings>
+		</ClCompile>
+		<ClCompile>
+			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)..\..\include\idlgen</AdditionalIncludeDirectories>
 		</ClCompile>
 		<IdlGenCppInclude>
 			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>

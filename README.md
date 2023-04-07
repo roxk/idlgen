@@ -12,7 +12,7 @@ Use your preferred way (cli/GUI) to install the nuget package `IdlGen.IdlGen.Cpp
 ## Usage (C++)
 
 1. Make sure your project can compile and build.
-2. Add `pch.h`, and other necessary includes in the header of your implementation type.
+2. Add `pch.h` and `idlgen.h`, and other necessary includes in the header of your implementation type.
 3. Edit a header file of your implementation type.
 4. Build the project. A custom build step would run before compilation.
 5. Viola! The idl file of the implementation type has been generated.
@@ -29,9 +29,14 @@ The library could automatically generate the following structures in an idl file
 
 ### Structures Requiring Author Help
 
+#### Base Class and Interfaces
+
+To tell the library that a runtime class inherit some base types, make the implementation type inherit the `idlgen::base<B, I...>` marker template type. Then, specify the project type's base class via template parameter `B`, and interfaces via `I`.
+
+#### Others
+
 1. Attributes
-2. Interfaces and base class
-3. Import file of projected types, structs, and enum referenced in the runtime class
+2. Import file of projected types, structs, and enum referenced in the runtime class
 
 The above structures require the help of class author to generate. The library defined a set of custom attributes, which, when declared on a class or methods, would allow the library to generate the missing pieces.
 
@@ -62,7 +67,6 @@ Below is a table for all attributes and their usage.
 |--|--|--|--|--|
 |`import`|`value,value,...`|Add import statement(s)|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
 |`attribute`|`value`|Add an attribute|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
-|`extend`|`value`|Add base class and interfaces|`[[clang::annotate("idlgen::extend=WUXC.Page,WUXD.INotifyPropertyChanged]]`|`$yourClass : WUXC.Page,WUXD.INotifyPropertyChanged`|
 |`hide`|N/A|Hide class or methods|`[[clang::annotate("idlgen::hide")]]`|
 
 You can apply them on a class definition or methods.
@@ -81,7 +85,7 @@ Note: The friend syntax is different because for XAML `ClassT` is a struct, for 
 
 ### Generate IDL for Only One Header
 
-Run ` msbuild -target:GenerateIDLfromCppHeaders -p:IdlGenInclude=MyClass.h -p:Platform=x64`.
+Run `msbuild -target:GenerateIDLfromCppHeaders -p:IdlGenInclude=MyClass.h -p:Platform=x64`.
 
 If `MyClass.h` is excluded globally in property page, add `-p:IdlGenExclude=""` to the command.
 

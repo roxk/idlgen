@@ -56,7 +56,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     if (!namespaces.empty() && namespaces.back() == "factory_implementation") { return true; }
     std::set<std::string> includes;
     std::vector<IdlGenAttr> attrs;
-    std::optional<std::string> extend;
+    std::optional<std::vector<clang::QualType>> extend{ GetExtend(record) };
     std::set<clang::CXXMethodDecl*> ctors;
     std::map<std::string, MethodGroup> methodGroups;
     std::set<clang::CXXMethodDecl*> events;
@@ -68,7 +68,6 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         if (idlGenAttr->type == IdlGenAttrType::Hide) { return true; }
         assert(!idlGenAttr->args.empty());
         if (idlGenAttr->type == IdlGenAttrType::Attribute) { attrs.emplace_back(std::move(*idlGenAttr)); }
-        else if (idlGenAttr->type == IdlGenAttrType::Extend) { extend = idlGenAttr->args[0]; }
         else if (idlGenAttr->type == IdlGenAttrType::Import)
         {
             auto imports{ idlGenAttr->args };
@@ -160,7 +159,26 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     out << "runtimeclass " << record->getNameAsString();
     if (extend)
     {
-        out << " : " << *extend;
+        debugPrint([&]()
+            {
+                std::cout << "extend size is " << extend->size() << std::endl;
+            });
+        if (!extend->empty())
+        {
+            out << " : ";
+        }
+        auto& bases{ *extend };
+        const auto baseCount = bases.size();
+        for (size_t i = 0; i < baseCount; ++i)
+        {
+            auto& base = bases[i];
+            auto name{ TranslateCxxTypeToWinRtType(base) };
+            out << name;
+            if (i + 1 < baseCount)
+            {
+                out << ", ";
+            }
+        }
     }
     out << "\n";
     out << "{" << "\n";
@@ -402,7 +420,6 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     }
     if (decl == nullptr) { return "error-type"; }
     auto name{ decl->getNameAsString() };
-    // TODO: Handle template
     const auto namespaces{ GetWinRtNamespaces(decl) };
     std::string qualifiedWinRtName;
     qualifiedWinRtName.reserve(name.size() + 20);
@@ -435,6 +452,11 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
         }
     }
     return qualifiedWinRtName;
+}
+
+std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::CXXRecordDecl* record)
+{
+    return std::string();
 }
 
 bool idlgen::RuntimeClassVisitor::IsCppWinRtPrimitive(std::string const& type)
@@ -645,6 +667,74 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
         }
     }
     return std::nullopt;
+}
+
+std::optional<std::vector<clang::QualType>> idlgen::RuntimeClassVisitor::GetExtend(clang::CXXRecordDecl* record)
+{
+    debugPrint([&]() {std::cout << "Getting extend for " << record->getNameAsString() << std::endl; });
+    if (!record->isCompleteDefinition()) { return std::nullopt; }
+    auto bases{ record->bases() };
+    std::vector<clang::QualType> result;
+    for (auto&& base : bases)
+    {
+        auto baseType{ base.getType().getTypePtrOrNull() };
+        if (baseType == nullptr) { continue; }
+        auto cxxType{ baseType->getAsCXXRecordDecl() };
+        if (cxxType == nullptr) { continue; }
+        auto spec{ clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxxType) };
+        if (spec == nullptr) { continue; }
+        auto typeName{ GetQualifiedName(cxxType) };
+        if (typeName != "idlgen::base") { continue; }
+        auto templateParams{ spec->getTemplateArgs().asArray() };
+        auto tryAddTypeToResult = [&](clang::QualType type)
+        {
+            if (!IsRuntimeClassMethodType(type, true)) { return; }
+            auto paramCxxType{ type->getAsCXXRecordDecl() };
+            if (paramCxxType == nullptr)
+            {
+                debugPrint([&]()
+                    {
+                        std::cout << type.getAsString()
+                            << " is not a CXXRecord" << std::endl;
+                    });
+                return;
+            }
+            debugPrint([&]() {std::cout << paramCxxType->getNameAsString() << " is an extend base" << std::endl; });
+            // TODO: Verify first type is projected type, second is interface (how?)
+            result.emplace_back(type);
+        };
+        for (auto&& templateParam : templateParams)
+        {
+            auto paramKind = templateParam.getKind();
+            if (paramKind == clang::TemplateArgument::ArgKind::Type)
+            {
+                auto paramType{ templateParam.getAsType() };
+                tryAddTypeToResult(paramType);
+            }
+            else if (paramKind == clang::TemplateArgument::ArgKind::Pack)
+            {
+                auto packParams{ templateParam.getPackAsArray() };
+                for (auto&& packParam : packParams)
+                {
+                    auto paramType{ packParam.getAsType() };
+                    tryAddTypeToResult(paramType);
+                }
+            }
+            else
+            {
+                debugPrint([&]()
+                    {
+                        std::cout << "Template param ";
+                        templateParam.print(clang::LangOptions(), llvm::outs(), true);
+                        std::cout << " is not a type but "
+                            << paramKind
+                            << std::endl;
+                    });
+            }
+        }
+    }
+    if (result.empty()) { return std::nullopt; }
+    return result;
 }
 
 std::vector<std::string> idlgen::RuntimeClassVisitor::GetWinRtNamespaces(clang::NamedDecl* record)

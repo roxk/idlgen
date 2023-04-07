@@ -95,6 +95,7 @@ namespace idlgen
         void FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type);
         static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
         std::string TranslateCxxTypeToWinRtType(clang::QualType type);
+        std::string TranslateCxxTypeToWinRtType(clang::CXXRecordDecl* record);
         static bool IsCppWinRtPrimitive(std::string const& type);
         bool IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly = false);
         bool IsEventRevoker(clang::CXXMethodDecl* method);
@@ -105,6 +106,7 @@ namespace idlgen
         static clang::CXXRecordDecl* StripReferenceAndGetClassDecl(clang::QualType type);
         std::optional<RuntimeClassKind> GetRuntimeClassKind(clang::QualType type);
         std::optional<RuntimeClassKind> GetRuntimeClassKind(clang::CXXRecordDecl* record, bool implementationOnly = false);
+        std::optional<std::vector<clang::QualType>> GetExtend(clang::CXXRecordDecl* record);
         static std::vector<std::string> GetWinRtNamespaces(clang::NamedDecl* decl);
         static std::string GetQualifiedName(clang::CXXRecordDecl* record);
         std::optional<std::string> GetLocFilePath(clang::CXXRecordDecl* record);

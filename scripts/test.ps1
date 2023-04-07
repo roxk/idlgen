@@ -1,4 +1,4 @@
-param([string]$config, [bool]$verbose)
+param([string]$config, [switch]$verbose)
 
 # TODO: Write in C# instead with Process...? Or just unit test in cpp?
 
@@ -7,14 +7,14 @@ if (!($config -eq "Release" -or $config -eq "Debug")) {
 	exit 1
 }
 
-if ($verbose) {
+if ($verbose.IsPresent) {
 	$verboseFlag = "--verbose"
 }
 
 $srcDir = $PSScriptRoot
 $testDataDir = "$srcDir\..\test-data"
 $testCodeDir = "$testDataDir\src"
-$testIncludeDirs = "$testDataDir\include\", "$testDataDir\include B\"
+$testIncludeDirs = "$testDataDir\include\", "$testDataDir\include B\", "$srcDir\..\nuget\include\idlgen"
 $idlgen = "$srcDir/../dev/out/build/x64-$config/idlgen.exe"
 $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
@@ -86,7 +86,7 @@ exists -src $blankPageOutput -line "[bindable]"
 # Runtime class name
 exists -src $blankPageOutput -line "runtimeclass BlankPage"
 # Extend
-exists -src $blankPageOutput -line "BlankPage : Windows.UI.Xaml.Page, Windows.UI.Xaml.Data.INotifyPropertyChanged"
+exists -src $blankPageOutput -line "BlankPage : Windows.UI.Xaml.Controls.Page, Windows.UI.Xaml.Data.INotifyPropertyChanged"
 # Constructors
 exists -src $blankPageOutput -line "BlankPage()"
 exists -src $blankPageOutput -line "BlankPage()"

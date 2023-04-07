@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "idlgen.h"
 // Test inconsistent file name case
 #include "blankpage.g.h"
 #include "SameViewModel.h"
@@ -19,12 +20,11 @@ namespace winrt::Root::A::implementation
 	struct ImplStruct : PackedTemplate<ImplStruct>, IntegerTemplate<10> {};
 
 	struct
-	[[clang::annotate("idlgen::import=SameViewModel.idl,ShallowerViewModel.idl,"
-		"SiblingViewModel.idl")]]
+		[[clang::annotate("idlgen::import=SameViewModel.idl,ShallowerViewModel.idl,"
+			"SiblingViewModel.idl")]]
 	[[clang::annotate("idlgen::attribute=bindable")]]
 	[[clang::annotate("idlgen::attribute=default_interface")]]
-	[[clang::annotate("idlgen::extend=Windows.UI.Xaml.Page, Windows.UI.Xaml.Data.INotifyPropertyChanged")]]
-	BlankPage : BlankPageT<BlankPage>
+	BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>
 	{
 		BlankPage();
 		BlankPage(uint64_t a);

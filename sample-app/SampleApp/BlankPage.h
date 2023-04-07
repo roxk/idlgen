@@ -7,8 +7,7 @@ namespace winrt::SampleApp::implementation
 {
     
     struct
-    [[clang::annotate("idlgen::extend=Windows.UI.Xaml.Controls.Page")]] 
-    BlankPage : BlankPageT<BlankPage>
+    BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page>
     {
         BlankPage()
         {

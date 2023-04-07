@@ -7,7 +7,7 @@ namespace winrt::SampleApp::implementation
 {
     struct
     [[clang::annotate("idlgen::import=Status.idl")]]
-    MainPage : MainPageT<MainPage>
+    MainPage : MainPageT<MainPage>, idlgen::base<Windows::UI::Xaml::Controls::Page>
     {
         MainPage() {}
 

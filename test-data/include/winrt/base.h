@@ -56,5 +56,15 @@ namespace winrt
 	namespace Windows::UI::Xaml
 	{
 		struct DependencyProperty : Base {};
+
+		namespace Controls
+		{
+			struct Page : Base {};
+		}
+
+		namespace Data
+		{
+			struct INotifyPropertyChanged : Base {};
+		}
 	}
 }
