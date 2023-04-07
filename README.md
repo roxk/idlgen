@@ -117,7 +117,7 @@ In a large code base, it is difficult to edit all existing header files to make 
 Follow these steps to configure the project for an edit-one-header-at-a-time workflow:
 1. Set `IdlGenCppGenerateIDL` to true.
 2. Set `IdlGenExclude` to `*.h` to exclude all headers by default.
-3. Follow the instruction in [Generate IDL for Only One Header](#Generate-IDL-for-Only One-Header) to generate only one header file at at time.
+3. Follow the instruction in [Generate IDL for Only One Header](#Generate-IDL-for-Only-One-Header) to generate only one header file at at time.
 
 ## CI Consideration
 
@@ -125,7 +125,7 @@ Since idl files are meant to be included in the source, there is no need to gene
 
 ## Dev (Inner) Loop Consideration
 
-1. Edit as little as 1 header at a time with clean commit
+1. Edit as few headers, ideally only one header, at a time with clean commit
 2. If something goes wrong, copy the idl from .bak directly to start over
 
 ## Contribution
