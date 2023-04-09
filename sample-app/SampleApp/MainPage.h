@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "MainPage.g.h"
+#include <algorithm>
 
 namespace winrt::SampleApp::implementation
 {
@@ -17,6 +18,7 @@ namespace winrt::SampleApp::implementation
         Status Status() { return mStatus; }
     private:
         friend struct MainPageT<MainPage>;
+        uint32_t MinMaxWorks(uint32_t a) { return std::max(a, 42u); }
         void ClickHandler(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
         SampleApp::Status mStatus{ Status::Unknown };
     };

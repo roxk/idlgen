@@ -24,6 +24,11 @@
                       Description="Exclude C++ header files from generating idl. Override the default behavior where App.h and pch.h are excluded."
                       Category="General"/>
 
+  <StringListProperty Name="IdlGenCppAdditionalDefines"
+						DisplayName="Additional Preprocessor definitions"
+						Description="Additional preprocessor definitions."
+						Category="General"/>
+
   <BoolProperty Name="IdlGenCppDisableUnknownAttributeWarning"
                 DisplayName="Disable unknown attribute warning"
 			    Description="Disable unknown attribute warning caused by [[clang::annotate]]. Default is true."

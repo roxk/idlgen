@@ -18,6 +18,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
+		<IdlGenCppAdditionalDefines Include="$(IdlGenCppAdditionalDefines)"/>
 	</ItemGroup>
 	<ItemDefinitionGroup>
 		<ClCompile Condition="'$(IdlGenCppDisableUnknownAttributeWarning)' == 'true'">
@@ -32,7 +33,7 @@
 	</ItemDefinitionGroup>
 	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="ClCompile" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen %(IdlGenCppInclude.Identity) @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
 	<Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateIDL" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="Running idlgen on C++ header" Importance="high" />

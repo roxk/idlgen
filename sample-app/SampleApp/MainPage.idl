@@ -4,7 +4,7 @@ namespace SampleApp
 runtimeclass MainPage : Windows.UI.Xaml.Controls.Page
 {
 MainPage();
-Int32 MyProperty;
-SampleApp.Status Status{get;};
+void MyProperty(Int32 value);
+SampleApp.Status Status();
 }
 }

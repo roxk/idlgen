@@ -46,6 +46,8 @@ static lc::opt<std::string> GenerateOutputPath("gen-out", lc::desc("if specified
 
 static lc::list<std::string> Includes("include", lc::desc("include folder(s)"));
 
+static lc::list<std::string> Defines("define", lc::desc("preprocessor definition(s)"));
+
 static lc::list<std::string> FileNames(lc::Positional, lc::desc("[<file> ...]"));
 
 static lc::opt<bool> Verbose("verbose", lc::desc("Enable verbose printing for debug. Note this breaks printing into stdout"));
@@ -81,7 +83,7 @@ int main(int argc, const char** argv)
         "-Wno-nonportable-include-path",
         "-std=c++20",
         "-DWIN32_LEAN_AND_MEAN", 
-        "-DWINRT_LEAN_AND_MEAN", 
+        "-DWINRT_LEAN_AND_MEAN",
         "-D_Windows",
         "-D_UNICODE", 
         "-DUNICODE", 
@@ -90,6 +92,10 @@ int main(int argc, const char** argv)
     for (auto&& include : Includes)
     {
         clangArgs.emplace_back("-I" + include);
+    }
+    for (auto&& define : Defines)
+    {
+        clangArgs.emplace_back("-D" + define);
     }
     if (FileNames.size() > 1 && Generate && GenerateOutputPath.hasArgStr())
     {
