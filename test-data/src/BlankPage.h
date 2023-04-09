@@ -35,17 +35,25 @@ namespace winrt::Root::A::implementation
 		BlankPage& operator=(BlankPage const& that) = default;
 		BlankPage& operator=(BlankPage&& that) = default;
 		~BlankPage();
+		[[clang::annotate("idlgen::getter")]]
 		hstring UnqualifiedType();
+		[[clang::annotate("idlgen::getter")]]
 		winrt::hstring Property();
+		[[clang::annotate("idlgen::setter")]]
 		void Property(winrt::hstring const& a);
+		[[clang::annotate("idlgen::getter")]]
+		void VoidGetterIsGeneratedAsIs();
 		event_token Event(winrt::Windows::Foundation::EventHandler const& handler);
 		void Event(winrt::event_token token);
 		winrt::event_token TypedEvent(winrt::Windows::Foundation::TypedEventHandler<BlankPage, uint32_t> const& handler);
-		winrt::event_token TypedEvent(winrt::Windows::Foundation::TypedEventHandler<Root::A::TestIncludeInTemplate, uint32_t> const& handler);
+		winrt::event_token TypedIncludeEvent(winrt::Windows::Foundation::TypedEventHandler<Root::A::TestIncludeInTemplate, uint32_t> const& handler);
 		void TypedEvent(winrt::event_token token);
 		void NoSetterOnlyProperty(bool a);
+		[[clang::annotate("idlgen::getter")]]
 		Category Enum();
+		[[clang::annotate("idlgen::getter")]]
 		Windows::Foundation::Numerics::Vector2 Struct();
+		[[clang::annotate("idlgen::getter")]]
 		bool Getter();
 		void MethodPure();
 		bool Method(bool a);
@@ -63,10 +71,15 @@ namespace winrt::Root::A::implementation
 		void NamespaceSame(Root::A::SameViewModel const& a);
 		void NamespaceShallower(Root::ShallowerViewModel const& a);
 		void NamespaceSibling(Root::B::SiblingViewModel const& a);
+		[[clang::annotate("idlgen::getter")]]
 		static Windows::UI::Xaml::DependencyProperty DependencyProperty();
+		[[clang::annotate("idlgen::getter")]]
 		SameViewModel ReturnAllowImpl();
+		[[clang::annotate("idlgen::getter")]]
 		SameViewModel ImplPropertyOnlyExposeGetter();
+		[[clang::annotate("idlgen::setter")]]
 		void ImplPropertyOnlyExposeGetter(SameViewModel const& a);
+		[[clang::annotate("idlgen::getter")]]
 		TestIncludeImpl TestIncludeImplWithOnlyImplUse();
 		ImplStruct InternalMethod();
 		void InternalMethod(ImplStruct const& s);
