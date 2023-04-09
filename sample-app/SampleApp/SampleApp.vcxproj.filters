@@ -5,6 +5,7 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainPage.xaml" />
+    <Page Include="BlankPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
@@ -19,6 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h">
+      <Filter>SomeFolder</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
@@ -49,6 +53,9 @@
   <ItemGroup>
     <Filter Include="Assets">
       <UniqueIdentifier>{e48dc53e-40b1-40cb-970a-f89935452892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SomeFolder">
+      <UniqueIdentifier>{794d0db9-18db-4907-9c7f-041da7414cae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
