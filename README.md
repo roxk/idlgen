@@ -23,7 +23,7 @@ The library would generate the whole runtimm class definition for you. There sho
 
 The library could automatically generate the following structures in an idl files:
 - Runtime class definition, if an implementation type is found
-- All (static) getters, setters, methods, events
+- All (static) methods, events
 - Import for another implementation type.
   - Suppose `A.h` includes `B.h`, and `B.h` contains the definition of the implementation type of `B`, any reference to `B` in `A.h` (projected or implementation), would cause `A.idl` to import `B.idl`.
 
@@ -36,7 +36,8 @@ To tell the library that a runtime class inherit some base types, make the imple
 #### Others
 
 1. Attributes
-2. Import file of projected types, structs, and enum referenced in the runtime class
+2. Properties
+3. Import file of projected types, structs, and enum referenced in the runtime class
 
 The above structures require the help of class author to generate. The library defined a set of custom attributes, which, when declared on a class or methods, would allow the library to generate the missing pieces.
 
@@ -63,13 +64,13 @@ The library currently utilize clang's annotate attribute to specify an inner att
 
 Below is a table for all attributes and their usage.
 
-|Attribute|Args|Description|Example Declaration|Resultant idl|
-|--|--|--|--|--|
-|`import`|`value,value,...`|Add import statement(s)|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
-|`attribute`|`value`|Add an attribute|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
-|`hide`|N/A|Hide class or methods|`[[clang::annotate("idlgen::hide")]]`|
-
-You can apply them on a class definition or methods.
+|Attribute|Args|Description|Applicable On|Example Declaration|Resultant idl|
+|--|--|--|--|--|--|
+|`import`|`value,value,...`|Add import statement(s)|class|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
+|`attribute`|`value`|Add an attribute|class|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
+|`getter`|N/A|The method is a getter|method|`[[clang::annotate("idlgen::getter")]]`||
+|`setter`|N/A|The method is a setter|method|`[[clang::annotate("idlgen::setter")]]`||
+|`hide`|N/A|Hide class or methods|class/method|`[[clang::annotate("idlgen::hide")]]`||
 
 ## Tips
 
