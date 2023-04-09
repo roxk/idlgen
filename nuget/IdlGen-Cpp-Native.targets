@@ -8,7 +8,7 @@
 		<IdlGenCppExclude Condition="'$(IdlGenCppExclude)' == ''">App.h;pch.h</IdlGenCppExclude>
 	</PropertyGroup>
 	<PropertyGroup>
-		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\include\idlgen</IdlGenCppIncludeDirs>
+		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\include\idlgen</IdlGenCppIncludeDirs>
 	</PropertyGroup>
 	<ItemGroup Condition="'$(IdlGenCppInclude)' == ''">
 		<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenCppExclude)" />

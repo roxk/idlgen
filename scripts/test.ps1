@@ -14,7 +14,7 @@ if ($verbose.IsPresent) {
 $srcDir = $PSScriptRoot
 $testDataDir = "$srcDir\..\test-data"
 $testCodeDir = "$testDataDir\src"
-$testIncludeDirs = "$testDataDir\include\", "$testDataDir\include B\", "$srcDir\..\nuget\include\idlgen"
+$testIncludeDirs = "$testCodeDir", "$testDataDir\include\", "$testDataDir\include B\", "$srcDir\..\nuget\include\idlgen"
 $idlgen = "$srcDir/../dev/out/build/x64-$config/idlgen.exe"
 $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
