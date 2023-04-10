@@ -1,9 +1,28 @@
 namespace SampleApp
 {
+enum Category
+{
+Literature = 0,
+Science = 1,
+};
+}
+namespace SampleApp
+{
+[flags]
+enum Permission
+{
+Camera = 0x00000001,
+Microphone = 0x00000002,
+};
+}
+namespace SampleApp
+{
 runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 {
 BlankPage();
+SampleApp.Category Category{get;};
 void ClickHandler(Object sender, Windows.UI.Xaml.RoutedEventArgs args);
-Int32 MyProperty;
+void MyProperty(Int32 value);
+SampleApp.Permission Permission{get;};
 }
 }

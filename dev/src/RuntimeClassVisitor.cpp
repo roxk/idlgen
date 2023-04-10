@@ -8,6 +8,8 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <sstream>
+#include <iomanip>
 
 idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose) :
     ci(ci),
@@ -30,17 +32,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     auto isMain{ astContext.getSourceManager().isInMainFile(location) };
     if (!isMain)
     {
-        // We skip checking whether the file contains impl class for built-in headers.
-        // TODO: Outright skip parsing them?
-        auto fileNameOpt{ GetLocFilePath(record) };
-        if (!fileNameOpt) { return true; }
-        auto& fileName{ *fileNameOpt };
-        if (fileName.find("winrt/") != std::string::npos || 
-            fileName.find("Microsoft Visual Studio") != std::string::npos || 
-            fileName.find("Windows Kits") != std::string::npos)
-        {
-            return true;
-        }
+        if (ShouldSkipGenerating(record)) { return true; }
         auto kindOpt = GetRuntimeClassKind(record, true);
         if (!kindOpt) { return true; }
         if (auto kind = *kindOpt; kind == idlgen::RuntimeClassKind::Implementation)
@@ -222,6 +214,45 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         out << "event " << handler << " " << ev->getNameAsString() << ";" << "\n";
     }
     out << "}" << "\n";
+    out << "}" << "\n";
+    return true;
+}
+
+bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
+{
+    auto location{ decl->getLocation() };
+    auto isMain{ astContext.getSourceManager().isInMainFile(location) };
+    if (!isMain) { return true; }
+    debugPrint([]() { std::cout << "is main file" << std::endl; });
+    auto kind{ GetEnumKind(decl) };
+    if (!kind) { return true; }
+    debugPrint([&]() { std::cout << decl->getNameAsString() << " is WinRT enum" << std::endl; });
+    std::vector<std::string> namespaces{ GetWinRtNamespaces(decl) };
+    PrintNameSpaces(namespaces);
+    out << "\n";
+    out << "{" << "\n";
+    if (*kind == EnumKind::Flag)
+    {
+        out << "[flags]" << "\n";
+    }
+    out << "enum " << decl->getNameAsString() << "\n";
+    out << "{" << "\n";
+    auto values{ decl->enumerators() };
+    for (auto&& value : values)
+    {
+        auto radix{ *kind == EnumKind::Normal ? 10 : 16 };
+        auto intValue = [&]()
+        {
+            if (*kind == EnumKind::Normal) { return std::to_string(value->getInitVal().getExtValue()); }
+            llvm::SmallVector<char> intValue;
+            std::stringstream ss;
+            ss << std::setfill('0') << std::setw(8) << value->getInitVal().getExtValue();
+            return "0x" +  ss.str();
+        };
+        out << value->getNameAsString() << " = " << intValue();
+        out << ",\n";
+    }
+    out << "};" << "\n";
     out << "}" << "\n";
     return true;
 }
@@ -535,6 +566,22 @@ bool idlgen::RuntimeClassVisitor::IsDestructor(clang::CXXMethodDecl* method)
     return method->getDeclKind() == clang::Decl::Kind::CXXDestructor;
 }
 
+bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
+{
+    // We skip checking whether the file contains impl class for built-in headers.
+    // TODO: Outright skip parsing them?
+    auto fileNameOpt{ GetLocFilePath(decl) };
+    if (!fileNameOpt) { return true; }
+    auto& fileName{ *fileNameOpt };
+    if (fileName.find("winrt/") != std::string::npos ||
+        fileName.find("Microsoft Visual Studio") != std::string::npos ||
+        fileName.find("Windows Kits") != std::string::npos)
+    {
+        return true;
+    }
+    return false;
+}
+
 std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMethodKind(clang::CXXMethodDecl* method)
 {
     if (method->getAccess() != clang::AccessSpecifier::AS_public) { return std::nullopt; }
@@ -579,6 +626,21 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
     auto record{ StripReferenceAndGetClassDecl(type) };
     if (record == nullptr) { return std::nullopt; }
     return GetRuntimeClassKind(record);
+}
+
+std::optional<idlgen::EnumKind> idlgen::RuntimeClassVisitor::GetEnumKind(clang::EnumDecl* decl)
+{
+    if (!decl->isComplete()) { return std::nullopt; }
+    if (!decl->isScoped()) { return std::nullopt; }
+    auto type{ decl->getIntegerType() };
+    if (type.isNull()) { return std::nullopt; }
+    auto typedefType{ type->getAs<clang::TypedefType>() };
+    if (typedefType == nullptr) { return std::nullopt; }
+    auto name{ typedefType->getDecl()->getQualifiedNameAsString() };
+    debugPrint([&]() { std::cout << decl->getNameAsString() << "'s underlying's name is " << name << std::endl; });
+    if (name == "idlgen::enum_normal") { return EnumKind::Normal; }
+    else if (name == "idlgen::enum_flag") { return EnumKind::Flag; }
+    return std::optional<EnumKind>();
 }
 
 std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::CXXRecordDecl* record, bool implementationOnly)
@@ -757,10 +819,10 @@ std::string idlgen::RuntimeClassVisitor::GetQualifiedName(clang::CXXRecordDecl* 
     return qualifiedName;
 }
 
-std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::CXXRecordDecl* record)
+std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::NamedDecl* decl)
 {
     auto& srcManager{ astContext.getSourceManager() };
-    auto file{ srcManager.getFileEntryForID(srcManager.getFileID(record->getLocation())) };
+    auto file{ srcManager.getFileEntryForID(srcManager.getFileID(decl->getLocation())) };
     if (file == nullptr) { return std::nullopt; }
     return file->getName().data();
 }
@@ -770,4 +832,15 @@ std::string idlgen::RuntimeClassVisitor::GetLocFileName(clang::CXXRecordDecl* re
     auto& srcManager{ astContext.getSourceManager() };
     auto file{ srcManager.getFileEntryForID(srcManager.getFileID(record->getLocation())) };
     return llvm::sys::path::filename(file->getName()).str();
+}
+
+void idlgen::RuntimeClassVisitor::PrintNameSpaces(std::vector<std::string> namespaces)
+{
+    out << "namespace ";
+    const auto namespaceCount = namespaces.size();
+    for (size_t i = 0; i < namespaceCount; ++i)
+    {
+        out << namespaces[i];
+        if (i + 1 < namespaceCount) { out << "."; }
+    }
 }

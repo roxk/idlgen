@@ -67,6 +67,11 @@ namespace idlgen
         Projected,
         Implementation
     };
+    enum class EnumKind
+    {
+        Normal,
+        Flag
+    };
     enum class MethodKind
     {
         Setter,
@@ -90,6 +95,8 @@ namespace idlgen
         void Reset();
 
         bool VisitCXXRecordDecl(clang::CXXRecordDecl* record);
+
+        bool VisitEnumDecl(clang::EnumDecl* decl);
     private:
         std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
         MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method);
@@ -103,15 +110,18 @@ namespace idlgen
         bool IsEventRegistrar(clang::CXXMethodDecl* method);
         bool IsConstructor(clang::CXXMethodDecl* method);
         bool IsDestructor(clang::CXXMethodDecl* method);
+        bool ShouldSkipGenerating(clang::NamedDecl* decl);
         std::optional<MethodKind> GetRuntimeClassMethodKind(clang::CXXMethodDecl* method);
         static clang::CXXRecordDecl* StripReferenceAndGetClassDecl(clang::QualType type);
         std::optional<RuntimeClassKind> GetRuntimeClassKind(clang::QualType type);
+        std::optional<EnumKind> GetEnumKind(clang::EnumDecl* decl);
         std::optional<RuntimeClassKind> GetRuntimeClassKind(clang::CXXRecordDecl* record, bool implementationOnly = false);
         std::optional<std::vector<clang::QualType>> GetExtend(clang::CXXRecordDecl* record);
         static std::vector<std::string> GetWinRtNamespaces(clang::NamedDecl* decl);
         static std::string GetQualifiedName(clang::CXXRecordDecl* record);
-        std::optional<std::string> GetLocFilePath(clang::CXXRecordDecl* record);
+        std::optional<std::string> GetLocFilePath(clang::NamedDecl* decl);
         std::string GetLocFileName(clang::CXXRecordDecl* record);
+        void PrintNameSpaces(std::vector<std::string> namespaces);
         template<typename Func>
         void debugPrint(Func&& func)
         {

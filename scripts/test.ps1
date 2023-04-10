@@ -147,6 +147,30 @@ exists -src $sameVmOutput -line "[default_interface]"
 exists -src $sameVmOutput -line "runtimeclass SameViewModel"
 absent -src $sameVmOutput -line "runtimeclass SameViewModelHide"
 
+$someEnumSrc = "$testCodeDir\SomeEnum.h"
+gen -filePath $someEnumSrc
+
+$someEnumIdlPath = "$testCodeDir\SomeEnum.idl"
+$someEnumOutput = get-content $someEnumIdlPath
+
+exists -src $someEnumOutput -line "enum SomeEnum"
+exists -src $someEnumOutput -line "Active = 0,"
+exists -src $someEnumOutput -line "InActive = 1,"
+exists -src $someEnumOutput -line "Unknown = 2,"
+exists -src $someEnumOutput -line "};"
+
+$someFlagSrc = "$testCodeDir\SomeFlag.h"
+gen -filePath $someFlagSrc
+
+$someFlagIdlPath = "$testCodeDir\SomeFlag.idl"
+$someFlagOutput = get-content $someFlagIdlPath
+
+exists -src $someFlagOutput -line "[flags]"
+exists -src $someFlagOutput -line "enum SomeFlag"
+exists -src $someFlagOutput -line "Camera = 0x00000001,"
+exists -src $someFlagOutput -line "Microphone = 0x00000002,"
+exists -src $someFlagOutput -line "};"
+
 echo "All test passed"
 
 #foreach($code in $testCodes) {
