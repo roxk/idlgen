@@ -119,6 +119,11 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             FindFileToInclude(includes, thisClassFileName, method->getReturnType());
         }
     }
+    // Add default_interface if the runtime class is empty
+    if (methodGroups.empty())
+    {
+        attrs.emplace_back(IdlGenAttr{ IdlGenAttrType::Attribute, { "default_interface" } });
+    }
     // Generate idl
     for (auto&& include : includes)
     {

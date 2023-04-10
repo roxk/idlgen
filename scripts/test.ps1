@@ -143,6 +143,7 @@ gen -filePath $sameVmSrc
 $sameVmIdlPath = "$testCodeDir\SameViewModel.idl"
 $sameVmOutput = get-content $sameVmIdlPath
 
+exists -src $sameVmOutput -line "[default_interface]"
 exists -src $sameVmOutput -line "runtimeclass SameViewModel"
 absent -src $sameVmOutput -line "runtimeclass SameViewModelHide"
 
