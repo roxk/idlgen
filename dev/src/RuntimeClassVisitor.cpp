@@ -508,7 +508,7 @@ bool idlgen::RuntimeClassVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
 {
     auto params{ method->parameters() };
     if (params.size() != 1) { return false; }
-    auto record = params.front()->getType()->getAsCXXRecordDecl();
+    auto record = StripReferenceAndGetClassDecl(params.front()->getType());
     if (record == nullptr) { return false; }
     return GetQualifiedName(record) == "winrt::event_token";
 }

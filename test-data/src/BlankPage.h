@@ -45,6 +45,8 @@ namespace winrt::Root::A::implementation
 		void VoidGetterIsGeneratedAsIs();
 		event_token Event(winrt::Windows::Foundation::EventHandler const& handler);
 		void Event(winrt::event_token token);
+		event_token EventWithConstRefToken(winrt::Windows::Foundation::EventHandler const& handler);
+		void EventWithConstRefToken(winrt::event_token const& token);
 		winrt::event_token TypedEvent(winrt::Windows::Foundation::TypedEventHandler<BlankPage, uint32_t> const& handler);
 		winrt::event_token TypedIncludeEvent(winrt::Windows::Foundation::TypedEventHandler<Root::A::TestIncludeInTemplate, uint32_t> const& handler);
 		void TypedEvent(winrt::event_token token);
