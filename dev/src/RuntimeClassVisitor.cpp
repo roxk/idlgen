@@ -276,13 +276,9 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     {
         return IdlGenAttr{ IdlGenAttrType::Hide, {} };
     }
-    else if (idlGenAttr == "getter")
+    else if (idlGenAttr == "property")
     {
-        return IdlGenAttr{ IdlGenAttrType::Getter, {} };
-    }
-    else if (idlGenAttr == "setter")
-    {
-        return IdlGenAttr{ IdlGenAttrType::Setter, {} };
+        return IdlGenAttr{ IdlGenAttrType::Property, {} };
     }
     return std::nullopt;
 }
@@ -538,23 +534,21 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
 {
     if (method->getAccess() != clang::AccessSpecifier::AS_public) { return std::nullopt; }
     auto methodAttrs{ method->attrs() };
-    auto hasGetterAttr{ false };
-    auto hasSetterAttr{ false };
+    auto isProperty{ false };
     for (auto&& attr : methodAttrs)
     {
         auto idlGenAttr = GetIdlGenAttr(attr);
         if (!idlGenAttr) { continue; }
         if (idlGenAttr->type == IdlGenAttrType::Hide) { return std::nullopt; }
-        else if (idlGenAttr->type == IdlGenAttrType::Setter) { hasSetterAttr = true; }
-        else if (idlGenAttr->type == IdlGenAttrType::Getter) { hasGetterAttr = true; }
+        else if (idlGenAttr->type == IdlGenAttrType::Property) { isProperty = true; }
     }
     auto params{ method->parameters() };
     auto returnType{ method->getReturnType() };
-    if (hasGetterAttr && params.size() == 0)
+    if (isProperty && params.size() == 0)
     {
         return IsRuntimeClassMethodType(returnType) ? std::optional(idlgen::MethodKind::Getter) : std::nullopt;
     }
-    if (hasSetterAttr && params.size() == 1)
+    if (isProperty && params.size() == 1)
     {
         auto paramType{ params[0]->getType()};
         return IsRuntimeClassMethodType(returnType) && IsRuntimeClassMethodType(paramType, true)

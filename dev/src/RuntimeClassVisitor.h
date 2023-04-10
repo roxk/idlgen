@@ -29,8 +29,7 @@ namespace idlgen
         Attribute,
         Extend,
         Hide,
-        Setter,
-        Getter
+        Property
     };
     struct IdlGenAttr
     {

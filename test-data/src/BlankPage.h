@@ -35,13 +35,13 @@ namespace winrt::Root::A::implementation
 		BlankPage& operator=(BlankPage const& that) = default;
 		BlankPage& operator=(BlankPage&& that) = default;
 		~BlankPage();
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		hstring UnqualifiedType();
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		winrt::hstring Property();
-		[[clang::annotate("idlgen::setter")]]
+		[[clang::annotate("idlgen::property")]]
 		void Property(winrt::hstring const& a);
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		void VoidGetterIsGeneratedAsIs();
 		event_token Event(winrt::Windows::Foundation::EventHandler const& handler);
 		void Event(winrt::event_token token);
@@ -49,11 +49,11 @@ namespace winrt::Root::A::implementation
 		winrt::event_token TypedIncludeEvent(winrt::Windows::Foundation::TypedEventHandler<Root::A::TestIncludeInTemplate, uint32_t> const& handler);
 		void TypedEvent(winrt::event_token token);
 		void NoSetterOnlyProperty(bool a);
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		Category Enum();
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		Windows::Foundation::Numerics::Vector2 Struct();
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		bool Getter();
 		void MethodPure();
 		bool Method(bool a);
@@ -71,15 +71,15 @@ namespace winrt::Root::A::implementation
 		void NamespaceSame(Root::A::SameViewModel const& a);
 		void NamespaceShallower(Root::ShallowerViewModel const& a);
 		void NamespaceSibling(Root::B::SiblingViewModel const& a);
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		static Windows::UI::Xaml::DependencyProperty DependencyProperty();
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		SameViewModel ReturnAllowImpl();
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		SameViewModel ImplPropertyOnlyExposeGetter();
-		[[clang::annotate("idlgen::setter")]]
+		[[clang::annotate("idlgen::property")]]
 		void ImplPropertyOnlyExposeGetter(SameViewModel const& a);
-		[[clang::annotate("idlgen::getter")]]
+		[[clang::annotate("idlgen::property")]]
 		TestIncludeImpl TestIncludeImplWithOnlyImplUse();
 		ImplStruct InternalMethod();
 		void InternalMethod(ImplStruct const& s);
