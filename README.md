@@ -68,9 +68,10 @@ Below is a table for all attributes and their usage.
 |--|--|--|--|--|--|
 |`import`|`value,value,...`|Add import statement(s)|class|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
 |`attribute`|`value`|Add an attribute|class|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
-|`getter`|N/A|The method is a getter|method|`[[clang::annotate("idlgen::getter")]]`||
-|`setter`|N/A|The method is a setter|method|`[[clang::annotate("idlgen::setter")]]`||
+|`property`|N/A|The method is a getter|method|`[[clang::annotate("idlgen::property")]]`||
 |`hide`|N/A|Hide class or methods|class/method|`[[clang::annotate("idlgen::hide")]]`||
+
+*Note*: By default, the tool would generate `[default_interface]` attribute for an empty class (a class that doesn't have any methods other than constructor) so you don't need to add it.
 
 ## Tips
 
