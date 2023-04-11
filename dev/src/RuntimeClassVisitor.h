@@ -122,11 +122,18 @@ namespace idlgen
         std::optional<std::string> GetLocFilePath(clang::NamedDecl* decl);
         std::string GetLocFileName(clang::CXXRecordDecl* record);
         void PrintNameSpaces(std::vector<std::string> namespaces);
+        void PrintMethodParams(clang::CXXMethodDecl* method);
+        /// <summary>
+        /// </summary>
+        /// <param name="decl"></param>
+        /// <returns>True if is delegate</returns>
+        bool TryHandleAsDelegate(clang::CXXRecordDecl* decl);
         /// <summary>
         /// </summary>
         /// <param name="decl"></param>
         /// <returns>True if is struct</returns>
         bool TryHandleAsStruct(clang::CXXRecordDecl* decl);
+        bool IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name);
         template<typename Func>
         void debugPrint(Func&& func)
         {

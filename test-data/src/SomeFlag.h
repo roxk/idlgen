@@ -4,7 +4,7 @@
 
 using namespace idlgen;
 
-namespace Root
+namespace winrt::Root
 {
 	enum class SomeFlag : enum_flag
 	{

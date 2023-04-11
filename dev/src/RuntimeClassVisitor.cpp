@@ -42,6 +42,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         return true;
     }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
+    if (TryHandleAsDelegate(record)) { return true; }
     if (TryHandleAsStruct(record)) { return true; }
     if (!GetRuntimeClassKind(record)) { return true; }
     debugPrint([]() { std::cout << "is runtime class" << std::endl; });
@@ -166,23 +167,10 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     }
     out << "\n";
     out << "{" << "\n";
-    auto printMethodParams = [&](clang::CXXMethodDecl* method)
-    {
-        out << "(";
-        auto params{ method->parameters() };
-        const auto paramCount = params.size();
-        for (size_t i = 0; i < paramCount; ++i)
-        {
-            auto param{ params[i] };
-            out << TranslateCxxTypeToWinRtType(param->getType()) << " " << param->getNameAsString();
-            if (i + 1 < paramCount) { out << ", "; }
-        }
-        out << ");";
-    };
     for (auto&& ctor : ctors)
     {
         out << ctor->getNameAsString();
-        printMethodParams(ctor);
+        PrintMethodParams(ctor);
         out << "\n";
     }
     for (auto&& entry : methodGroups)
@@ -204,7 +192,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         else
         {
-            printMethodParams(group.setterOrElse());
+            PrintMethodParams(group.setterOrElse());
         }
         out << "\n";
     }
@@ -846,18 +834,54 @@ void idlgen::RuntimeClassVisitor::PrintNameSpaces(std::vector<std::string> names
     }
 }
 
+void idlgen::RuntimeClassVisitor::PrintMethodParams(clang::CXXMethodDecl* method)
+{
+    out << "(";
+    auto params{ method->parameters() };
+    const auto paramCount = params.size();
+    for (size_t i = 0; i < paramCount; ++i)
+    {
+        auto param{ params[i] };
+        out << TranslateCxxTypeToWinRtType(param->getType()) << " " << param->getNameAsString();
+        if (i + 1 < paramCount) { out << ", "; }
+    }
+    out << ");";
+}
+
+bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
+{
+    if (!IsSingleBaseOfType(decl, "idlgen::author_delegate")) { return false; }
+    clang::CXXMethodDecl* method{ nullptr };
+    auto methods{ decl->methods() };
+    for (auto&& candidateMethod : methods)
+    {
+        debugPrint([&]()
+            {
+                std::cout << "Finding delegate signature from" << candidateMethod->getNameAsString() << std::endl;
+            });
+        if (method != nullptr) { return false; }
+        if (GetRuntimeClassMethodKind(candidateMethod) != MethodKind::Method) { return false; }
+        if (candidateMethod->param_size() != 2) { return false; }
+        method = candidateMethod;
+    }
+    if (method == nullptr) { return false; }
+    if (method->getNameAsString() != "operator()") { return false; }
+    auto namespaces{ GetWinRtNamespaces(decl) };
+    PrintNameSpaces(namespaces);
+    out << "\n";
+    out << "{\n";
+    out << "delegate ";
+    out << TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
+    out << decl->getNameAsString();
+    PrintMethodParams(method);
+    out << "\n";
+    out << "}\n";
+    return true;
+}
+
 bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
 {
-    if (!decl->isCompleteDefinition()) { return false; }
-    if (decl->getNumBases() != 1) { return false; }
-    auto baseIt{ decl->bases_begin() };
-    auto& base = *baseIt;
-    auto baseType{ base.getType().getTypePtrOrNull() };
-    if (baseType == nullptr) { return false; }
-    auto cxxBase{ baseType->getAsCXXRecordDecl() };
-    if (cxxBase == nullptr) { return false; }
-    auto baseQualifiedName{ cxxBase->getQualifiedNameAsString() };
-    if (baseQualifiedName != "idlgen::author_struct") { return false; }
+    if (!IsSingleBaseOfType(decl, "idlgen::author_struct")) { return false; }
     auto fields{ decl->fields() };
     auto namespaces{ GetWinRtNamespaces(decl) };
     PrintNameSpaces(namespaces);
@@ -876,4 +900,18 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
     out << "};\n";
     out << "}\n";
     return true;
+}
+
+bool idlgen::RuntimeClassVisitor::IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
+{
+    if (!decl->isCompleteDefinition()) { return false; }
+    if (decl->getNumBases() != 1) { return false; }
+    auto baseIt{ decl->bases_begin() };
+    auto& base = *baseIt;
+    auto baseType{ base.getType().getTypePtrOrNull() };
+    if (baseType == nullptr) { return false; }
+    auto cxxBase{ baseType->getAsCXXRecordDecl() };
+    if (cxxBase == nullptr) { return false; }
+    auto baseQualifiedName{ cxxBase->getQualifiedNameAsString() };
+    return baseQualifiedName == name;
 }

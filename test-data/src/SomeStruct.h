@@ -3,7 +3,7 @@
 #include "idlgen.h"
 #include <cstdint>
 
-namespace Root
+namespace winrt::Root
 {
 	struct SomeStruct : idlgen::author_struct
 	{

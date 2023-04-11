@@ -182,6 +182,14 @@ exists -src $someStructOutput -line "Int64 X;"
 exists -src $someStructOutput -line "Int64 Y;"
 exists -src $someStructOutput -line "};"
 
+$someDelegateSrc = "$testCodeDir\SomeDelegate.h"
+gen -filePath $someDelegateSrc
+
+$someDelegateIdlPath = "$testCodeDir\SomeDelegate.idl"
+$someDelegateOutput = get-content $someDelegateIdlPath
+
+exists -src $someDelegateOutput -line "delegate void SomeEventHandler(Root.ShallowerViewModel vm, UInt64 e);"
+
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
 gen -filePath $nonWinRtHeaderSrc
 
