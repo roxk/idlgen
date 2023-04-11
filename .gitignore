@@ -6,3 +6,5 @@ test-data/src/*.testidl
 *.nupkg
 .nuspec
 *.idl.bak
+bin
+obj

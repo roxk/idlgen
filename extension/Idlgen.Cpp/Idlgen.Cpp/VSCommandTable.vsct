@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+  <Include href="KnownImageIds.vsct"/>
+  <Include href="VSGlobals.vsct"/>
+
+  <Commands package="IdlgenCpp">
+    <Groups>
+      <!-- VS's document right-click menu -->
+      <Group guid="IdlgenCpp" id="FileMenu" priority="0x0010">
+		  <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+    </Groups>
+
+    <!--This section defines the elements the user can interact with, like a menu command or a button
+        or combo box in a toolbar. -->
+    <Buttons>
+      <Button guid="IdlgenCpp" id="CppGenerateIDL" priority="0x0100" type="Button">
+        <Icon guid="ImageCatalogGuid" id="Interface" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+		<CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Generate IDL</ButtonText>
+          <LocCanonicalName>.IdlgenCpp.CppGenerateIDL</LocCanonicalName>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+	<CommandPlacements>
+		<CommandPlacement guid="IdlgenCpp" id="CppGenerateIDL" priority="0x0100">
+			<Parent guid="IdlgenCpp" id="FileMenu"/>
+		</CommandPlacement>
+	</CommandPlacements>
+
+	<VisibilityConstraints>
+		<VisibilityItem guid="IdlgenCpp" id="CppGenerateIDL" context="CppHeaderSelected" />
+	</VisibilityConstraints>
+
+	<Symbols>
+	    <GuidSymbol name="CppHeaderSelected" value="{832db40a-438e-49e3-a300-cc7ede3ee208}"/>
+
+        <GuidSymbol name="IdlgenCpp" value="{6a532ba2-8723-4c20-bb58-c3c92006188e}">
+		    <!-- VS's document right-click menu -->
+          <IDSymbol name="FileMenu" value="0x0002"/>
+          <IDSymbol name="CppGenerateIDL" value="0x0101" />
+        </GuidSymbol>
+  </Symbols>
+</CommandTable>
