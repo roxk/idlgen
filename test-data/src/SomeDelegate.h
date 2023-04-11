@@ -8,6 +8,6 @@ namespace winrt::Root
 {
 	struct SomeEventHandler : idlgen::author_delegate
 	{
-		void operator()(Root::ShallowerViewModel const& vm, uint64_t e) {}
+		void operator ()(Root::ShallowerViewModel const& vm, uint64_t e) {}
 	};
 }
