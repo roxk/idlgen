@@ -87,9 +87,7 @@ Note: The friend syntax is different because for XAML `ClassT` is a struct, for 
 
 ### Generate IDL for Only One Header
 
-Run `msbuild -target:IdlGenCppGenerateIDL -p:IdlGenCppInclude=MyClass.h -p:Platform=x64`.
-
-If `MyClass.h` is excluded globally in property page, add `-p:IdlGenCppExclude=""` to the command.
+Run `msbuild -target:IdlGenCppGenerateIDL -p:IdlGenCppInclude=MyClass.h -p:IdlGenCppExclude="" -p:Platform=x64`.
 
 ## Build Property
 
