@@ -171,6 +171,18 @@ exists -src $someFlagOutput -line "Camera = 0x00000001,"
 exists -src $someFlagOutput -line "Microphone = 0x00000002,"
 exists -src $someFlagOutput -line "};"
 
+$nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
+gen -filePath $nonWinRtHeaderSrc
+
+$nonWinRtHeaderIdlPath = "$testCodeDir\NonWinRtHeader.idl"
+
+if (test-path $nonWinRtHeaderIdlPath) {
+	$doesWinRtHeaderIdlExist = $true
+} else {
+	$doesWinRtHeaderIdlExist = $false
+}
+assert "Non WinRT header doesn't generate idl" -actual ($doesWinRtHeaderIdlExist -eq $false)
+
 echo "All test passed"
 
 #foreach($code in $testCodes) {

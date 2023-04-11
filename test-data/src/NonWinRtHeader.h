@@ -1,0 +1,6 @@
+namespace Some
+{
+	struct Class
+	{
+	};
+}

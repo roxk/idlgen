@@ -158,8 +158,12 @@ int main(int argc, const char** argv)
             fileOutputStreamOpt.reset();
             if (result && fileBackup && genFile && idlFile)
             {
-                llvm::sys::fs::rename(*idlFile, *fileBackup);
-                llvm::sys::fs::rename(*genFile, *idlFile);
+                uint64_t genFileSize;
+                if (auto ec = llvm::sys::fs::file_size(*genFile, genFileSize); !ec && genFileSize > 0)
+                {
+                    llvm::sys::fs::rename(*idlFile, *fileBackup);
+                    llvm::sys::fs::rename(*genFile, *idlFile);
+                }
             }
             if (genFile) { llvm::sys::fs::remove(*genFile); }
         }
