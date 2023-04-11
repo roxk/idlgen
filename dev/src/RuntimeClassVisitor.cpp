@@ -875,5 +875,5 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
     }
     out << "};\n";
     out << "}\n";
-    return false;
+    return true;
 }
