@@ -171,6 +171,17 @@ exists -src $someFlagOutput -line "Camera = 0x00000001,"
 exists -src $someFlagOutput -line "Microphone = 0x00000002,"
 exists -src $someFlagOutput -line "};"
 
+$someStructSrc = "$testCodeDir\SomeStruct.h"
+gen -filePath $someStructSrc
+
+$someStructIdlPath = "$testCodeDir\SomeStruct.idl"
+$someStructOutput = get-content $someStructIdlPath
+
+exists -src $someStructOutput -line "struct SomeStruct"
+exists -src $someStructOutput -line "Int64 X;"
+exists -src $someStructOutput -line "Int64 Y;"
+exists -src $someStructOutput -line "};"
+
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
 gen -filePath $nonWinRtHeaderSrc
 

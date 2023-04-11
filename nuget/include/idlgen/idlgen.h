@@ -13,4 +13,8 @@ namespace idlgen
 	using enum_normal = int64_t;
 
 	using enum_flag = uint64_t;
+
+	struct author_struct
+	{
+	};
 }

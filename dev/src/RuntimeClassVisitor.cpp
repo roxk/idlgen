@@ -42,6 +42,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         return true;
     }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
+    if (TryHandleAsStruct(record)) { return true; }
     if (!GetRuntimeClassKind(record)) { return true; }
     debugPrint([]() { std::cout << "is runtime class" << std::endl; });
     std::vector<std::string> namespaces{ GetWinRtNamespaces(record) };
@@ -843,4 +844,36 @@ void idlgen::RuntimeClassVisitor::PrintNameSpaces(std::vector<std::string> names
         out << namespaces[i];
         if (i + 1 < namespaceCount) { out << "."; }
     }
+}
+
+bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
+{
+    if (!decl->isCompleteDefinition()) { return false; }
+    if (decl->getNumBases() != 1) { return false; }
+    auto baseIt{ decl->bases_begin() };
+    auto& base = *baseIt;
+    auto baseType{ base.getType().getTypePtrOrNull() };
+    if (baseType == nullptr) { return false; }
+    auto cxxBase{ baseType->getAsCXXRecordDecl() };
+    if (cxxBase == nullptr) { return false; }
+    auto baseQualifiedName{ cxxBase->getQualifiedNameAsString() };
+    if (baseQualifiedName != "idlgen::author_struct") { return false; }
+    auto fields{ decl->fields() };
+    auto namespaces{ GetWinRtNamespaces(decl) };
+    PrintNameSpaces(namespaces);
+    out << "\n";
+    out << "{\n";
+    out << "struct " << decl->getNameAsString() << "\n";
+    out << "{\n";
+    for (auto&& field : fields)
+    {
+        auto fieldType = field->getType();
+        if (!IsRuntimeClassMethodType(fieldType, true)) { continue; }
+        auto typeName{ TranslateCxxTypeToWinRtType(fieldType) };
+        out << typeName << " ";
+        out << field->getNameAsString() << ";\n";
+    }
+    out << "};\n";
+    out << "}\n";
+    return false;
 }

@@ -122,6 +122,11 @@ namespace idlgen
         std::optional<std::string> GetLocFilePath(clang::NamedDecl* decl);
         std::string GetLocFileName(clang::CXXRecordDecl* record);
         void PrintNameSpaces(std::vector<std::string> namespaces);
+        /// <summary>
+        /// </summary>
+        /// <param name="decl"></param>
+        /// <returns>True if is struct</returns>
+        bool TryHandleAsStruct(clang::CXXRecordDecl* decl);
         template<typename Func>
         void debugPrint(Func&& func)
         {
