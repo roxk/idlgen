@@ -25,6 +25,10 @@ Int64 Y;
 }
 namespace SampleApp
 {
+delegate void BlankPageEventHandler(SampleApp.BlankPage sender, UInt64 e);
+}
+namespace SampleApp
+{
 runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 {
 BlankPage();

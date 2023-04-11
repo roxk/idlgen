@@ -23,6 +23,11 @@ namespace winrt::SampleApp::implementation
         int64_t Y;
     };
 
+    struct BlankPageEventHandler : idlgen::author_delegate
+    {
+        void operator()(SampleApp::BlankPage const& sender, uint64_t e) {}
+    };
+
     struct
     BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page>
     {
@@ -39,6 +44,8 @@ namespace winrt::SampleApp::implementation
         SampleApp::Permission Permission() { return SampleApp::Permission::Camera | SampleApp::Permission::Microphone; }
 
         SampleApp::Point GetPoint() { return SampleApp::Point{}; }
+
+        void AssignHandler(SampleApp::BlankPageEventHandler const& handler) {}
 
         int32_t MyProperty();
         void MyProperty(int32_t value);
