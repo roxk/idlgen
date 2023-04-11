@@ -17,11 +17,20 @@ Microphone = 0x00000002,
 }
 namespace SampleApp
 {
+struct Point
+{
+Int64 X;
+Int64 Y;
+};
+}
+namespace SampleApp
+{
 runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 {
 BlankPage();
 SampleApp.Category Category{get;};
 void ClickHandler(Object sender, Windows.UI.Xaml.RoutedEventArgs args);
+SampleApp.Point GetPoint();
 void MyProperty(Int32 value);
 SampleApp.Permission Permission{get;};
 }

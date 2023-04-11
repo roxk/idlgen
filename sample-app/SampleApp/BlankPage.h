@@ -17,6 +17,12 @@ namespace winrt::SampleApp::implementation
         Microphone = 0x00000002
     };
 
+    struct Point : idlgen::author_struct
+    {
+        int64_t X;
+        int64_t Y;
+    };
+
     struct
     BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page>
     {
@@ -31,6 +37,8 @@ namespace winrt::SampleApp::implementation
 
         [[clang::annotate("idlgen::property")]]
         SampleApp::Permission Permission() { return SampleApp::Permission::Camera | SampleApp::Permission::Microphone; }
+
+        SampleApp::Point GetPoint() { return SampleApp::Point{}; }
 
         int32_t MyProperty();
         void MyProperty(int32_t value);
