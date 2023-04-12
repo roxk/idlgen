@@ -45,6 +45,14 @@ namespace Idlgen.Cpp
             {
                 var project = activeFile.ContainingProject;
                 var evalProject = Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection.LoadProject(project.FullPath);
+                if (!evalProject.Targets.ContainsKey("IdlGenCppGenerateIDL"))
+                {
+                    await output.ClearAsync();
+                    await output.WriteLineAsync("Failed to find target IdlGenCppGenerateIDL.");
+                    await output.WriteLineAsync("Please install IdlGen.IdlGen.Cpp nuget package.");
+                    await VS.StatusBar.ShowMessageAsync("Failed to generate IDL. See Build Output for more details.");
+                    return;
+                }
                 evalProject.SetProperty("IdlGenCppGenerateIDL", "true");
                 evalProject.SetProperty("IdlGenCppInclude", $"{activeFile.Name}");
                 evalProject.SetProperty("IdlGenCppExclude", "");
