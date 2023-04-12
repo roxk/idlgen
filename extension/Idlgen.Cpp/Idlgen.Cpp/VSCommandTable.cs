@@ -23,6 +23,7 @@ namespace Idlgen.Cpp
     /// </summary>
     internal sealed partial class PackageIds
     {
+        public const int SolutionMenu = 0x0001;
         public const int FileMenu = 0x0002;
         public const int CppGenerateIDL = 0x0101;
     }

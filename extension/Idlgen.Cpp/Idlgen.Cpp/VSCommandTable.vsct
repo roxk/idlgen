@@ -8,7 +8,11 @@
 
   <Commands package="IdlgenCpp">
     <Groups>
-      <!-- VS's document right-click menu -->
+        <!-- VS's solution explorer context menu -->
+		<Group guid="IdlgenCpp" id="SolutionMenu" priority="0x0010">
+			<Parent guid="VSMainMenu" id="ItemNode"/>
+		</Group>
+      <!-- VS's document context menu -->
       <Group guid="IdlgenCpp" id="FileMenu" priority="0x0010">
 		  <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
       </Group>
@@ -33,6 +37,9 @@
 		<CommandPlacement guid="IdlgenCpp" id="CppGenerateIDL" priority="0x0100">
 			<Parent guid="IdlgenCpp" id="FileMenu"/>
 		</CommandPlacement>
+		<CommandPlacement guid="IdlgenCpp" id="CppGenerateIDL" priority="0x0100">
+			<Parent guid="IdlgenCpp" id="SolutionMenu"/>
+		</CommandPlacement>
 	</CommandPlacements>
 
 	<VisibilityConstraints>
@@ -43,7 +50,9 @@
 	    <GuidSymbol name="CppHeaderSelected" value="{832db40a-438e-49e3-a300-cc7ede3ee208}"/>
 
         <GuidSymbol name="IdlgenCpp" value="{6a532ba2-8723-4c20-bb58-c3c92006188e}">
-		    <!-- VS's document right-click menu -->
+			<!-- VS's solution explorer context menu -->
+			<IDSymbol name="SolutionMenu" value="0x0001" />
+		    <!-- VS's document context menu -->
           <IDSymbol name="FileMenu" value="0x0002"/>
           <IDSymbol name="CppGenerateIDL" value="0x0101" />
         </GuidSymbol>

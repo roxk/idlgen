@@ -32,6 +32,7 @@ namespace SampleApp
 runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 {
 BlankPage();
+void AssignHandler(SampleApp.BlankPageEventHandler handler);
 SampleApp.Category Category{get;};
 void ClickHandler(Object sender, Windows.UI.Xaml.RoutedEventArgs args);
 SampleApp.Point GetPoint();

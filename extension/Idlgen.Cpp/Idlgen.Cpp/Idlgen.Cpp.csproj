@@ -78,9 +78,11 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Build" />
     <Reference Include="System" />
     <Reference Include="System.Design" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Community.VisualStudio.VSCT" Version="16.0.29.6" PrivateAssets="all" />
