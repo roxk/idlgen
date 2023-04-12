@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="IdlgenCpp.e65ac391-3a5d-4701-bbf2-e26e9f56de71" Version="0.1" Language="en-US" Publisher="Roxk Yiu" />
+        <Identity Id="IdlgenCpp.e65ac391-3a5d-4701-bbf2-e26e9f56de71" Version="0.1.1" Language="en-US" Publisher="Roxk Yiu" />
         <DisplayName>Idlgen.Idlgen.Cpp Extension</DisplayName>
         <Description xml:space="preserve">Provides support for IDL generation from C++ header using IdlGen.IdlGen.Cpp nuget package.</Description>
 		<MoreInfo>https://github.com/roxk/idlgen</MoreInfo>

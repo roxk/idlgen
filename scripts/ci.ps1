@@ -13,4 +13,6 @@ function run {
 run -func {
 	. "$PSScriptRoot\test" -config Release
 }
-# TODO: Add test to validate output...
+run -func {
+	. "$PSScriptRoot\build-extension" -config Debug
+}
