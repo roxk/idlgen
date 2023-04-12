@@ -6,6 +6,6 @@
 
 ## Getting started
 
-Edit any C++ header, build the project, and the corresponding idl file should be generated.
+Edit any C++ header, right click, and then choose Generate IDL. The corresponding idl file should be generated.
 
 See the repository https://github.com/roxk/idlgen for more documentation.

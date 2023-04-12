@@ -1,13 +1,24 @@
 # idlgen, an IDL Generator for WinRT
 
 [![nuget](https://img.shields.io/nuget/v/IdlGen.IdlGen.Cpp)](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/)
+[![VS2022](https://img.shields.io/visual-studio-marketplace/v/Roxk.Idlgencpp.svg?label=Visual%20Studio%202022%20(Preview))](https://marketplace.visualstudio.com/items?itemName=Roxk.idlgencpp)
 [![CI](https://github.com/roxk/idlgen/actions/workflows/ci.yaml/badge.svg)](https://github.com/roxk/idlgen/actions/workflows/ci.yaml)
 
 A library for generating idl files when implementing WinRT components. Currently, only C++ is supported.
 
 ## Installation
 
-Use your preferred way (cli/GUI) to install the nuget package `IdlGen.IdlGen.Cpp`, which can be found on [nuget gallery](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/).
+### Nuget
+
+Use your preferred way (cli/GUI) to install nuget package `IdlGen.IdlGen.Cpp`, which can be found on [nuget gallery](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/).
+
+### Extension
+
+On top of the nuget package, you can also install IDE extension to streamline the code generation process.
+
+**Note**: The above nuget package is required for the extension to work. Please install it in all of your project in which you wish to generate IDL.
+
+- [IdlgenCpp for Visual Studio 2022](https://marketplace.visualstudio.com/items?itemName=Roxk.idlgencpp)
 
 ## Usage (C++)
 
@@ -88,6 +99,8 @@ Note: The friend syntax is different because for XAML `ClassT` is a struct, for 
 ### Generate IDL for Only One Header
 
 Run `msbuild -target:IdlGenCppGenerateIDL -p:IdlGenCppInclude=MyClass.h -p:IdlGenCppExclude="" -p:Platform=x64`.
+
+If you have the extension installed, right click on the header file and click "Generate IDL".
 
 ## Build Property
 
