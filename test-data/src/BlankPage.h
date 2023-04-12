@@ -64,6 +64,8 @@ namespace winrt::Root::A::implementation
 		void MethodInt(int a, long b, int16_t c, int32_t d, int64_t e);
 		void MethodUInt(uint8_t a, uint16_t b, uint32_t c, uint64_t d);
 		void MethodObject(Windows::Foundation::IInspectable const& a);
+		void MethodDateTime(Windows::Foundation::DateTime const& a);
+		void MethodTimeSpan(Windows::Foundation::TimeSpan const& a);
 		void MethodConst(winrt::hstring const a);
 		void MethodIncomplete(IncompleteViewModel const&);
 		void MethodOverload(bool a);

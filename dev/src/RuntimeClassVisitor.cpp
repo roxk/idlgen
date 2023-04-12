@@ -105,13 +105,12 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         else if (methodKind == idlgen::MethodKind::Getter)
         {
             group.getter = method;
-            FindFileToInclude(includes, thisClassFileName, method->getReturnType());
         }
         else
         {
             group.method = method;
-            FindFileToInclude(includes, thisClassFileName, method->getReturnType());
         }
+        FindFileToInclude(includes, thisClassFileName, method->getReturnType());
     }
     // Add default_interface if the runtime class is empty
     if (methodGroups.empty())
@@ -419,8 +418,7 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
         {
             auto enumType{ clang::cast<clang::EnumType>(type.getCanonicalType()) };
             auto enumDecl{ enumType->getDecl() };
-            llvm::raw_string_ostream typeOs{ qualifiedName };
-            enumDecl->printQualifiedName(typeOs);
+            qualifiedName = enumDecl->getQualifiedNameAsString();
             decl = enumDecl;
         }
         else
@@ -432,6 +430,16 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     if (auto result{ cxxTypeToWinRtTypeMap.find(qualifiedName) }; result != cxxTypeToWinRtTypeMap.end())
     {
         return result->second;
+    }
+    // Some WinRT primitives are alias, handle them.
+    auto namedDecl{ StripReferenceAndGetNamedDecl(type) };
+    if (namedDecl != nullptr)
+    {
+        qualifiedName = namedDecl->getQualifiedNameAsString();
+        if (auto result{ cxxTypeToWinRtTypeMap.find(qualifiedName) }; result != cxxTypeToWinRtTypeMap.end())
+        {
+            return result->second;
+        }
     }
     if (decl == nullptr) { return "error-type"; }
     auto name{ decl->getNameAsString() };
@@ -469,14 +477,11 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     return qualifiedWinRtName;
 }
 
-std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::CXXRecordDecl* record)
-{
-    return std::string();
-}
-
 bool idlgen::RuntimeClassVisitor::IsCppWinRtPrimitive(std::string const& type)
 {
     return type == "winrt::hstring" || type == "winrt::event_token"
+        || type == "winrt::Windows::Foundation::DateTime"
+        || type == "winrt::Windows::Foundation::TimeSpan"
         || type == "winrt::Windows::Foundation::IInspectable";
 }
 
@@ -517,16 +522,28 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
         return true;
     }
     if (record->isPOD()) { return true; }
-    std::string qualifiedName;
-    llvm::raw_string_ostream typeOs{ qualifiedName };
-    record->printQualifiedName(typeOs);
+    std::string qualifiedName{ record->getQualifiedNameAsString() };
+    debugPrint([&]() { std::cout << "Checking if cxx record " << qualifiedName << " is primitive" << std::endl; });
     if (IsCppWinRtPrimitive(qualifiedName)) { return true; }
     auto kindOpt = GetRuntimeClassKind(record);
     if (kindOpt && (!projectedOnly || *kindOpt == idlgen::RuntimeClassKind::Projected))
     {
         return true;
     }
-    return false;
+    // Some WinRT primitives are alias, handle them.
+    // TODO: Make all name-based logic recusrively check typedef
+    auto namedDecl{ StripReferenceAndGetNamedDecl(type) };
+    if (namedDecl == nullptr)
+    {
+        debugPrint([&]()
+            {
+                std::cout << record->getNameAsString() << " is not a named declaration" << std::endl;
+            });
+        return false;
+    }
+    qualifiedName = namedDecl->getQualifiedNameAsString();
+    debugPrint([&]() { std::cout << "Checking if named decl " << qualifiedName << " is primitive" << std::endl; });
+    return IsCppWinRtPrimitive(qualifiedName);
 }
 
 bool idlgen::RuntimeClassVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
@@ -608,6 +625,22 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
 clang::CXXRecordDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetClassDecl(clang::QualType type)
 {
     return type->isReferenceType() ? type.getNonReferenceType()->getAsCXXRecordDecl() : type->getAsCXXRecordDecl();
+}
+
+const clang::NamedDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetNamedDecl(clang::QualType type)
+{
+    const clang::Type* typePtr;
+    if (type->isReferenceType())
+    {
+        typePtr = type.getNonReferenceType().getTypePtrOrNull();
+    }
+    else
+    {
+        typePtr = type.getTypePtrOrNull();
+    }
+    auto namedType{ typePtr->getAs<clang::TypedefType>() };
+    if (namedType == nullptr) { return false; }
+    return namedType->getDecl();
 }
 
 std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::QualType type)

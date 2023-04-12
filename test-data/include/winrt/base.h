@@ -4,6 +4,25 @@
 #include <cpuid.h>
 #endif
 
+namespace std::chrono
+{
+	class virtual_base
+	{};
+
+	// Simualte non-winrt, non-pod base
+	class duration : virtual virtual_base
+	{
+	public:
+		duration() {}
+	};
+
+	class time_point : virtual virtual_base
+	{
+	public:
+		time_point() {}
+	};
+}
+
 struct IUnknown
 {
 	virtual void Release() = 0;
@@ -22,6 +41,8 @@ namespace winrt
 			virtual void AddRef() = 0;
 		};
 		struct IInspectable : Windows::Foundation::IUnknown {};
+		using TimeSpan = std::chrono::duration;
+		using DateTime = std::chrono::time_point;
 	}
 	struct Base : Windows::Foundation::IInspectable
 	{
