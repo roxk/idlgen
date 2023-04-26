@@ -499,6 +499,7 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
             || scalarType == clang::Type::STK_Bool
             || scalarType == clang::Type::STK_Floating;
     }
+    if (type->isEnumeralType()) { return true; }
     auto record{ StripReferenceAndGetClassDecl(type) };
     if (record == nullptr)
     {

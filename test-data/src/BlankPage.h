@@ -10,6 +10,12 @@
 
 namespace winrt::Root::A::implementation
 {
+	enum TestEnumInMethod : int32_t
+	{
+		A,
+		B
+	};
+
 	// Make sure we don't crash when checking against template parameter (not all args are type)
 	template <typename... T>
 	struct PackedTemplate {};
@@ -64,6 +70,7 @@ namespace winrt::Root::A::implementation
 		bool Getter();
 		void MethodPure();
 		void MethodOverriden(uint32_t a) override;
+		void MethodEnum(TestEnumInMethod a);
 		bool Method(bool a);
 		void MethodBool(bool a);
 		void MethodFloat(float a, double b);
