@@ -19,12 +19,17 @@ namespace winrt::Root::A::implementation
 
 	struct ImplStruct : PackedTemplate<ImplStruct>, IntegerTemplate<10> {};
 
+	struct Interface
+	{
+		virtual void MethodOverriden(uint32_t a) = 0;
+	};
+
 	struct
 		[[clang::annotate("idlgen::import=SameViewModel.idl,ShallowerViewModel.idl,"
 			"SiblingViewModel.idl")]]
 	[[clang::annotate("idlgen::attribute=bindable")]]
 	[[clang::annotate("idlgen::attribute=default_interface")]]
-	BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>
+	BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>, Interface
 	{
 		BlankPage();
 		BlankPage(uint64_t a);
@@ -58,6 +63,7 @@ namespace winrt::Root::A::implementation
 		[[clang::annotate("idlgen::property")]]
 		bool Getter();
 		void MethodPure();
+		void MethodOverriden(uint32_t a) override;
 		bool Method(bool a);
 		void MethodBool(bool a);
 		void MethodFloat(float a, double b);

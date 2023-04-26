@@ -247,7 +247,11 @@ bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
 
 std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(clang::Attr* attr)
 {
-    if (attr->getScopeName()->getName() != "clang" || attr->getAttrName()->getName() != "annotate")
+    auto scopeName{ attr->getScopeName() };
+    if (scopeName == nullptr) { return std::nullopt; }
+    auto attrName{ attr->getAttrName() };
+    if (attrName == nullptr) { return std::nullopt; }
+    if (scopeName->getName() != "clang" || attrName->getName() != "annotate")
     {
         return std::nullopt;
     }
