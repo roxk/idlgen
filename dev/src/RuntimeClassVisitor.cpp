@@ -1,21 +1,18 @@
-#include "clang/AST/ASTContext.h"
-#include "clang/Sema/Template.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Parse/RAIIObjectsForParser.h"
 #include "RuntimeClassVisitor.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Lex/Preprocessor.h"
-#include <iostream>
-#include <string>
+#include "clang/Parse/RAIIObjectsForParser.h"
+#include "clang/Sema/Template.h"
 #include <cassert>
-#include <sstream>
 #include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
 
-idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose) :
-    ci(ci),
-    astContext(ci.getASTContext()),
-    out(std::move(out)),
-    verbose(verbose)
+idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose)
+    : ci(ci), astContext(ci.getASTContext()), out(std::move(out)), verbose(verbose)
 {
 }
 
@@ -24,46 +21,74 @@ void idlgen::RuntimeClassVisitor::Reset()
     implementationTypes.clear();
 }
 
-std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::cxxTypeToWinRtTypeMap{ idlgen::RuntimeClassVisitor::initCxxTypeToWinRtTypeMap() };
+std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::cxxTypeToWinRtTypeMap{
+    idlgen::RuntimeClassVisitor::initCxxTypeToWinRtTypeMap()};
 
 bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* record)
 {
-    auto location{ record->getLocation() };
-    auto isMain{ astContext.getSourceManager().isInMainFile(location) };
+    auto location{record->getLocation()};
+    auto isMain{astContext.getSourceManager().isInMainFile(location)};
     if (!isMain)
     {
-        if (ShouldSkipGenerating(record)) { return true; }
+        if (ShouldSkipGenerating(record))
+        {
+            return true;
+        }
         auto kindOpt = GetRuntimeClassKind(record, true);
-        if (!kindOpt) { return true; }
+        if (!kindOpt)
+        {
+            return true;
+        }
         if (auto kind = *kindOpt; kind == idlgen::RuntimeClassKind::Implementation)
         {
-            implementationTypes.insert({ record->getNameAsString(), record });
+            implementationTypes.insert({record->getNameAsString(), record});
         }
         return true;
     }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
-    if (TryHandleAsDelegate(record)) { return true; }
-    if (TryHandleAsStruct(record)) { return true; }
-    if (!GetRuntimeClassKind(record)) { return true; }
+    if (TryHandleAsDelegate(record))
+    {
+        return true;
+    }
+    if (TryHandleAsStruct(record))
+    {
+        return true;
+    }
+    if (!GetRuntimeClassKind(record))
+    {
+        return true;
+    }
     debugPrint([]() { std::cout << "is runtime class" << std::endl; });
-    std::vector<std::string> namespaces{ GetWinRtNamespaces(record) };
-    if (!namespaces.empty() && namespaces.back() == "factory_implementation") { return true; }
+    std::vector<std::string> namespaces{GetWinRtNamespaces(record)};
+    if (!namespaces.empty() && namespaces.back() == "factory_implementation")
+    {
+        return true;
+    }
     std::set<std::string> includes;
     std::vector<IdlGenAttr> attrs;
-    std::optional<std::vector<clang::QualType>> extend{ GetExtend(record) };
+    std::optional<std::vector<clang::QualType>> extend{GetExtend(record)};
     std::set<clang::CXXMethodDecl*> ctors;
     std::map<std::string, MethodGroup> methodGroups;
     std::set<clang::CXXMethodDecl*> events;
-    auto cxxAttrs{ record->attrs() };
+    auto cxxAttrs{record->attrs()};
     for (auto&& attr : cxxAttrs)
     {
         auto idlGenAttr = GetIdlGenAttr(attr);
-        if (!idlGenAttr) { continue; }
-        if (idlGenAttr->type == IdlGenAttrType::Hide) { return true; }
-        if (idlGenAttr->type == IdlGenAttrType::Attribute) { attrs.emplace_back(std::move(*idlGenAttr)); }
+        if (!idlGenAttr)
+        {
+            continue;
+        }
+        if (idlGenAttr->type == IdlGenAttrType::Hide)
+        {
+            return true;
+        }
+        if (idlGenAttr->type == IdlGenAttrType::Attribute)
+        {
+            attrs.emplace_back(std::move(*idlGenAttr));
+        }
         else if (idlGenAttr->type == IdlGenAttrType::Import)
         {
-            auto imports{ idlGenAttr->args };
+            auto imports{idlGenAttr->args};
             for (auto&& importFile : imports)
             {
                 includes.insert(importFile);
@@ -74,24 +99,33 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     auto thisClassFileName = GetLocFileName(record);
     for (auto&& method : methods)
     {
-        debugPrint([&]()
-            {
-                std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl;
-            });
-        auto methodKind{ GetRuntimeClassMethodKind(method) };
-        if (!methodKind) { continue; }
-        auto params{ method->parameters() };
+        debugPrint(
+            [&]()
+            { std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl; }
+        );
+        auto methodKind{GetRuntimeClassMethodKind(method)};
+        if (!methodKind)
+        {
+            continue;
+        }
+        auto params{method->parameters()};
         for (auto&& param : params)
         {
             FindFileToInclude(includes, thisClassFileName, param->getType());
         }
-        if (IsDestructor(method)) { continue; }
+        if (IsDestructor(method))
+        {
+            continue;
+        }
         if (IsConstructor(method))
         {
             ctors.insert(method);
             continue;
         }
-        if (IsEventRevoker(method)) { continue; }
+        if (IsEventRevoker(method))
+        {
+            continue;
+        }
         if (IsEventRegistrar(method))
         {
             events.insert(method);
@@ -115,48 +149,54 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     // Add default_interface if the runtime class is empty
     if (methodGroups.empty())
     {
-        attrs.emplace_back(IdlGenAttr{ IdlGenAttrType::Attribute, { "default_interface" } });
+        attrs.emplace_back(IdlGenAttr{IdlGenAttrType::Attribute, {"default_interface"}});
     }
     // Generate idl
     for (auto&& include : includes)
     {
-        out << "import \"" << include << "\";" << "\n";
+        out << "import \"" << include << "\";"
+            << "\n";
     }
     out << "namespace ";
     const auto namespaceCount = namespaces.size();
     for (size_t i = 0; i < namespaceCount; ++i)
     {
         out << namespaces[i];
-        if (i + 1 < namespaceCount) { out << "."; }
+        if (i + 1 < namespaceCount)
+        {
+            out << ".";
+        }
     }
     out << "\n";
-    out << "{" << "\n";
+    out << "{"
+        << "\n";
     for (auto&& attr : attrs)
     {
-        if (attr.type != IdlGenAttrType::Attribute) { continue; }
-        auto& args{ attr.args };
+        if (attr.type != IdlGenAttrType::Attribute)
+        {
+            continue;
+        }
+        auto& args{attr.args};
         for (auto&& arg : args)
         {
-            out << "[" << arg << "]" << "\n";
+            out << "[" << arg << "]"
+                << "\n";
         }
     }
     out << "runtimeclass " << record->getNameAsString();
     if (extend)
     {
-        debugPrint([&]()
-            {
-                std::cout << "extend size is " << extend->size() << std::endl;
-            });
+        debugPrint([&]() { std::cout << "extend size is " << extend->size() << std::endl; });
         if (!extend->empty())
         {
             out << " : ";
         }
-        auto& bases{ *extend };
+        auto& bases{*extend};
         const auto baseCount = bases.size();
         for (size_t i = 0; i < baseCount; ++i)
         {
             auto& base = bases[i];
-            auto name{ TranslateCxxTypeToWinRtType(base) };
+            auto name{TranslateCxxTypeToWinRtType(base)};
             out << name;
             if (i + 1 < baseCount)
             {
@@ -165,7 +205,8 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
     }
     out << "\n";
-    out << "{" << "\n";
+    out << "{"
+        << "\n";
     for (auto&& ctor : ctors)
     {
         out << ctor->getNameAsString();
@@ -174,12 +215,12 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     }
     for (auto&& entry : methodGroups)
     {
-        auto& group{ entry.second };
+        auto& group{entry.second};
         if (group.getterOrElse()->isStatic() && group.setterOrElse()->isStatic())
         {
             out << "static ";
         }
-        auto returnType{ TranslateCxxTypeToWinRtType(group.getterOrElse()->getReturnType())};
+        auto returnType{TranslateCxxTypeToWinRtType(group.getterOrElse()->getReturnType())};
         out << returnType << " " << group.methodName;
         if (group.IsGetter())
         {
@@ -198,59 +239,82 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     for (auto&& ev : events)
     {
         assert(ev->parameters().size() > 0);
-        auto handler{ TranslateCxxTypeToWinRtType(ev->parameters().front()->getType()) };
-        out << "event " << handler << " " << ev->getNameAsString() << ";" << "\n";
+        auto handler{TranslateCxxTypeToWinRtType(ev->parameters().front()->getType())};
+        out << "event " << handler << " " << ev->getNameAsString() << ";"
+            << "\n";
     }
-    out << "}" << "\n";
-    out << "}" << "\n";
+    out << "}"
+        << "\n";
+    out << "}"
+        << "\n";
     return true;
 }
 
 bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
 {
-    auto location{ decl->getLocation() };
-    auto isMain{ astContext.getSourceManager().isInMainFile(location) };
-    if (!isMain) { return true; }
+    auto location{decl->getLocation()};
+    auto isMain{astContext.getSourceManager().isInMainFile(location)};
+    if (!isMain)
+    {
+        return true;
+    }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
-    auto kind{ GetEnumKind(decl) };
-    if (!kind) { return true; }
+    auto kind{GetEnumKind(decl)};
+    if (!kind)
+    {
+        return true;
+    }
     debugPrint([&]() { std::cout << decl->getNameAsString() << " is WinRT enum" << std::endl; });
-    std::vector<std::string> namespaces{ GetWinRtNamespaces(decl) };
+    std::vector<std::string> namespaces{GetWinRtNamespaces(decl)};
     PrintNameSpaces(namespaces);
     out << "\n";
-    out << "{" << "\n";
+    out << "{"
+        << "\n";
     if (*kind == EnumKind::Flag)
     {
-        out << "[flags]" << "\n";
+        out << "[flags]"
+            << "\n";
     }
     out << "enum " << decl->getNameAsString() << "\n";
-    out << "{" << "\n";
-    auto values{ decl->enumerators() };
+    out << "{"
+        << "\n";
+    auto values{decl->enumerators()};
     for (auto&& value : values)
     {
-        auto radix{ *kind == EnumKind::Normal ? 10 : 16 };
+        auto radix{*kind == EnumKind::Normal ? 10 : 16};
         auto intValue = [&]()
         {
-            if (*kind == EnumKind::Normal) { return std::to_string(value->getInitVal().getExtValue()); }
+            if (*kind == EnumKind::Normal)
+            {
+                return std::to_string(value->getInitVal().getExtValue());
+            }
             llvm::SmallVector<char> intValue;
             std::stringstream ss;
             ss << std::setfill('0') << std::setw(8) << value->getInitVal().getExtValue();
-            return "0x" +  ss.str();
+            return "0x" + ss.str();
         };
         out << value->getNameAsString() << " = " << intValue();
         out << ",\n";
     }
-    out << "};" << "\n";
-    out << "}" << "\n";
+    out << "};"
+        << "\n";
+    out << "}"
+        << "\n";
     return true;
 }
 
 std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(clang::Attr* attr)
 {
-    auto scopeName{ attr->getScopeName() };
-    if (scopeName == nullptr) { return std::nullopt; }
-    auto attrName{ attr->getAttrName() };
-    if (attrName == nullptr) { return std::nullopt; }
+    auto scopeName{attr->getScopeName()};
+    if (scopeName == nullptr)
+    {
+        return std::nullopt;
+    }
+    auto attrName{attr->getAttrName()};
+    if (attrName == nullptr)
+    {
+        return std::nullopt;
+    }
     if (scopeName->getName() != "clang" || attrName->getName() != "annotate")
     {
         return std::nullopt;
@@ -264,56 +328,79 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
         llvm::SplitString(pretty, splitted, "\"");
         constexpr auto rawAttrContentIndex = 1;
         constexpr auto expectedRawAttrSize = 3;
-        if (splitted.size() != expectedRawAttrSize) { return std::nullopt; }
+        if (splitted.size() != expectedRawAttrSize)
+        {
+            return std::nullopt;
+        }
         return splitted[rawAttrContentIndex].str();
     };
-    auto annotationOpt{ annotationGetter() };
-    if (!annotationOpt) { std::nullopt; }
-    auto& annotation{ *annotationOpt };
-    if (annotation.find("idlgen::") != 0) { return std::nullopt; }
+    auto annotationOpt{annotationGetter()};
+    if (!annotationOpt)
+    {
+        std::nullopt;
+    }
+    auto& annotation{*annotationOpt};
+    if (annotation.find("idlgen::") != 0)
+    {
+        return std::nullopt;
+    }
     auto equalIndex = annotation.find("=");
-    if (equalIndex == std::string::npos) { equalIndex = annotation.size(); }
-    auto idlGenAttr{ std::string_view(annotation) };
+    if (equalIndex == std::string::npos)
+    {
+        equalIndex = annotation.size();
+    }
+    auto idlGenAttr{std::string_view(annotation)};
     constexpr auto idlgenAttrHeaderCount = 8;
     idlGenAttr = idlGenAttr.substr(idlgenAttrHeaderCount, equalIndex - idlgenAttrHeaderCount);
-    std::string args{ equalIndex >= annotation.size() ? "" : annotation.substr(equalIndex + 1)};
+    std::string args{equalIndex >= annotation.size() ? "" : annotation.substr(equalIndex + 1)};
     if (idlGenAttr == "attribute")
     {
-        if (args.empty()) { return std::nullopt; }
-        return IdlGenAttr{ IdlGenAttrType::Attribute, {std::move(args)}};
+        if (args.empty())
+        {
+            return std::nullopt;
+        }
+        return IdlGenAttr{IdlGenAttrType::Attribute, {std::move(args)}};
     }
     else if (idlGenAttr == "extend")
     {
-        if (args.empty()) { return std::nullopt; }
-        return IdlGenAttr{ IdlGenAttrType::Extend, {std::move(args)}};
+        if (args.empty())
+        {
+            return std::nullopt;
+        }
+        return IdlGenAttr{IdlGenAttrType::Extend, {std::move(args)}};
     }
     else if (idlGenAttr == "import")
     {
         llvm::SmallVector<llvm::StringRef> splitted;
         llvm::SplitString(args, splitted, ",");
-        if (splitted.empty()) { std::nullopt; }
+        if (splitted.empty())
+        {
+            std::nullopt;
+        }
         std::vector<std::string> result;
         result.reserve(splitted.size());
         for (auto&& importFile : splitted)
         {
             result.emplace_back(importFile.str());
         }
-        return IdlGenAttr{ IdlGenAttrType::Import, result };
+        return IdlGenAttr{IdlGenAttrType::Import, result};
     }
     else if (idlGenAttr == "hide")
     {
-        return IdlGenAttr{ IdlGenAttrType::Hide, {} };
+        return IdlGenAttr{IdlGenAttrType::Hide, {}};
     }
     else if (idlGenAttr == "property")
     {
-        return IdlGenAttr{ IdlGenAttrType::Property, {} };
+        return IdlGenAttr{IdlGenAttrType::Property, {}};
     }
     return std::nullopt;
 }
 
-idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method)
+idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
+    std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method
+)
 {
-    auto methodName{ method->getNameAsString() };
+    auto methodName{method->getNameAsString()};
     auto tryPrintParamName = [&](std::string& name, clang::QualType type)
     {
         if (!type->isVoidType())
@@ -325,47 +412,58 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(std::map<std::s
     auto paramStrGetter = [&]()
     {
         std::string name;
-        auto returnType{ method->getReturnType() };
+        auto returnType{method->getReturnType()};
         tryPrintParamName(name, returnType);
-        auto params{ method->parameters() };
+        auto params{method->parameters()};
         for (auto&& param : params)
         {
             tryPrintParamName(name, param->getType());
         }
         return name;
     };
-    auto key{ methodName + paramStrGetter() };
-    if (auto result{ methodGroups.find(key) }; result != methodGroups.end())
+    auto key{methodName + paramStrGetter()};
+    if (auto result{methodGroups.find(key)}; result != methodGroups.end())
     {
         return result->second;
     }
-    auto entry{ methodGroups.insert({ std::move(key), MethodGroup{ std::move(methodName), nullptr, nullptr } }) };
+    auto entry{methodGroups.insert({std::move(key), MethodGroup{std::move(methodName), nullptr, nullptr}})};
     return entry.first->second;
 }
 
-void idlgen::RuntimeClassVisitor::FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type)
+void idlgen::RuntimeClassVisitor::FindFileToInclude(
+    std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type
+)
 {
-    auto paramRecord{ StripReferenceAndGetClassDecl(type) };
-    if (paramRecord == nullptr) { return; }
+    auto paramRecord{StripReferenceAndGetClassDecl(type)};
+    if (paramRecord == nullptr)
+    {
+        return;
+    }
     debugPrint([&]() { std::cout << "Looking for include for " << paramRecord->getNameAsString() << std::endl; });
     if (IsRuntimeClassMethodType(type))
     {
         if (auto templateSpec = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(paramRecord))
         {
             debugPrint([&]() { std::cout << "Looking also for include for template params" << std::endl; });
-            auto params{ templateSpec->getTemplateArgs().asArray() };
+            auto params{templateSpec->getTemplateArgs().asArray()};
             for (auto&& param : params)
             {
-                if (param.getKind() != clang::TemplateArgument::ArgKind::Type) { continue; }
+                if (param.getKind() != clang::TemplateArgument::ArgKind::Type)
+                {
+                    continue;
+                }
                 FindFileToInclude(includes, thisClassFileName, param.getAsType());
             }
         }
         auto implType = implementationTypes.find(paramRecord->getNameAsString());
-        if (implType == implementationTypes.end()) { return; }
-        auto paramClassFileName{ GetLocFileName(implType->second) };
+        if (implType == implementationTypes.end())
+        {
+            return;
+        }
+        auto paramClassFileName{GetLocFileName(implType->second)};
         if (thisClassFileName != paramClassFileName)
         {
-            auto extension{ llvm::sys::path::extension(paramClassFileName) };
+            auto extension{llvm::sys::path::extension(paramClassFileName)};
             if (auto extensionIndex = paramClassFileName.rfind(extension); extensionIndex != std::string::npos)
             {
                 paramClassFileName.erase(extensionIndex);
@@ -378,8 +476,7 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(std::set<std::string>& inclu
 std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCxxTypeToWinRtTypeMap()
 {
     // See https://learn.microsoft.com/en-us/uwp/midl-3/intro#types
-    return
-    {
+    return {
         {"void", "void"},
         {"winrt::hstring", "String"},
         {"winrt::guid", "Guid"},
@@ -405,14 +502,20 @@ std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCx
 
 std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::QualType type)
 {
-    if (type->isVoidType()) { return "void"; }
-    else if (type->isBooleanType()) { return "Boolean"; }
+    if (type->isVoidType())
+    {
+        return "void";
+    }
+    else if (type->isBooleanType())
+    {
+        return "Boolean";
+    }
     std::string qualifiedName;
-    clang::NamedDecl* decl{ nullptr };
-    auto record{ StripReferenceAndGetClassDecl(type) };
+    clang::NamedDecl* decl{nullptr};
+    auto record{StripReferenceAndGetClassDecl(type)};
     if (record != nullptr)
     {
-        llvm::raw_string_ostream typeOs{ qualifiedName };
+        llvm::raw_string_ostream typeOs{qualifiedName};
         record->printQualifiedName(typeOs);
         decl = record;
     }
@@ -420,8 +523,8 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     {
         if (type->isEnumeralType())
         {
-            auto enumType{ clang::cast<clang::EnumType>(type.getCanonicalType()) };
-            auto enumDecl{ enumType->getDecl() };
+            auto enumType{clang::cast<clang::EnumType>(type.getCanonicalType())};
+            auto enumDecl{enumType->getDecl()};
             qualifiedName = enumDecl->getQualifiedNameAsString();
             decl = enumDecl;
         }
@@ -430,24 +533,30 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
             qualifiedName = type.getNonReferenceType().getCanonicalType().getAsString();
         }
     }
-    else { return "error-type"; }
-    if (auto result{ cxxTypeToWinRtTypeMap.find(qualifiedName) }; result != cxxTypeToWinRtTypeMap.end())
+    else
+    {
+        return "error-type";
+    }
+    if (auto result{cxxTypeToWinRtTypeMap.find(qualifiedName)}; result != cxxTypeToWinRtTypeMap.end())
     {
         return result->second;
     }
     // Some WinRT primitives are alias, handle them.
-    auto namedDecl{ StripReferenceAndGetNamedDecl(type) };
+    auto namedDecl{StripReferenceAndGetNamedDecl(type)};
     if (namedDecl != nullptr)
     {
         qualifiedName = namedDecl->getQualifiedNameAsString();
-        if (auto result{ cxxTypeToWinRtTypeMap.find(qualifiedName) }; result != cxxTypeToWinRtTypeMap.end())
+        if (auto result{cxxTypeToWinRtTypeMap.find(qualifiedName)}; result != cxxTypeToWinRtTypeMap.end())
         {
             return result->second;
         }
     }
-    if (decl == nullptr) { return "error-type"; }
-    auto name{ decl->getNameAsString() };
-    const auto namespaces{ GetWinRtNamespaces(decl) };
+    if (decl == nullptr)
+    {
+        return "error-type";
+    }
+    auto name{decl->getNameAsString()};
+    const auto namespaces{GetWinRtNamespaces(decl)};
     std::string qualifiedWinRtName;
     qualifiedWinRtName.reserve(name.size() + 20);
     const auto namespaceCount = namespaces.size();
@@ -459,12 +568,15 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     qualifiedWinRtName += name;
     if (auto templateSpec = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(decl))
     {
-        auto params{ templateSpec->getTemplateArgs().asArray() };
+        auto params{templateSpec->getTemplateArgs().asArray()};
         std::string paramString;
         for (auto&& param : params)
         {
-            if (param.getKind() != clang::TemplateArgument::ArgKind::Type) { continue; }
-            auto type{ param.getAsType() };
+            if (param.getKind() != clang::TemplateArgument::ArgKind::Type)
+            {
+                continue;
+            }
+            auto type{param.getAsType()};
             paramString += TranslateCxxTypeToWinRtType(type);
             paramString += ", ";
         }
@@ -472,7 +584,10 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
         {
             const auto expectedLastCommaSpaceIndex = paramString.size() - 2;
             const auto lastCommaSpaceIndex = paramString.rfind(", ");
-            if (lastCommaSpaceIndex == expectedLastCommaSpaceIndex) { paramString.erase(expectedLastCommaSpaceIndex); }
+            if (lastCommaSpaceIndex == expectedLastCommaSpaceIndex)
+            {
+                paramString.erase(expectedLastCommaSpaceIndex);
+            }
             qualifiedWinRtName += "<";
             qualifiedWinRtName += paramString;
             qualifiedWinRtName += ">";
@@ -483,53 +598,58 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
 
 bool idlgen::RuntimeClassVisitor::IsCppWinRtPrimitive(std::string const& type)
 {
-    return type == "winrt::hstring" || type == "winrt::event_token"
-        || type == "winrt::Windows::Foundation::DateTime"
-        || type == "winrt::Windows::Foundation::TimeSpan"
-        || type == "winrt::Windows::Foundation::IInspectable";
+    return type == "winrt::hstring" || type == "winrt::event_token" || type == "winrt::Windows::Foundation::DateTime" ||
+           type == "winrt::Windows::Foundation::TimeSpan" || type == "winrt::Windows::Foundation::IInspectable";
 }
 
 bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly)
 {
-    if (type->isVoidType()) { return true; }
+    if (type->isVoidType())
+    {
+        return true;
+    }
     if (type->isScalarType())
     {
-        auto scalarType{ type->getScalarTypeKind() };
-        return scalarType == clang::Type::STK_Integral
-            || scalarType == clang::Type::STK_Bool
-            || scalarType == clang::Type::STK_Floating;
+        auto scalarType{type->getScalarTypeKind()};
+        return scalarType == clang::Type::STK_Integral || scalarType == clang::Type::STK_Bool ||
+               scalarType == clang::Type::STK_Floating;
     }
-    if (type->isEnumeralType()) { return true; }
-    auto record{ StripReferenceAndGetClassDecl(type) };
+    if (type->isEnumeralType())
+    {
+        return true;
+    }
+    auto record{StripReferenceAndGetClassDecl(type)};
     if (record == nullptr)
     {
-        debugPrint([&]()
+        debugPrint(
+            [&]()
             {
-                auto rawType{ type.getNonReferenceType().getUnqualifiedType().getAsString() };
-                std::cout << rawType
-                    << " struct=" << type->isStructureType()
-                    << " class=" << type->isClassType()
-                    << " incomplete=" << type->isIncompleteType()
-                    << " reference=" << type->isReferenceType()
-                    << "\n";
-            });
+                auto rawType{type.getNonReferenceType().getUnqualifiedType().getAsString()};
+                std::cout << rawType << " struct=" << type->isStructureType() << " class=" << type->isClassType()
+                          << " incomplete=" << type->isIncompleteType() << " reference=" << type->isReferenceType()
+                          << "\n";
+            }
+        );
         return false;
     }
     if (!record->isCompleteDefinition())
     {
-        debugPrint([&]()
-            {
-                std::cout << record->getNameAsString() << " is not complete" << std::endl;
-            });
+        debugPrint([&]() { std::cout << record->getNameAsString() << " is not complete" << std::endl; });
         // We have to count incomplete type as OK since clang's AST wouldn't make template reference
         // (e.g. TypedHandler<T, A> const&) a complete type but we definitely want to support these
         // class...
         return true;
     }
-    if (record->isPOD()) { return true; }
-    std::string qualifiedName{ record->getQualifiedNameAsString() };
+    if (record->isPOD())
+    {
+        return true;
+    }
+    std::string qualifiedName{record->getQualifiedNameAsString()};
     debugPrint([&]() { std::cout << "Checking if cxx record " << qualifiedName << " is primitive" << std::endl; });
-    if (IsCppWinRtPrimitive(qualifiedName)) { return true; }
+    if (IsCppWinRtPrimitive(qualifiedName))
+    {
+        return true;
+    }
     auto kindOpt = GetRuntimeClassKind(record);
     if (kindOpt && (!projectedOnly || *kindOpt == idlgen::RuntimeClassKind::Projected))
     {
@@ -537,13 +657,10 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
     }
     // Some WinRT primitives are alias, handle them.
     // TODO: Make all name-based logic recusrively check typedef
-    auto namedDecl{ StripReferenceAndGetNamedDecl(type) };
+    auto namedDecl{StripReferenceAndGetNamedDecl(type)};
     if (namedDecl == nullptr)
     {
-        debugPrint([&]()
-            {
-                std::cout << record->getNameAsString() << " is not a named declaration" << std::endl;
-            });
+        debugPrint([&]() { std::cout << record->getNameAsString() << " is not a named declaration" << std::endl; });
         return false;
     }
     qualifiedName = namedDecl->getQualifiedNameAsString();
@@ -553,17 +670,26 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
 
 bool idlgen::RuntimeClassVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
 {
-    auto params{ method->parameters() };
-    if (params.size() != 1) { return false; }
+    auto params{method->parameters()};
+    if (params.size() != 1)
+    {
+        return false;
+    }
     auto record = StripReferenceAndGetClassDecl(params.front()->getType());
-    if (record == nullptr) { return false; }
+    if (record == nullptr)
+    {
+        return false;
+    }
     return GetQualifiedName(record) == "winrt::event_token";
 }
 
 bool idlgen::RuntimeClassVisitor::IsEventRegistrar(clang::CXXMethodDecl* method)
 {
     auto returnRecord = method->getReturnType()->getAsCXXRecordDecl();
-    if (returnRecord == nullptr) { return false; }
+    if (returnRecord == nullptr)
+    {
+        return false;
+    }
     return GetQualifiedName(returnRecord) == "winrt::event_token";
 }
 
@@ -581,11 +707,13 @@ bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
 {
     // We skip checking whether the file contains impl class for built-in headers.
     // TODO: Outright skip parsing them?
-    auto fileNameOpt{ GetLocFilePath(decl) };
-    if (!fileNameOpt) { return true; }
-    auto& fileName{ *fileNameOpt };
-    if (fileName.find("winrt/") != std::string::npos ||
-        fileName.find("Microsoft Visual Studio") != std::string::npos ||
+    auto fileNameOpt{GetLocFilePath(decl)};
+    if (!fileNameOpt)
+    {
+        return true;
+    }
+    auto& fileName{*fileNameOpt};
+    if (fileName.find("winrt/") != std::string::npos || fileName.find("Microsoft Visual Studio") != std::string::npos ||
         fileName.find("Windows Kits") != std::string::npos)
     {
         return true;
@@ -595,34 +723,52 @@ bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
 
 std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMethodKind(clang::CXXMethodDecl* method)
 {
-    if (method->getAccess() != clang::AccessSpecifier::AS_public) { return std::nullopt; }
-    auto methodAttrs{ method->attrs() };
-    auto isProperty{ false };
+    if (method->getAccess() != clang::AccessSpecifier::AS_public)
+    {
+        return std::nullopt;
+    }
+    auto methodAttrs{method->attrs()};
+    auto isProperty{false};
     for (auto&& attr : methodAttrs)
     {
         auto idlGenAttr = GetIdlGenAttr(attr);
-        if (!idlGenAttr) { continue; }
-        if (idlGenAttr->type == IdlGenAttrType::Hide) { return std::nullopt; }
-        else if (idlGenAttr->type == IdlGenAttrType::Property) { isProperty = true; }
+        if (!idlGenAttr)
+        {
+            continue;
+        }
+        if (idlGenAttr->type == IdlGenAttrType::Hide)
+        {
+            return std::nullopt;
+        }
+        else if (idlGenAttr->type == IdlGenAttrType::Property)
+        {
+            isProperty = true;
+        }
     }
-    auto params{ method->parameters() };
-    auto returnType{ method->getReturnType() };
+    auto params{method->parameters()};
+    auto returnType{method->getReturnType()};
     if (isProperty && params.size() == 0)
     {
         return IsRuntimeClassMethodType(returnType) ? std::optional(idlgen::MethodKind::Getter) : std::nullopt;
     }
     if (isProperty && params.size() == 1)
     {
-        auto paramType{ params[0]->getType()};
+        auto paramType{params[0]->getType()};
         return IsRuntimeClassMethodType(returnType) && IsRuntimeClassMethodType(paramType, true)
-            ? std::optional(idlgen::MethodKind::Setter)
-            : std::nullopt;
+                   ? std::optional(idlgen::MethodKind::Setter)
+                   : std::nullopt;
     }
     // Ordinary methods
-    if (!IsRuntimeClassMethodType(returnType)) { return std::nullopt; }
+    if (!IsRuntimeClassMethodType(returnType))
+    {
+        return std::nullopt;
+    }
     for (auto&& param : params)
     {
-        if (!IsRuntimeClassMethodType(param->getType(), true)) { return std::nullopt; }
+        if (!IsRuntimeClassMethodType(param->getType(), true))
+        {
+            return std::nullopt;
+        }
     }
     return idlgen::MethodKind::Method;
 }
@@ -643,104 +789,147 @@ const clang::NamedDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetNamedDe
     {
         typePtr = type.getTypePtrOrNull();
     }
-    auto namedType{ typePtr->getAs<clang::TypedefType>() };
-    if (namedType == nullptr) { return false; }
+    auto namedType{typePtr->getAs<clang::TypedefType>()};
+    if (namedType == nullptr)
+    {
+        return false;
+    }
     return namedType->getDecl();
 }
 
 std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::QualType type)
 {
-    auto record{ StripReferenceAndGetClassDecl(type) };
-    if (record == nullptr) { return std::nullopt; }
+    auto record{StripReferenceAndGetClassDecl(type)};
+    if (record == nullptr)
+    {
+        return std::nullopt;
+    }
     return GetRuntimeClassKind(record);
 }
 
 std::optional<idlgen::EnumKind> idlgen::RuntimeClassVisitor::GetEnumKind(clang::EnumDecl* decl)
 {
-    if (!decl->isComplete()) { return std::nullopt; }
-    if (!decl->isScoped()) { return std::nullopt; }
-    auto type{ decl->getIntegerType() };
-    if (type.isNull()) { return std::nullopt; }
-    auto typedefType{ type->getAs<clang::TypedefType>() };
-    if (typedefType == nullptr) { return std::nullopt; }
-    auto name{ typedefType->getDecl()->getQualifiedNameAsString() };
+    if (!decl->isComplete())
+    {
+        return std::nullopt;
+    }
+    if (!decl->isScoped())
+    {
+        return std::nullopt;
+    }
+    auto type{decl->getIntegerType()};
+    if (type.isNull())
+    {
+        return std::nullopt;
+    }
+    auto typedefType{type->getAs<clang::TypedefType>()};
+    if (typedefType == nullptr)
+    {
+        return std::nullopt;
+    }
+    auto name{typedefType->getDecl()->getQualifiedNameAsString()};
     debugPrint([&]() { std::cout << decl->getNameAsString() << "'s underlying's name is " << name << std::endl; });
-    if (name == "idlgen::enum_normal") { return EnumKind::Normal; }
-    else if (name == "idlgen::enum_flag") { return EnumKind::Flag; }
+    if (name == "idlgen::enum_normal")
+    {
+        return EnumKind::Normal;
+    }
+    else if (name == "idlgen::enum_flag")
+    {
+        return EnumKind::Flag;
+    }
     return std::optional<EnumKind>();
 }
 
-std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::CXXRecordDecl* record, bool implementationOnly)
+std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(
+    clang::CXXRecordDecl* record, bool implementationOnly
+)
 {
-    auto className{ record->getNameAsString() };
-    debugPrint([&]() {std::cout << "Checking if " << className << " is runtime class" << std::endl; });
-    auto filePathOpt{ GetLocFilePath(record) };
+    auto className{record->getNameAsString()};
+    debugPrint([&]() { std::cout << "Checking if " << className << " is runtime class" << std::endl; });
+    auto filePathOpt{GetLocFilePath(record)};
     if (implementationOnly)
     {
-        auto parentContext{ record->getParent() };
-        if (parentContext == nullptr) { return std::nullopt; }
-        if (!parentContext->isNamespace()) { return std::nullopt; }
+        auto parentContext{record->getParent()};
+        if (parentContext == nullptr)
+        {
+            return std::nullopt;
+        }
+        if (!parentContext->isNamespace())
+        {
+            return std::nullopt;
+        }
         auto namespaceDecl = static_cast<clang::NamespaceDecl*>(parentContext);
-        if (namespaceDecl->getNameAsString() != "implementation") { return std::nullopt; }
+        if (namespaceDecl->getNameAsString() != "implementation")
+        {
+            return std::nullopt;
+        }
     }
     if (!record->isCompleteDefinition())
     {
-        debugPrint([&]() {std::cout << className << " is not complete" << std::endl; });
+        debugPrint([&]() { std::cout << className << " is not complete" << std::endl; });
         return std::nullopt;
     }
-    auto bases{ record->bases() };
+    auto bases{record->bases()};
     for (auto&& base : bases)
     {
         debugPrint([&]() { std::cout << "Checking base " << base.getType().getAsString() << std::endl; });
-        auto baseType{ base.getType().getTypePtrOrNull() };
-        if (baseType == nullptr) { continue; }
-        auto cxxType{ baseType->getAsCXXRecordDecl() };
-        if (cxxType == nullptr) { continue; }
+        auto baseType{base.getType().getTypePtrOrNull()};
+        if (baseType == nullptr)
+        {
+            continue;
+        }
+        auto cxxType{baseType->getAsCXXRecordDecl()};
+        if (cxxType == nullptr)
+        {
+            continue;
+        }
         // TODO: Need to check full name as Windows::Foundation::IInspectable instead
         if (cxxType->getName() == "IInspectable" || cxxType->getName() == "IUnknown")
         {
             return idlgen::RuntimeClassKind::Projected;
         }
-        auto templateSpecType{ baseType->getAs<clang::TemplateSpecializationType>() };
-        auto spec{ clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxxType) };
+        auto templateSpecType{baseType->getAs<clang::TemplateSpecializationType>()};
+        auto spec{clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxxType)};
         if (templateSpecType != nullptr && spec != nullptr)
         {
-            auto templateDecl{ templateSpecType->getTemplateName().getAsTemplateDecl() };
-            auto templateName{ templateDecl->getNameAsString() };
+            auto templateDecl{templateSpecType->getTemplateName().getAsTemplateDecl()};
+            auto templateName{templateDecl->getNameAsString()};
             debugPrint([&]() { std::cout << templateName << " is a template specialization" << std::endl; });
-            auto params{ spec->getTemplateArgs().asArray() };
+            auto params{spec->getTemplateArgs().asArray()};
             for (auto&& param : params)
             {
                 auto paramKind = param.getKind();
                 if (paramKind != clang::TemplateArgument::ArgKind::Type)
                 {
-                    debugPrint([&]()
+                    debugPrint(
+                        [&]()
                         {
                             std::cout << "Template param ";
                             param.print(clang::LangOptions(), llvm::outs(), true);
                             std::cout << " is not a type" << std::endl;
-                        });
+                        }
+                    );
                     continue;
                 }
-                auto type{ param.getAsType()->getAsCXXRecordDecl() };
+                auto type{param.getAsType()->getAsCXXRecordDecl()};
                 if (type == nullptr)
                 {
-                    debugPrint([&]() { std::cout << param.getAsType().getAsString() << " is not a CXXRecord" << std::endl; });
+                    debugPrint([&]()
+                               { std::cout << param.getAsType().getAsString() << " is not a CXXRecord" << std::endl; });
                     continue;
                 }
-                auto templateParamTypeName{ type->getNameAsString() };
-                auto expectedParamTypeName{ std::string_view(templateName).substr(0, templateName.size() - 1) };
-                debugPrint([&]()
+                auto templateParamTypeName{type->getNameAsString()};
+                auto expectedParamTypeName{std::string_view(templateName).substr(0, templateName.size() - 1)};
+                debugPrint(
+                    [&]()
                     {
-                        std::cout << "templateParamTypeName=" << templateParamTypeName
-                            << " className=" << className
-                            << " templateName=" << templateName
-                            << " expectedParamTypeName=" << expectedParamTypeName
-                            << " cxxTypeName=" << cxxType->getName().data()
-                            << std::endl;
-                    });
-                if (templateParamTypeName == expectedParamTypeName &&
-                    templateParamTypeName == className)
+                        std::cout << "templateParamTypeName=" << templateParamTypeName << " className=" << className
+                                  << " templateName=" << templateName
+                                  << " expectedParamTypeName=" << expectedParamTypeName
+                                  << " cxxTypeName=" << cxxType->getName().data() << std::endl;
+                    }
+                );
+                if (templateParamTypeName == expectedParamTypeName && templateParamTypeName == className)
                 {
                     return idlgen::RuntimeClassKind::Implementation;
                 }
@@ -756,35 +945,49 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
 
 std::optional<std::vector<clang::QualType>> idlgen::RuntimeClassVisitor::GetExtend(clang::CXXRecordDecl* record)
 {
-    debugPrint([&]() {std::cout << "Getting extend for " << record->getNameAsString() << std::endl; });
-    if (!record->isCompleteDefinition()) { return std::nullopt; }
-    auto bases{ record->bases() };
+    debugPrint([&]() { std::cout << "Getting extend for " << record->getNameAsString() << std::endl; });
+    if (!record->isCompleteDefinition())
+    {
+        return std::nullopt;
+    }
+    auto bases{record->bases()};
     std::vector<clang::QualType> result;
     for (auto&& base : bases)
     {
-        auto baseType{ base.getType().getTypePtrOrNull() };
-        if (baseType == nullptr) { continue; }
-        auto cxxType{ baseType->getAsCXXRecordDecl() };
-        if (cxxType == nullptr) { continue; }
-        auto spec{ clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxxType) };
-        if (spec == nullptr) { continue; }
-        auto typeName{ GetQualifiedName(cxxType) };
-        if (typeName != "idlgen::base") { continue; }
-        auto templateParams{ spec->getTemplateArgs().asArray() };
+        auto baseType{base.getType().getTypePtrOrNull()};
+        if (baseType == nullptr)
+        {
+            continue;
+        }
+        auto cxxType{baseType->getAsCXXRecordDecl()};
+        if (cxxType == nullptr)
+        {
+            continue;
+        }
+        auto spec{clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxxType)};
+        if (spec == nullptr)
+        {
+            continue;
+        }
+        auto typeName{GetQualifiedName(cxxType)};
+        if (typeName != "idlgen::base")
+        {
+            continue;
+        }
+        auto templateParams{spec->getTemplateArgs().asArray()};
         auto tryAddTypeToResult = [&](clang::QualType type)
         {
-            if (!IsRuntimeClassMethodType(type, true)) { return; }
-            auto paramCxxType{ type->getAsCXXRecordDecl() };
-            if (paramCxxType == nullptr)
+            if (!IsRuntimeClassMethodType(type, true))
             {
-                debugPrint([&]()
-                    {
-                        std::cout << type.getAsString()
-                            << " is not a CXXRecord" << std::endl;
-                    });
                 return;
             }
-            debugPrint([&]() {std::cout << paramCxxType->getNameAsString() << " is an extend base" << std::endl; });
+            auto paramCxxType{type->getAsCXXRecordDecl()};
+            if (paramCxxType == nullptr)
+            {
+                debugPrint([&]() { std::cout << type.getAsString() << " is not a CXXRecord" << std::endl; });
+                return;
+            }
+            debugPrint([&]() { std::cout << paramCxxType->getNameAsString() << " is an extend base" << std::endl; });
             // TODO: Verify first type is projected type, second is interface (how?)
             result.emplace_back(type);
         };
@@ -793,32 +996,35 @@ std::optional<std::vector<clang::QualType>> idlgen::RuntimeClassVisitor::GetExte
             auto paramKind = templateParam.getKind();
             if (paramKind == clang::TemplateArgument::ArgKind::Type)
             {
-                auto paramType{ templateParam.getAsType() };
+                auto paramType{templateParam.getAsType()};
                 tryAddTypeToResult(paramType);
             }
             else if (paramKind == clang::TemplateArgument::ArgKind::Pack)
             {
-                auto packParams{ templateParam.getPackAsArray() };
+                auto packParams{templateParam.getPackAsArray()};
                 for (auto&& packParam : packParams)
                 {
-                    auto paramType{ packParam.getAsType() };
+                    auto paramType{packParam.getAsType()};
                     tryAddTypeToResult(paramType);
                 }
             }
             else
             {
-                debugPrint([&]()
+                debugPrint(
+                    [&]()
                     {
                         std::cout << "Template param ";
                         templateParam.print(clang::LangOptions(), llvm::outs(), true);
-                        std::cout << " is not a type but "
-                            << paramKind
-                            << std::endl;
-                    });
+                        std::cout << " is not a type but " << paramKind << std::endl;
+                    }
+                );
             }
         }
     }
-    if (result.empty()) { return std::nullopt; }
+    if (result.empty())
+    {
+        return std::nullopt;
+    }
     return result;
 }
 
@@ -828,10 +1034,16 @@ std::vector<std::string> idlgen::RuntimeClassVisitor::GetWinRtNamespaces(clang::
     auto parentContext = record->getDeclContext();
     while (parentContext != nullptr)
     {
-        if (!parentContext->isNamespace()) { break; }
+        if (!parentContext->isNamespace())
+        {
+            break;
+        }
         auto namespaceDecl = static_cast<clang::NamespaceDecl*>(parentContext);
-        auto name{ namespaceDecl->getNameAsString() };
-        if (!(name == "winrt" || name == "implementation")) { namespaces.emplace_back(std::move(name)); }
+        auto name{namespaceDecl->getNameAsString()};
+        if (!(name == "winrt" || name == "implementation"))
+        {
+            namespaces.emplace_back(std::move(name));
+        }
         parentContext = parentContext->getParent();
     }
     std::reverse(namespaces.begin(), namespaces.end());
@@ -841,23 +1053,26 @@ std::vector<std::string> idlgen::RuntimeClassVisitor::GetWinRtNamespaces(clang::
 std::string idlgen::RuntimeClassVisitor::GetQualifiedName(clang::CXXRecordDecl* record)
 {
     std::string qualifiedName;
-    llvm::raw_string_ostream typeOs{ qualifiedName };
+    llvm::raw_string_ostream typeOs{qualifiedName};
     record->printQualifiedName(typeOs);
     return qualifiedName;
 }
 
 std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::NamedDecl* decl)
 {
-    auto& srcManager{ astContext.getSourceManager() };
-    auto file{ srcManager.getFileEntryForID(srcManager.getFileID(decl->getLocation())) };
-    if (file == nullptr) { return std::nullopt; }
+    auto& srcManager{astContext.getSourceManager()};
+    auto file{srcManager.getFileEntryForID(srcManager.getFileID(decl->getLocation()))};
+    if (file == nullptr)
+    {
+        return std::nullopt;
+    }
     return file->getName().data();
 }
 
 std::string idlgen::RuntimeClassVisitor::GetLocFileName(clang::CXXRecordDecl* record)
 {
-    auto& srcManager{ astContext.getSourceManager() };
-    auto file{ srcManager.getFileEntryForID(srcManager.getFileID(record->getLocation())) };
+    auto& srcManager{astContext.getSourceManager()};
+    auto file{srcManager.getFileEntryForID(srcManager.getFileID(record->getLocation()))};
     return llvm::sys::path::filename(file->getName()).str();
 }
 
@@ -868,43 +1083,66 @@ void idlgen::RuntimeClassVisitor::PrintNameSpaces(std::vector<std::string> names
     for (size_t i = 0; i < namespaceCount; ++i)
     {
         out << namespaces[i];
-        if (i + 1 < namespaceCount) { out << "."; }
+        if (i + 1 < namespaceCount)
+        {
+            out << ".";
+        }
     }
 }
 
 void idlgen::RuntimeClassVisitor::PrintMethodParams(clang::CXXMethodDecl* method)
 {
     out << "(";
-    auto params{ method->parameters() };
+    auto params{method->parameters()};
     const auto paramCount = params.size();
     for (size_t i = 0; i < paramCount; ++i)
     {
-        auto param{ params[i] };
+        auto param{params[i]};
         out << TranslateCxxTypeToWinRtType(param->getType()) << " " << param->getNameAsString();
-        if (i + 1 < paramCount) { out << ", "; }
+        if (i + 1 < paramCount)
+        {
+            out << ", ";
+        }
     }
     out << ");";
 }
 
 bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
 {
-    if (!IsSingleBaseOfType(decl, "idlgen::author_delegate")) { return false; }
-    clang::CXXMethodDecl* method{ nullptr };
-    auto methods{ decl->methods() };
+    if (!IsSingleBaseOfType(decl, "idlgen::author_delegate"))
+    {
+        return false;
+    }
+    clang::CXXMethodDecl* method{nullptr};
+    auto methods{decl->methods()};
     for (auto&& candidateMethod : methods)
     {
-        debugPrint([&]()
-            {
-                std::cout << "Finding delegate signature from" << candidateMethod->getNameAsString() << std::endl;
-            });
-        if (method != nullptr) { return false; }
-        if (GetRuntimeClassMethodKind(candidateMethod) != MethodKind::Method) { return false; }
-        if (candidateMethod->param_size() != 2) { return false; }
+        debugPrint(
+            [&]() { std::cout << "Finding delegate signature from" << candidateMethod->getNameAsString() << std::endl; }
+        );
+        if (method != nullptr)
+        {
+            return false;
+        }
+        if (GetRuntimeClassMethodKind(candidateMethod) != MethodKind::Method)
+        {
+            return false;
+        }
+        if (candidateMethod->param_size() != 2)
+        {
+            return false;
+        }
         method = candidateMethod;
     }
-    if (method == nullptr) { return false; }
-    if (method->getNameAsString() != "operator()") { return false; }
-    auto namespaces{ GetWinRtNamespaces(decl) };
+    if (method == nullptr)
+    {
+        return false;
+    }
+    if (method->getNameAsString() != "operator()")
+    {
+        return false;
+    }
+    auto namespaces{GetWinRtNamespaces(decl)};
     PrintNameSpaces(namespaces);
     out << "\n";
     out << "{\n";
@@ -919,9 +1157,12 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl
 
 bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
 {
-    if (!IsSingleBaseOfType(decl, "idlgen::author_struct")) { return false; }
-    auto fields{ decl->fields() };
-    auto namespaces{ GetWinRtNamespaces(decl) };
+    if (!IsSingleBaseOfType(decl, "idlgen::author_struct"))
+    {
+        return false;
+    }
+    auto fields{decl->fields()};
+    auto namespaces{GetWinRtNamespaces(decl)};
     PrintNameSpaces(namespaces);
     out << "\n";
     out << "{\n";
@@ -930,8 +1171,11 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
     for (auto&& field : fields)
     {
         auto fieldType = field->getType();
-        if (!IsRuntimeClassMethodType(fieldType, true)) { continue; }
-        auto typeName{ TranslateCxxTypeToWinRtType(fieldType) };
+        if (!IsRuntimeClassMethodType(fieldType, true))
+        {
+            continue;
+        }
+        auto typeName{TranslateCxxTypeToWinRtType(fieldType)};
         out << typeName << " ";
         out << field->getNameAsString() << ";\n";
     }
@@ -942,14 +1186,26 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
 
 bool idlgen::RuntimeClassVisitor::IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
 {
-    if (!decl->isCompleteDefinition()) { return false; }
-    if (decl->getNumBases() != 1) { return false; }
-    auto baseIt{ decl->bases_begin() };
+    if (!decl->isCompleteDefinition())
+    {
+        return false;
+    }
+    if (decl->getNumBases() != 1)
+    {
+        return false;
+    }
+    auto baseIt{decl->bases_begin()};
     auto& base = *baseIt;
-    auto baseType{ base.getType().getTypePtrOrNull() };
-    if (baseType == nullptr) { return false; }
-    auto cxxBase{ baseType->getAsCXXRecordDecl() };
-    if (cxxBase == nullptr) { return false; }
-    auto baseQualifiedName{ cxxBase->getQualifiedNameAsString() };
+    auto baseType{base.getType().getTypePtrOrNull()};
+    if (baseType == nullptr)
+    {
+        return false;
+    }
+    auto cxxBase{baseType->getAsCXXRecordDecl()};
+    if (cxxBase == nullptr)
+    {
+        return false;
+    }
+    auto baseQualifiedName{cxxBase->getQualifiedNameAsString()};
     return baseQualifiedName == name;
 }

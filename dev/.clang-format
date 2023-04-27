@@ -1,0 +1,8 @@
+BasedOnStyle: Microsoft
+PointerAlignment: Left
+BraceWrapping:
+  BeforeLambdaBody: true
+BinPackArguments: false
+BinPackParameters: false
+AllowShortIfStatementsOnASingleLine: true
+AlignAfterOpenBracket: BlockIndent

@@ -4,21 +4,21 @@
 
 namespace llvm
 {
-    class raw_ostream;
+class raw_ostream;
 }
 
 namespace idlgen
 {
-    class RuntimeClassVisitor;
+class RuntimeClassVisitor;
 
-    class GenIdlAstConsumer : public clang::ASTConsumer
-    {
-    private:
-        std::unique_ptr<RuntimeClassVisitor> visitor;
+class GenIdlAstConsumer : public clang::ASTConsumer
+{
+  private:
+    std::unique_ptr<RuntimeClassVisitor> visitor;
 
-    public:
-        explicit GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose);
+  public:
+    explicit GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose);
 
-        virtual void HandleTranslationUnit(clang::ASTContext& context) override;
-    };
-}
+    virtual void HandleTranslationUnit(clang::ASTContext& context) override;
+};
+} // namespace idlgen
