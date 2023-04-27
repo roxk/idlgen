@@ -555,12 +555,7 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     }
     if (decl == nullptr)
     {
-        debugPrint([&]()
-            {
-                std::cout << qualifiedName << " is not a built-in type nor a name decl"
-                          << std::endl;
-            }
-        );
+        debugPrint([&]() { std::cout << qualifiedName << " is not a built-in type nor a name decl" << std::endl; });
         return "error-type";
     }
     auto name{decl->getNameAsString()};

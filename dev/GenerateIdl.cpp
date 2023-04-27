@@ -91,7 +91,8 @@ int main(int argc, const char** argv)
         "-D_Windows",
         "-D_UNICODE",
         "-DUNICODE",
-        "-DWINAPI_FAMILY=WINAPI_FAMILY_APP"};
+        "-DWINAPI_FAMILY=WINAPI_FAMILY_APP",
+    };
     for (auto&& include : Includes)
     {
         clangArgs.emplace_back("-I" + include);
