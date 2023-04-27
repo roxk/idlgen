@@ -502,11 +502,12 @@ std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCx
 
 std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::QualType type)
 {
+    auto nonRefType{StripReference(type)};
     if (type->isVoidType())
     {
         return "void";
     }
-    else if (type->isBooleanType())
+    else if (nonRefType->isBooleanType())
     {
         return "Boolean";
     }
@@ -519,22 +520,23 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
         record->printQualifiedName(typeOs);
         decl = record;
     }
-    else if (type->isScalarType())
+    else if (nonRefType->isScalarType())
     {
-        if (type->isEnumeralType())
+        if (nonRefType->isEnumeralType())
         {
-            auto enumType{clang::cast<clang::EnumType>(type.getCanonicalType())};
+            auto enumType{clang::cast<clang::EnumType>(nonRefType.getCanonicalType())};
             auto enumDecl{enumType->getDecl()};
             qualifiedName = enumDecl->getQualifiedNameAsString();
             decl = enumDecl;
         }
         else
         {
-            qualifiedName = type.getNonReferenceType().getCanonicalType().getAsString();
+            qualifiedName = nonRefType.getCanonicalType().getAsString();
         }
     }
     else
     {
+        debugPrint([&]() { std::cout << nonRefType.getAsString() << " is not a record nor scalar" << std::endl; });
         return "error-type";
     }
     if (auto result{cxxTypeToWinRtTypeMap.find(qualifiedName)}; result != cxxTypeToWinRtTypeMap.end())
@@ -553,6 +555,12 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     }
     if (decl == nullptr)
     {
+        debugPrint([&]()
+            {
+                std::cout << qualifiedName << " is not a built-in type nor a name decl"
+                          << std::endl;
+            }
+        );
         return "error-type";
     }
     auto name{decl->getNameAsString()};
@@ -604,17 +612,18 @@ bool idlgen::RuntimeClassVisitor::IsCppWinRtPrimitive(std::string const& type)
 
 bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly)
 {
-    if (type->isVoidType())
+    auto nonRefType{StripReference(type)};
+    if (nonRefType->isVoidType())
     {
         return true;
     }
-    if (type->isScalarType())
+    if (nonRefType->isScalarType())
     {
-        auto scalarType{type->getScalarTypeKind()};
+        auto scalarType{nonRefType->getScalarTypeKind()};
         return scalarType == clang::Type::STK_Integral || scalarType == clang::Type::STK_Bool ||
                scalarType == clang::Type::STK_Floating;
     }
-    if (type->isEnumeralType())
+    if (nonRefType->isEnumeralType())
     {
         return true;
     }
@@ -624,7 +633,7 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
         debugPrint(
             [&]()
             {
-                auto rawType{type.getNonReferenceType().getUnqualifiedType().getAsString()};
+                auto rawType{nonRefType.getUnqualifiedType().getAsString()};
                 std::cout << rawType << " struct=" << type->isStructureType() << " class=" << type->isClassType()
                           << " incomplete=" << type->isIncompleteType() << " reference=" << type->isReferenceType()
                           << "\n";
@@ -771,6 +780,16 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
         }
     }
     return idlgen::MethodKind::Method;
+}
+
+clang::QualType idlgen::RuntimeClassVisitor::StripReference(clang::QualType type)
+{
+    auto nonRef{type->isReferenceType() ? type.getNonReferenceType() : type};
+    if (nonRef.isLocalConstQualified())
+    {
+        nonRef.removeLocalConst();
+    }
+    return nonRef;
 }
 
 clang::CXXRecordDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetClassDecl(clang::QualType type)

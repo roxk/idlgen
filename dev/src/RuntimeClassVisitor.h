@@ -113,6 +113,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     bool IsDestructor(clang::CXXMethodDecl* method);
     bool ShouldSkipGenerating(clang::NamedDecl* decl);
     std::optional<MethodKind> GetRuntimeClassMethodKind(clang::CXXMethodDecl* method);
+    static clang::QualType StripReference(clang::QualType type);
     static clang::CXXRecordDecl* StripReferenceAndGetClassDecl(clang::QualType type);
     static const clang::NamedDecl* StripReferenceAndGetNamedDecl(clang::QualType type);
     std::optional<RuntimeClassKind> GetRuntimeClassKind(clang::QualType type);

@@ -71,11 +71,16 @@ namespace winrt::Root::A::implementation
 		void MethodPure();
 		void MethodOverriden(uint32_t a) override;
 		void MethodEnum(TestEnumInMethod a);
+		void MethodConstRefEnum(TestEnumInMethod const& a);
 		bool Method(bool a);
 		void MethodBool(bool a);
+		void MethodConstRefBool(bool const& a);
 		void MethodFloat(float a, double b);
+		void MethodConstRefFloat(float const& a, double const& b);
 		void MethodInt(int a, long b, int16_t c, int32_t d, int64_t e);
+		void MethodConstRefInt(int const& a, long const& b, int16_t const& c, int32_t const& d, int64_t const& e);
 		void MethodUInt(uint8_t a, uint16_t b, uint32_t c, uint64_t d);
+		void MethodConstRefUInt(uint8_t const& a, uint16_t const& b, uint32_t const& c, uint64_t const& d);
 		void MethodObject(Windows::Foundation::IInspectable const& a);
 		void MethodDateTime(Windows::Foundation::DateTime const& a);
 		void MethodTimeSpan(Windows::Foundation::TimeSpan const& a);
