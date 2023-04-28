@@ -64,6 +64,11 @@ namespace winrt
 			void operator()(const T& sender, const A& args) {}
 		};
 
+		template<typename T>
+		struct IAsyncOperation : Windows::Foundation::IInspectable
+		{
+		};
+
 		namespace Numerics
 		{
 			struct Vector2

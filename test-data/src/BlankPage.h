@@ -90,6 +90,7 @@ namespace winrt::Root::A::implementation
 		void MethodOverload(uint64_t a);
 		void MethodOverload(bool a, uint64_t b);
 		void MethodOverload(uint64_t a, bool b);
+		winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Foundation::TypedEventHandler<uint32_t, uint32_t>> MethodTemplateInTemplate();
 		void NamespaceSame(Root::A::SameViewModel const& a);
 		void NamespaceShallower(Root::ShallowerViewModel const& a);
 		void NamespaceSibling(Root::B::SiblingViewModel const& a);

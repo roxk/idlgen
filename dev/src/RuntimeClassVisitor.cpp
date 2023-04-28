@@ -593,6 +593,10 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
             }
             qualifiedWinRtName += "<";
             qualifiedWinRtName += paramString;
+            if (qualifiedWinRtName.back() == '>')
+            {
+                qualifiedWinRtName += " ";
+            }
             qualifiedWinRtName += ">";
         }
     }
