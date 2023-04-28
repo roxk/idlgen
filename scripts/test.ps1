@@ -76,6 +76,7 @@ $blankPageOutput = get-content $blankPageIdlPath
 exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"ShallowerViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"SiblingViewModel.idl`";"
+exists -src $blankPageOutput -line "import `"SomeNamespace\DifferentPathViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"TestIncludeImpl.idl`";"
 exists -src $blankPageOutput -line "import `"TestIncludeInTemplate.idl`";"
 # Namespace
@@ -156,6 +157,15 @@ $sameVmOutput = get-content $sameVmIdlPath
 exists -src $sameVmOutput -line "[default_interface]"
 exists -src $sameVmOutput -line "runtimeclass SameViewModel"
 absent -src $sameVmOutput -line "runtimeclass SameViewModelHide"
+
+$differentPathVmSrc = "$testCodeDir\SomeNamespace\DifferentPathViewModel.h"
+gen -filePath $differentPathVmSrc
+
+$differentPathVmIdlPath = "$testCodeDir\SomeNamespace\DifferentPathViewModel.idl"
+$differentPathVmOutput = get-content $differentPathVmIdlPath
+
+exists -src $differentPathVmOutput -line "[default_interface]"
+exists -src $differentPathVmOutput -line "runtimeclass DifferentPathViewModel"
 
 $someEnumSrc = "$testCodeDir\SomeEnum.h"
 gen -filePath $someEnumSrc

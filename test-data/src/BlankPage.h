@@ -7,6 +7,7 @@
 #include "SameViewModel.h"
 #include "TestIncludeImpl.h"
 #include "TestIncludeInTemplate.h"
+#include "SomeNamespace/DifferentPathViewModel.h"
 
 namespace winrt::Root::A::implementation
 {
@@ -94,6 +95,7 @@ namespace winrt::Root::A::implementation
 		void NamespaceSame(Root::A::SameViewModel const& a);
 		void NamespaceShallower(Root::ShallowerViewModel const& a);
 		void NamespaceSibling(Root::B::SiblingViewModel const& a);
+		void DifferentPath(Root::SomeNamespace::DifferentPathViewModel const& a);
 		[[clang::annotate("idlgen::property")]]
 		static Windows::UI::Xaml::DependencyProperty DependencyProperty();
 		[[clang::annotate("idlgen::property")]]

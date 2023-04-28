@@ -102,7 +102,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
   private:
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
     MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method);
-    void FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type);
+    void FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFilePath, clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     std::string TranslateCxxTypeToWinRtType(clang::QualType type);
     static bool IsCppWinRtPrimitive(std::string const& type);
@@ -123,7 +123,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     static std::vector<std::string> GetWinRtNamespaces(clang::NamedDecl* decl);
     static std::string GetQualifiedName(clang::CXXRecordDecl* record);
     std::optional<std::string> GetLocFilePath(clang::NamedDecl* decl);
-    std::string GetLocFileName(clang::CXXRecordDecl* record);
+    std::optional<std::string> GetLocFileName(clang::CXXRecordDecl* record);
     void PrintNameSpaces(std::vector<std::string> namespaces);
     void PrintMethodParams(clang::CXXMethodDecl* method);
     /// <summary>

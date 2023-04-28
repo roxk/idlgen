@@ -32,4 +32,9 @@ namespace winrt::Root
 	{
 		struct SiblingViewModel : Base {};
 	}
+
+	namespace SomeNamespace
+	{
+		struct DifferentPathViewModel : Base {};
+	}
 }

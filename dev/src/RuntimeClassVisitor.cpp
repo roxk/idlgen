@@ -96,7 +96,12 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
     }
     auto methods(record->methods());
-    auto thisClassFileName = GetLocFileName(record);
+    auto thisClassFilePath = GetLocFilePath(record);
+    if (!thisClassFilePath)
+    {
+        debugPrint([]() { std::cout << "Failed to get class file path" << std::endl; });
+        return true;
+    }
     for (auto&& method : methods)
     {
         debugPrint(
@@ -111,7 +116,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         auto params{method->parameters()};
         for (auto&& param : params)
         {
-            FindFileToInclude(includes, thisClassFileName, param->getType());
+            FindFileToInclude(includes, *thisClassFilePath, param->getType());
         }
         if (IsDestructor(method))
         {
@@ -144,7 +149,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             group.method = method;
         }
-        FindFileToInclude(includes, thisClassFileName, method->getReturnType());
+        FindFileToInclude(includes, *thisClassFilePath, method->getReturnType());
     }
     // Add default_interface if the runtime class is empty
     if (methodGroups.empty())
@@ -431,7 +436,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
 }
 
 void idlgen::RuntimeClassVisitor::FindFileToInclude(
-    std::set<std::string>& includes, std::string const& thisClassFileName, clang::QualType type
+    std::set<std::string>& includes, std::string const& thisClassFilePath, clang::QualType type
 )
 {
     auto paramRecord{StripReferenceAndGetClassDecl(type)};
@@ -452,7 +457,7 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(
                 {
                     continue;
                 }
-                FindFileToInclude(includes, thisClassFileName, param.getAsType());
+                FindFileToInclude(includes, thisClassFilePath, param.getAsType());
             }
         }
         auto implType = implementationTypes.find(paramRecord->getNameAsString());
@@ -460,15 +465,77 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(
         {
             return;
         }
-        auto paramClassFileName{GetLocFileName(implType->second)};
-        if (thisClassFileName != paramClassFileName)
+        auto paramClassFilePathOpt{GetLocFilePath(implType->second)};
+        if (!paramClassFilePathOpt)
         {
-            auto extension{llvm::sys::path::extension(paramClassFileName)};
-            if (auto extensionIndex = paramClassFileName.rfind(extension); extensionIndex != std::string::npos)
+            debugPrint(
+                [&]() {
+                    std::cout << "Failed to get file path for to-be-included " << implType->second->getNameAsString()
+                              << std::endl;
+                }
+            );
+            return;
+        }
+        auto& paramClassFilePath{*paramClassFilePathOpt};
+        if (thisClassFilePath != paramClassFilePath)
+        {
+            // Find the relative path to include.
+            namespace lsp = llvm::sys::path;
+            const auto thisPathEnd = lsp::end(thisClassFilePath);
+            const auto paramPathEnd = lsp::end(paramClassFilePath);
+            std::optional<std::string> includeOpt;
+            for (auto thisPathIt = lsp::begin(thisClassFilePath), paramPathIt = lsp::begin(paramClassFilePath);
+                 thisPathIt != thisPathEnd && paramPathIt != paramPathEnd;)
             {
-                paramClassFileName.erase(extensionIndex);
+                auto& thisSegment{*thisPathIt};
+                auto& paramSegment{*paramPathIt};
+                if (thisSegment != paramSegment)
+                {
+                    std::string include;
+                    auto backPathIt = thisPathIt;
+                    ++backPathIt;
+                    // Try to add ../
+                    for (; backPathIt != thisPathEnd; ++backPathIt)
+                    {
+                        include += "..";
+                        include += lsp::get_separator();
+                    }
+                    for (auto includeIt = paramPathIt;;)
+                    {
+                        include += *includeIt;
+                        ++includeIt;
+                        if (includeIt == paramPathEnd)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            include += lsp::get_separator();
+                        }
+                    }
+                    includeOpt.emplace(std::move(include));
+                    break;
+                }
+                ++thisPathIt;
+                ++paramPathIt;
             }
-            includes.insert(paramClassFileName + ".idl");
+            if (!includeOpt)
+            {
+                debugPrint(
+                    [&]() {
+                        std::cout << "Failed to generate include for " << implType->second->getNameAsString()
+                                  << std::endl;
+                    }
+                );
+                return;
+            }
+            auto& include{*includeOpt};
+            auto extension{llvm::sys::path::extension(include)};
+            if (auto extensionIndex = include.rfind(extension); extensionIndex != std::string::npos)
+            {
+                include.erase(extensionIndex);
+            }
+            includes.insert(include + ".idl");
         }
     }
 }
@@ -1087,10 +1154,14 @@ std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::Na
     return file->getName().data();
 }
 
-std::string idlgen::RuntimeClassVisitor::GetLocFileName(clang::CXXRecordDecl* record)
+std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFileName(clang::CXXRecordDecl* record)
 {
     auto& srcManager{astContext.getSourceManager()};
     auto file{srcManager.getFileEntryForID(srcManager.getFileID(record->getLocation()))};
+    if (file == nullptr)
+    {
+        return std::nullopt;
+    }
     return llvm::sys::path::filename(file->getName()).str();
 }
 
