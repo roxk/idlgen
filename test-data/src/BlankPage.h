@@ -36,6 +36,7 @@ namespace winrt::Root::A::implementation
 			"SiblingViewModel.idl")]]
 	[[clang::annotate("idlgen::attribute=bindable")]]
 	[[clang::annotate("idlgen::attribute=default_interface")]]
+	[[clang::annotate("idlgen::attribute=Windows.UI.Xaml.Markup.ContentProperty(\"Property\")")]]
 	BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>, Interface
 	{
 		BlankPage();

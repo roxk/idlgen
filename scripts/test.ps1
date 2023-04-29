@@ -84,6 +84,7 @@ exists -src $blankPageOutput -line "namespace Root.A"
 # Attributes
 exists -src $blankPageOutput -line "[default_interface]"
 exists -src $blankPageOutput -line "[bindable]"
+exists -src $blankPageOutput -line "[Windows.UI.Xaml.Markup.ContentProperty(`"Property`")]"
 # Runtime class name
 exists -src $blankPageOutput -line "runtimeclass BlankPage"
 # Extend

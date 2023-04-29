@@ -330,7 +330,22 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
         llvm::raw_string_ostream prettyStream(pretty);
         attr->printPretty(prettyStream, clang::PrintingPolicy(clang::LangOptions()));
         llvm::SmallVector<llvm::StringRef> splitted;
-        llvm::SplitString(pretty, splitted, "\"");
+        const auto firstQuoteIndex{pretty.find("\"")};
+        const auto lastQuoteIndex{pretty.rfind("\"")};
+        const std::string_view prettyView{pretty};
+        if (firstQuoteIndex > 0)
+        {
+            splitted.emplace_back(prettyView.substr(0, firstQuoteIndex));
+        }
+        if (lastQuoteIndex >= firstQuoteIndex + 1)
+        {
+            const auto start{firstQuoteIndex + 1};
+            splitted.emplace_back(prettyView.substr(start, lastQuoteIndex - start));
+            if (lastQuoteIndex + 1 < prettyView.size())
+            {
+                splitted.emplace_back(prettyView.substr(lastQuoteIndex + 1));
+            }
+        }
         constexpr auto rawAttrContentIndex = 1;
         constexpr auto expectedRawAttrSize = 3;
         if (splitted.size() != expectedRawAttrSize)
@@ -342,7 +357,7 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     auto annotationOpt{annotationGetter()};
     if (!annotationOpt)
     {
-        std::nullopt;
+        return std::nullopt;
     }
     auto& annotation{*annotationOpt};
     if (annotation.find("idlgen::") != 0)
