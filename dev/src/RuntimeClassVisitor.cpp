@@ -491,12 +491,22 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(
                 auto& paramSegment{*paramPathIt};
                 if (thisSegment != paramSegment)
                 {
+                    debugPrint([&]()
+                        {
+                            std::cout << "Paths diverged when this=" << thisSegment.str()
+                                      << " include=" << paramSegment.str()
+                                      << " thisPath=" << thisClassFilePath
+                                      << " includePath=" << paramClassFilePath
+                                << std::endl;
+                        }
+                    );
                     std::string include;
                     auto backPathIt = thisPathIt;
                     ++backPathIt;
                     // Try to add ../
                     for (; backPathIt != thisPathEnd; ++backPathIt)
                     {
+                        debugPrint([&]() { std::cout << "Adding .. for " << backPathIt->str() << std::endl; });
                         include += "..";
                         include += lsp::get_separator();
                     }
@@ -1151,7 +1161,7 @@ std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::Na
     {
         return std::nullopt;
     }
-    return file->getName().data();
+    return file->tryGetRealPathName().str();
 }
 
 std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFileName(clang::CXXRecordDecl* record)
