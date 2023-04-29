@@ -491,13 +491,12 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(
                 auto& paramSegment{*paramPathIt};
                 if (thisSegment != paramSegment)
                 {
-                    debugPrint([&]()
+                    debugPrint(
+                        [&]()
                         {
                             std::cout << "Paths diverged when this=" << thisSegment.str()
-                                      << " include=" << paramSegment.str()
-                                      << " thisPath=" << thisClassFilePath
-                                      << " includePath=" << paramClassFilePath
-                                << std::endl;
+                                      << " include=" << paramSegment.str() << " thisPath=" << thisClassFilePath
+                                      << " includePath=" << paramClassFilePath << std::endl;
                         }
                     );
                     std::string include;
