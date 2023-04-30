@@ -844,7 +844,9 @@ bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
     return false;
 }
 
-std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMethodKind(bool isPropertyDefault, clang::CXXMethodDecl* method)
+std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMethodKind(
+    bool isPropertyDefault, clang::CXXMethodDecl* method
+)
 {
     if (method->getAccess() != clang::AccessSpecifier::AS_public)
     {
