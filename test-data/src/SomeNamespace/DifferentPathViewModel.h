@@ -2,8 +2,7 @@
 
 namespace winrt::Root::SomeNamespace::implementation
 {
-	class DifferentPathViewModel : DifferentPathViewModelT<DifferentPathViewModel>
+	struct DifferentPathViewModel : DifferentPathViewModelT<DifferentPathViewModel>
 	{
-
 	};
 }

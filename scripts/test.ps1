@@ -30,6 +30,13 @@ function gen {
 	}
 }
 
+function get-gen-output {
+	param([string]$filePath)
+	gen -filePath $filePath
+	$idlPath = $filePath.Replace(".h", ".idl")
+	return get-content $idlPath
+}
+
 function expect {
 	param([string]$desc, [string]$expected, [string]$actual)
 	if ($expected -ne $actual) {
@@ -66,12 +73,8 @@ function absent {
 }
 
 # Test BlankPage
-$blankPageSrc = "$testCodeDir\BlankPage.h"
-gen -filePath $blankPageSrc
-
-$blankPageIdlPath = "$testCodeDir\BlankPage.idl"
-$blankPageOutput = get-content $blankPageIdlPath
-
+# TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })
+$blankPageOutput = get-gen-output "$testCodeDir\BlankPage.h"
 # Import
 exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"ShallowerViewModel.idl`";"
@@ -149,73 +152,45 @@ absent -src $blankPageOutput -line "void HideMethod();"
 absent -src $blankPageOutput -line "Root.A.factory_implementation";
 absent -src $blankPageOutput -line "warning";
 
-$sameVmSrc = "$testCodeDir\SameViewModel.h"
-gen -filePath $sameVmSrc
-
-$sameVmIdlPath = "$testCodeDir\SameViewModel.idl"
-$sameVmOutput = get-content $sameVmIdlPath
-
+$sameVmOutput = get-gen-output "$testCodeDir\SameViewModel.h"
 exists -src $sameVmOutput -line "[default_interface]"
 exists -src $sameVmOutput -line "runtimeclass SameViewModel"
 absent -src $sameVmOutput -line "runtimeclass SameViewModelHide"
 
-$differentPathVmSrc = "$testCodeDir\SomeNamespace\DifferentPathViewModel.h"
-gen -filePath $differentPathVmSrc
-
-$differentPathVmIdlPath = "$testCodeDir\SomeNamespace\DifferentPathViewModel.idl"
-$differentPathVmOutput = get-content $differentPathVmIdlPath
-
+$differentPathVmOutput = get-gen-output -filePath "$testCodeDir\SomeNamespace\DifferentPathViewModel.h"
 exists -src $differentPathVmOutput -line "[default_interface]"
 exists -src $differentPathVmOutput -line "runtimeclass DifferentPathViewModel"
 
-$someEnumSrc = "$testCodeDir\SomeEnum.h"
-gen -filePath $someEnumSrc
+$differentPathConsumerVmOutput = get-gen-output -filePath "$testCodeDir\SomeNamespace\DifferentPathConsumerViewModel.h"
+exists -src $differentPathConsumerVmOutput -line "runtimeclass DifferentPathConsumerViewModel"
+exists -src $differentPathConsumerVmOutput -line "import `"SomeNamespace\DifferentPathViewModel.idl`";"
 
-$someEnumIdlPath = "$testCodeDir\SomeEnum.idl"
-$someEnumOutput = get-content $someEnumIdlPath
-
+$someEnumOutput = get-gen-output -filePath "$testCodeDir\SomeEnum.h"
 exists -src $someEnumOutput -line "enum SomeEnum"
 exists -src $someEnumOutput -line "Active = 0,"
 exists -src $someEnumOutput -line "InActive = 1,"
 exists -src $someEnumOutput -line "Unknown = 2,"
 exists -src $someEnumOutput -line "};"
 
-$someFlagSrc = "$testCodeDir\SomeFlag.h"
-gen -filePath $someFlagSrc
-
-$someFlagIdlPath = "$testCodeDir\SomeFlag.idl"
-$someFlagOutput = get-content $someFlagIdlPath
-
+$someFlagOutput = get-gen-output "$testCodeDir\SomeFlag.h"
 exists -src $someFlagOutput -line "[flags]"
 exists -src $someFlagOutput -line "enum SomeFlag"
 exists -src $someFlagOutput -line "Camera = 0x00000001,"
 exists -src $someFlagOutput -line "Microphone = 0x00000002,"
 exists -src $someFlagOutput -line "};"
 
-$someStructSrc = "$testCodeDir\SomeStruct.h"
-gen -filePath $someStructSrc
-
-$someStructIdlPath = "$testCodeDir\SomeStruct.idl"
-$someStructOutput = get-content $someStructIdlPath
-
+$someStructOutput = get-gen-output "$testCodeDir\SomeStruct.h"
 exists -src $someStructOutput -line "struct SomeStruct"
 exists -src $someStructOutput -line "Int64 X;"
 exists -src $someStructOutput -line "Int64 Y;"
 exists -src $someStructOutput -line "};"
 
-$someDelegateSrc = "$testCodeDir\SomeDelegate.h"
-gen -filePath $someDelegateSrc
-
-$someDelegateIdlPath = "$testCodeDir\SomeDelegate.idl"
-$someDelegateOutput = get-content $someDelegateIdlPath
-
+$someDelegateOutput = get-gen-output "$testCodeDir\SomeDelegate.h"
 exists -src $someDelegateOutput -line "delegate void SomeEventHandler(Root.ShallowerViewModel vm, UInt64 e);"
 
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
 gen -filePath $nonWinRtHeaderSrc
-
 $nonWinRtHeaderIdlPath = "$testCodeDir\NonWinRtHeader.idl"
-
 if (test-path $nonWinRtHeaderIdlPath) {
 	$doesWinRtHeaderIdlExist = $true
 } else {

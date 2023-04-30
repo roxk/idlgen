@@ -36,5 +36,6 @@ namespace winrt::Root
 	namespace SomeNamespace
 	{
 		struct DifferentPathViewModel : Base {};
+		struct DifferentPathConsumerViewModel : Base {};
 	}
 }
