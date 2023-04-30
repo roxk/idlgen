@@ -6,6 +6,7 @@
 #include "clang/Parse/RAIIObjectsForParser.h"
 #include "clang/Sema/Template.h"
 #include <cassert>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -96,12 +97,6 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
     }
     auto methods(record->methods());
-    auto thisClassFilePath = GetLocFilePath(record);
-    if (!thisClassFilePath)
-    {
-        debugPrint([]() { std::cout << "Failed to get class file path" << std::endl; });
-        return true;
-    }
     for (auto&& method : methods)
     {
         debugPrint(
@@ -116,7 +111,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         auto params{method->parameters()};
         for (auto&& param : params)
         {
-            FindFileToInclude(includes, *thisClassFilePath, param->getType());
+            FindFileToInclude(includes, param->getType());
         }
         if (IsDestructor(method))
         {
@@ -149,7 +144,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             group.method = method;
         }
-        FindFileToInclude(includes, *thisClassFilePath, method->getReturnType());
+        FindFileToInclude(includes, method->getReturnType());
     }
     // Add default_interface if the runtime class is empty
     if (methodGroups.empty())
@@ -450,9 +445,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
     return entry.first->second;
 }
 
-void idlgen::RuntimeClassVisitor::FindFileToInclude(
-    std::set<std::string>& includes, std::string const& thisClassFilePath, clang::QualType type
-)
+void idlgen::RuntimeClassVisitor::FindFileToInclude(std::set<std::string>& includes, clang::QualType type)
 {
     auto paramRecord{StripReferenceAndGetClassDecl(type)};
     if (paramRecord == nullptr)
@@ -472,7 +465,7 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(
                 {
                     continue;
                 }
-                FindFileToInclude(includes, thisClassFilePath, param.getAsType());
+                FindFileToInclude(includes, param.getAsType());
             }
         }
         auto implType = implementationTypes.find(paramRecord->getNameAsString());
@@ -492,26 +485,42 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(
             return;
         }
         auto& paramClassFilePath{*paramClassFilePathOpt};
-        if (thisClassFilePath != paramClassFilePath)
+        auto projectRoot{std::filesystem::current_path().string()};
+        if (projectRoot != paramClassFilePath)
         {
             // Find the relative path to include.
             namespace lsp = llvm::sys::path;
-            const auto thisPathEnd = lsp::end(thisClassFilePath);
+            const auto thisPathEnd = lsp::end(projectRoot);
             const auto paramPathEnd = lsp::end(paramClassFilePath);
             std::optional<std::string> includeOpt;
-            for (auto thisPathIt = lsp::begin(thisClassFilePath), paramPathIt = lsp::begin(paramClassFilePath);
+            for (auto thisPathIt = lsp::begin(projectRoot), paramPathIt = lsp::begin(paramClassFilePath);
                  thisPathIt != thisPathEnd && paramPathIt != paramPathEnd;)
             {
                 auto& thisSegment{*thisPathIt};
                 auto& paramSegment{*paramPathIt};
+                bool startPath = false;
                 if (thisSegment != paramSegment)
+                {
+                    startPath = true;
+                }
+                else
+                {
+                    auto nextThis = thisPathIt;
+                    ++nextThis;
+                    if (nextThis == thisPathEnd)
+                    {
+                        startPath = true;
+                        ++paramPathIt;
+                    }
+                }
+                if (startPath)
                 {
                     debugPrint(
                         [&]()
                         {
                             std::cout << "Paths diverged when this=" << thisSegment.str()
-                                      << " include=" << paramSegment.str() << " thisPath=" << thisClassFilePath
-                                      << " includePath=" << paramClassFilePath << std::endl;
+                                      << " include=" << paramSegment.str() << " includePath=" << paramClassFilePath
+                                      << " workingDir=" << std::filesystem::current_path() << std::endl;
                         }
                     );
                     std::string include;

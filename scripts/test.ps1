@@ -23,7 +23,9 @@ $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
 function gen {
 	param([string]$filePath)
 	$LASTEXITCODE = 0
-	&$idlgen $includes $verboseFlag $filePath --gen
+	push-location $testCodeDir
+	&$idlgen $includes $verboseFlag $filePath --gen | out-host
+	pop-location
 	if ($LASTEXITCODE -ne 0) {
 		echo "idlgen returned $LASTEXITCODE"
 		exit 1
@@ -32,6 +34,10 @@ function gen {
 
 function get-gen-output {
 	param([string]$filePath)
+	$idlPath = $filePath.Replace(".h", ".idl")
+	if (test-path $idlPath) {
+		remove-item $idlPath
+	}
 	gen -filePath $filePath
 	$idlPath = $filePath.Replace(".h", ".idl")
 	return get-content $idlPath

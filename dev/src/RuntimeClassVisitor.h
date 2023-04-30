@@ -102,7 +102,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
   private:
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
     MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method);
-    void FindFileToInclude(std::set<std::string>& includes, std::string const& thisClassFilePath, clang::QualType type);
+    void FindFileToInclude(std::set<std::string>& includes, clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     std::string TranslateCxxTypeToWinRtType(clang::QualType type);
     static bool IsCppWinRtPrimitive(std::string const& type);
