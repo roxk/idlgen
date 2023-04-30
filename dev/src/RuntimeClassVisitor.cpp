@@ -72,6 +72,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     std::map<std::string, MethodGroup> methodGroups;
     std::set<clang::CXXMethodDecl*> events;
     auto cxxAttrs{record->attrs()};
+    bool isPropertyDefault = false;
     for (auto&& attr : cxxAttrs)
     {
         auto idlGenAttr = GetIdlGenAttr(attr);
@@ -95,7 +96,13 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
                 includes.insert(importFile);
             }
         }
+        else if (idlGenAttr->type == IdlGenAttrType::Property)
+        {
+            isPropertyDefault = true;
+        }
     }
+    debugPrint([&]()
+               { std::cout << record->getNameAsString() << " propertyDefault=" << isPropertyDefault << std::endl; });
     auto methods(record->methods());
     for (auto&& method : methods)
     {
@@ -103,7 +110,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             [&]()
             { std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl; }
         );
-        auto methodKind{GetRuntimeClassMethodKind(method)};
+        auto methodKind{GetRuntimeClassMethodKind(isPropertyDefault, method)};
         if (!methodKind)
         {
             continue;
@@ -829,14 +836,14 @@ bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
     return false;
 }
 
-std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMethodKind(clang::CXXMethodDecl* method)
+std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMethodKind(bool isPropertyDefault, clang::CXXMethodDecl* method)
 {
     if (method->getAccess() != clang::AccessSpecifier::AS_public)
     {
         return std::nullopt;
     }
     auto methodAttrs{method->attrs()};
-    auto isProperty{false};
+    auto isProperty{isPropertyDefault};
     for (auto&& attr : methodAttrs)
     {
         auto idlGenAttr = GetIdlGenAttr(attr);
@@ -1246,7 +1253,7 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl
         {
             return false;
         }
-        if (GetRuntimeClassMethodKind(candidateMethod) != MethodKind::Method)
+        if (GetRuntimeClassMethodKind(false, candidateMethod) != MethodKind::Method)
         {
             return false;
         }

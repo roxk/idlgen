@@ -158,6 +158,15 @@ absent -src $blankPageOutput -line "void HideMethod();"
 absent -src $blankPageOutput -line "Root.A.factory_implementation";
 absent -src $blankPageOutput -line "warning";
 
+$propertyBagOutput = get-gen-output "$testCodeDir\PropertyBag.h"
+exists -src $propertyBagOutput -line "runtimeclass PropertyBag"
+exists -src $propertyBagOutput -line "UInt32 UInt32Prop;"
+exists -src $propertyBagOutput -line "Root.A.SameViewModel ClassProp{get;};"
+exists -src $propertyBagOutput -line "void Method(UInt32 a, UInt32 b);"
+exists -src $propertyBagOutput -line "Boolean IsErrored{get;};"
+exists -src $propertyBagOutput -line "Boolean IsLoading{get;};"
+exists -src $propertyBagOutput -line "Boolean IsIdle{get;};"
+
 $sameVmOutput = get-gen-output "$testCodeDir\SameViewModel.h"
 exists -src $sameVmOutput -line "[default_interface]"
 exists -src $sameVmOutput -line "runtimeclass SameViewModel"

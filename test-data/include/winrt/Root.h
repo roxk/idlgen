@@ -26,6 +26,8 @@ namespace winrt::Root
 			Doc,
 			Sample
 		};
+
+		struct PropertyBag : Base {};
 	}
 
 	namespace B
