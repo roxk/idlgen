@@ -29,7 +29,8 @@ enum class IdlGenAttrType
     Attribute,
     Extend,
     Hide,
-    Property
+    Property,
+    Method
 };
 struct IdlGenAttr
 {

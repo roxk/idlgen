@@ -100,6 +100,10 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             isPropertyDefault = true;
         }
+        else if (idlGenAttr->type == IdlGenAttrType::Method)
+        {
+            isPropertyDefault = false;
+        }
     }
     debugPrint([&]()
                { std::cout << record->getNameAsString() << " propertyDefault=" << isPropertyDefault << std::endl; });
@@ -414,6 +418,10 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     else if (idlGenAttr == "property")
     {
         return IdlGenAttr{IdlGenAttrType::Property, {}};
+    }
+    else if (idlGenAttr == "method")
+    {
+        return IdlGenAttr{IdlGenAttrType::Method, {}};
     }
     return std::nullopt;
 }
@@ -858,6 +866,10 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
         else if (idlGenAttr->type == IdlGenAttrType::Property)
         {
             isProperty = true;
+        }
+        else if (idlGenAttr->type == IdlGenAttrType::Method)
+        {
+            isProperty = false;
         }
     }
     auto params{method->parameters()};

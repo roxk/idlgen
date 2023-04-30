@@ -69,6 +69,10 @@ namespace winrt
 		{
 		};
 
+		struct IAsyncAction : Windows::Foundation::IInspectable
+		{
+		};
+
 		namespace Numerics
 		{
 			struct Vector2
