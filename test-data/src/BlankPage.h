@@ -55,7 +55,7 @@ namespace winrt::Root::A::implementation
 		[[clang::annotate("idlgen::property")]]
 		void Property(winrt::hstring const& a);
 		[[clang::annotate("idlgen::property")]]
-		void VoidGetterIsGeneratedAsIs();
+		void VoidGetterIsMethod();
 		event_token Event(winrt::Windows::Foundation::EventHandler const& handler);
 		void Event(winrt::event_token token);
 		event_token EventWithConstRefToken(winrt::Windows::Foundation::EventHandler const& handler);

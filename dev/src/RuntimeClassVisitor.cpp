@@ -878,7 +878,9 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
     auto returnType{method->getReturnType()};
     if (isProperty && params.size() == 0)
     {
-        return IsRuntimeClassMethodType(returnType) ? std::optional(idlgen::MethodKind::Getter) : std::nullopt;
+        return returnType->isVoidType()               ? std::optional(idlgen::MethodKind::Method)
+               : IsRuntimeClassMethodType(returnType) ? std::optional(idlgen::MethodKind::Getter)
+                                                      : std::nullopt;
     }
     if (isProperty && params.size() == 1)
     {
