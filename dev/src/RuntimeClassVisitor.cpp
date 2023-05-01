@@ -23,7 +23,8 @@ void idlgen::RuntimeClassVisitor::Reset()
 }
 
 std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::cxxTypeToWinRtTypeMap{
-    idlgen::RuntimeClassVisitor::initCxxTypeToWinRtTypeMap()};
+    idlgen::RuntimeClassVisitor::initCxxTypeToWinRtTypeMap(),
+};
 
 bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* record)
 {
