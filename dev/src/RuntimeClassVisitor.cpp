@@ -75,7 +75,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     std::map<std::string, MethodHolder> methodGroups;
     std::map<std::string, clang::CXXMethodDecl*> events;
     auto cxxAttrs{record->attrs()};
-    bool isPropertyDefault = false;
+    bool isClassPropertyDefault = false;
     for (auto&& attr : cxxAttrs)
     {
         auto idlGenAttr = GetIdlGenAttr(attr);
@@ -101,17 +101,18 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         else if (idlGenAttr->type == IdlGenAttrType::Property)
         {
-            isPropertyDefault = true;
+            isClassPropertyDefault = true;
         }
         else if (idlGenAttr->type == IdlGenAttrType::Method)
         {
-            isPropertyDefault = false;
+            isClassPropertyDefault = false;
         }
     }
     debugPrint([&]()
-               { std::cout << record->getNameAsString() << " propertyDefault=" << isPropertyDefault << std::endl; });
+               { std::cout << record->getNameAsString() << " propertyDefault=" << isClassPropertyDefault << std::endl; }
+    );
     auto methods(record->methods());
-    auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name)
+    auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault)
     {
         assert(method != nullptr);
         auto methodKind{GetRuntimeClassMethodKind(isPropertyDefault, method)};
@@ -165,11 +166,29 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             [&]()
             { std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl; }
         );
-        tryAddMethod(method, method->getNameAsString());
+        tryAddMethod(method, method->getNameAsString(), isClassPropertyDefault);
     }
     auto fields{record->fields()};
     for (auto&& field : fields)
     {
+        bool isFieldPropertyDefault{isClassPropertyDefault};
+        auto fieldAttrs{field->attrs()};
+        for (auto&& fieldAttr : fieldAttrs)
+        {
+            auto idlgenAttr{GetIdlGenAttr(fieldAttr)};
+            if (!idlgenAttr)
+            {
+                continue;
+            }
+            if (idlgenAttr->type == idlgen::IdlGenAttrType::Property)
+            {
+                isFieldPropertyDefault = true;
+            }
+            else if (idlgenAttr->type == idlgen::IdlGenAttrType::Method)
+            {
+                isFieldPropertyDefault = false;
+            }
+        }
         if (field->getAccess() != clang::AccessSpecifier::AS_public)
         {
             continue;
@@ -233,7 +252,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
                                   << std::endl;
                     }
                 );
-                tryAddMethod(fieldMethod, field->getNameAsString());
+                tryAddMethod(fieldMethod, field->getNameAsString(), isFieldPropertyDefault);
             }
         );
     }

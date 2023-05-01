@@ -118,6 +118,8 @@ namespace winrt::Root::A::implementation
 		void MethodMixingImplAndProjected(Root::A::SameViewModel const& a, Root::A::implementation::SameViewModel const& b);
 		[[clang::annotate("idlgen::hide")]]
 		void HideMethod();
+		[[clang::annotate("idlgen::property")]]
+		cppxaml::XamlProperty<bool> CppXamlProperty;
 		// Don't need property attribute here or at class level
 		wil::single_threaded_property<Root::A::SameViewModel> WilProp;
 		wil::single_threaded_rw_property<Root::A::SameViewModel> WilRwProp;
