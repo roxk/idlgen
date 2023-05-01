@@ -22,5 +22,9 @@ namespace winrt::Root::A::implementation
 		cppxaml::XamlProperty<bool> CppXamlProperty;
 		wil::single_threaded_property<Root::A::SameViewModel> WilProp;
 		wil::single_threaded_rw_property<Root::A::SameViewModel> WilRwProp;
+	private:
+		cppxaml::XamlProperty<bool> PrivateCppXamlProperty;
+		wil::single_threaded_property<Root::A::SameViewModel> PrivateWilProp;
+		wil::single_threaded_rw_property<Root::A::SameViewModel> PrivateWilRwProp;
 	};
 }

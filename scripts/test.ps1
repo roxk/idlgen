@@ -142,6 +142,8 @@ exists -src $blankPageOutput -line "Root.A.TestIncludeImpl TestIncludeImplWithOn
 exists -src $blankPageOutput -line "String UnqualifiedType{get;};"
 exists -src $blankPageOutput -line "event Windows.Foundation.EventHandler Event;"
 exists -src $blankPageOutput -line "event Windows.Foundation.TypedEventHandler<Root.A.BlankPage, UInt32> TypedEvent;"
+exists -src $blankPageOutput -line "Root.A.SameViewModel WilProp{get;};"
+exists -src $blankPageOutput -line "Root.A.SameViewModel WilRwProp;"
 # Stuff that should be hidden
 absent -src $blankPageOutput -line "BlankPage(BlankPage that);"
 absent -src $blankPageOutput -line "void operator=(BlankPage that);"
@@ -170,6 +172,12 @@ exists -src $propertyBagOutput -line "Windows.Foundation.IAsyncAction MethodAsyn
 exists -src $propertyBagOutput -line "void MethodPure();"
 exists -src $propertyBagOutput -line "void MethodBool(Boolean a);"
 exists -src $propertyBagOutput -line "Boolean CppXamlProperty;"
+exists -src $propertyBagOutput -line "Root.A.SameViewModel WilProp{get;};"
+exists -src $propertyBagOutput -line "Root.A.SameViewModel WilRwProp;"
+# hidden
+absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateCppXamlProperty"
+absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateWilProp"
+absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateWilRwProp"
 
 $sameVmOutput = get-gen-output "$testCodeDir\SameViewModel.h"
 exists -src $sameVmOutput -line "[default_interface]"

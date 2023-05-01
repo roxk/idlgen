@@ -7,6 +7,7 @@
 #include <optional>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace llvm
@@ -37,9 +38,24 @@ struct IdlGenAttr
     IdlGenAttrType type;
     std::vector<std::string> args;
 };
-struct MethodGroup
+class RuntimeClassVisitor;
+class MethodPrinter
 {
+  public:
+    virtual ~MethodPrinter()
+    {
+    }
+    virtual void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) = 0;
+};
+class MethodGroup : public MethodPrinter
+{
+  private:
     std::string methodName;
+
+  public:
+    MethodGroup(
+        std::string methodName, clang::CXXMethodDecl* method, clang::CXXMethodDecl* getter, clang::CXXMethodDecl* setter
+    );
     clang::CXXMethodDecl* method;
     clang::CXXMethodDecl* getter;
     clang::CXXMethodDecl* setter;
@@ -51,18 +67,19 @@ struct MethodGroup
     {
         return getter != nullptr && setter == nullptr;
     }
-    bool isMethod() const
+    bool IsMethod() const
     {
         return method != nullptr;
     }
-    clang::CXXMethodDecl* getterOrElse()
+    clang::CXXMethodDecl* GetterOrElse()
     {
         return method != nullptr ? method : getter != nullptr ? getter : setter;
     }
-    clang::CXXMethodDecl* setterOrElse()
+    clang::CXXMethodDecl* SetterOrElse()
     {
         return method != nullptr ? method : setter != nullptr ? setter : getter;
     }
+    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
 enum class RuntimeClassKind
 {
@@ -80,6 +97,28 @@ enum class MethodKind
     Getter,
     Method
 };
+enum class PropertyKind
+{
+    Getter,
+    Property
+};
+class PropertyMethodPrinter : public MethodPrinter
+{
+  private:
+    std::string methodName;
+    clang::QualType type;
+    PropertyKind kind;
+    bool isStatic{};
+
+  public:
+    PropertyMethodPrinter(std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic);
+    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+};
+struct MethodHolder
+{
+    std::unique_ptr<MethodPrinter> printer;
+    std::optional<std::reference_wrapper<MethodGroup>> groupOpt;
+};
 
 class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisitor>
 {
@@ -89,6 +128,8 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     llvm::raw_ostream& out;
     static std::unordered_map<std::string, std::string> cxxTypeToWinRtTypeMap;
     std::unordered_map<std::string, clang::CXXRecordDecl*> implementationTypes;
+    std::unordered_set<std::string> getterTemplates;
+    std::unordered_set<std::string> propertyTemplates;
     bool verbose;
 
   public:
@@ -101,8 +142,12 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     bool VisitEnumDecl(clang::EnumDecl* decl);
 
   private:
+    friend class MethodGroup;
+    friend class PropertyMethodPrinter;
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
-    MethodGroup& GetMethodGroup(std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method, std::string methodName);
+    MethodGroup& GetMethodGroup(
+        std::map<std::string, MethodHolder>& methodGroups, clang::CXXMethodDecl* method, std::string methodName
+    );
     void FindFileToInclude(std::set<std::string>& includes, clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     std::string TranslateCxxTypeToWinRtType(clang::QualType type);
@@ -123,6 +168,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     std::optional<std::vector<clang::QualType>> GetExtend(clang::CXXRecordDecl* record);
     static std::vector<std::string> GetWinRtNamespaces(clang::NamedDecl* decl);
     static std::string GetQualifiedName(clang::CXXRecordDecl* record);
+    clang::QualType GetFirstTemplateTypeParam(clang::ClassTemplateSpecializationDecl const* templateSpecDecl);
     std::optional<std::string> GetLocFilePath(clang::NamedDecl* decl);
     std::optional<std::string> GetLocFileName(clang::CXXRecordDecl* record);
     void PrintNameSpaces(std::vector<std::string> namespaces);

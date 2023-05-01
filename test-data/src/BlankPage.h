@@ -8,6 +8,8 @@
 #include "TestIncludeImpl.h"
 #include "TestIncludeInTemplate.h"
 #include "SomeNamespace/DifferentPathViewModel.h"
+#include "wil/cppwinrt_authoring.h"
+#include "cppxaml/cppxaml.h"
 
 namespace winrt::Root::A::implementation
 {
@@ -116,6 +118,9 @@ namespace winrt::Root::A::implementation
 		void MethodMixingImplAndProjected(Root::A::SameViewModel const& a, Root::A::implementation::SameViewModel const& b);
 		[[clang::annotate("idlgen::hide")]]
 		void HideMethod();
+		// Don't need property attribute here or at class level
+		wil::single_threaded_property<Root::A::SameViewModel> WilProp;
+		wil::single_threaded_rw_property<Root::A::SameViewModel> WilRwProp;
 	private:
 		void PrivateMethod();
 	};
