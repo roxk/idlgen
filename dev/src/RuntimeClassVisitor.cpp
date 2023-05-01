@@ -541,9 +541,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
     }
     auto group{std::make_unique<MethodGroup>(std::move(methodName), nullptr, nullptr, nullptr)};
     auto& groupRef{*group};
-    auto entry{methodGroups.insert(
-        {std::move(key), MethodHolder{std::move(group), groupRef}}
-    )};
+    auto entry{methodGroups.insert({std::move(key), MethodHolder{std::move(group), groupRef}})};
     auto& groupOpt = entry.first->second.groupOpt;
     assert(groupOpt.has_value());
     return *groupOpt;
@@ -836,15 +834,14 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
         if (autoType == nullptr)
         {
             debugPrint(
-                [&]() {
-                    std::cout << nonRefType.getUnqualifiedType().getAsString() << " cannot get auto type"
-                              << std::endl;
-                }
+                [&]()
+                { std::cout << nonRefType.getUnqualifiedType().getAsString() << " cannot get auto type" << std::endl; }
             );
             return false;
         }
         debugPrint(
-            [&]() {
+            [&]()
+            {
                 std::cout << nonRefType.getUnqualifiedType().getAsString() << " isDeduced=" << autoType->isDeduced()
                           << " isSugared=" << autoType->isSugared() << std::endl;
             }
@@ -1320,7 +1317,9 @@ std::string idlgen::RuntimeClassVisitor::GetQualifiedName(clang::CXXRecordDecl* 
     return qualifiedName;
 }
 
-clang::QualType idlgen::RuntimeClassVisitor::GetFirstTemplateTypeParam(clang::ClassTemplateSpecializationDecl const* templateSpecDecl)
+clang::QualType idlgen::RuntimeClassVisitor::GetFirstTemplateTypeParam(
+    clang::ClassTemplateSpecializationDecl const* templateSpecDecl
+)
 {
     auto params{templateSpecDecl->getTemplateArgs().asArray()};
     std::optional<clang::QualType> propertyTypeOpt;
