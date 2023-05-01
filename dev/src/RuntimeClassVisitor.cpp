@@ -109,16 +109,14 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     debugPrint([&]()
                { std::cout << record->getNameAsString() << " propertyDefault=" << isPropertyDefault << std::endl; });
     auto methods(record->methods());
-    for (auto&& method : methods)
+    auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name)
     {
-        debugPrint(
-            [&]()
-            { std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl; }
-        );
+        assert(method != nullptr);
         auto methodKind{GetRuntimeClassMethodKind(isPropertyDefault, method)};
         if (!methodKind)
         {
-            continue;
+            debugPrint([&]() { std::cout << name << " is not a runtime class method" << std::endl; });
+            return;
         }
         auto params{method->parameters()};
         for (auto&& param : params)
@@ -127,23 +125,24 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         if (IsDestructor(method))
         {
-            continue;
+            return;
         }
         if (IsConstructor(method))
         {
             ctors.insert(method);
-            continue;
+            return;
         }
         if (IsEventRevoker(method))
         {
-            continue;
+            return;
         }
         if (IsEventRegistrar(method))
         {
             events.insert(method);
-            continue;
+            return;
         }
-        auto& group = GetMethodGroup(methodGroups, method);
+        debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
+        auto& group = GetMethodGroup(methodGroups, method, std::move(name));
         if (methodKind == idlgen::MethodKind::Setter)
         {
             group.setter = method;
@@ -157,6 +156,48 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             group.method = method;
         }
         FindFileToInclude(includes, method->getReturnType());
+    };
+    for (auto&& method : methods)
+    {
+        debugPrint(
+            [&]()
+            { std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl; }
+        );
+        tryAddMethod(method, method->getNameAsString());
+    }
+    auto fields{record->fields()};
+    for (auto&& field : fields)
+    {
+        auto type{field->getType()};
+        clang::CXXRecordDecl const* fieldRecord{type->getAsCXXRecordDecl()};
+        if (fieldRecord == nullptr)
+        {
+            debugPrint([&]() { std::cout << field->getNameAsString() << "'s type is not a CXXRecord" << std::endl; });
+            continue;
+        }
+        if (auto templateDecl = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(fieldRecord))
+        {
+            debugPrint([&]() { std::cout << field->getNameAsString() << " is a template" << std::endl; });
+            fieldRecord = templateDecl;
+        }
+        // Check if the type has overloaded operator()
+        // TODO: Should check for all callable? e.g. std::function
+        auto fieldMethods{fieldRecord->methods()};
+        for (auto&& fieldMethod : fieldMethods)
+        {
+            if (fieldMethod->getNameAsString() != "operator()")
+            {
+                continue;
+            }
+            debugPrint(
+                [&]()
+                {
+                    std::cout << "Checking if " << field->getNameAsString() << " is runtime class method"
+                        << std::endl;
+                }
+            );
+            tryAddMethod(fieldMethod, field->getNameAsString());
+        }
     }
     // Add default_interface if the runtime class is empty
     if (methodGroups.empty())
@@ -428,10 +469,9 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
 }
 
 idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
-    std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method
+    std::map<std::string, MethodGroup>& methodGroups, clang::CXXMethodDecl* method, std::string methodName
 )
 {
-    auto methodName{method->getNameAsString()};
     auto tryPrintParamName = [&](std::string& name, clang::QualType type)
     {
         if (!type->isVoidType())
@@ -741,6 +781,38 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
     if (nonRefType->isEnumeralType())
     {
         return true;
+    }
+    if (nonRefType->isUndeducedAutoType())
+    {
+        auto autoType{nonRefType->getAs<clang::AutoType>()};
+        if (autoType == nullptr)
+        {
+            debugPrint(
+                [&]() {
+                    std::cout << nonRefType.getUnqualifiedType().getAsString() << " cannot get auto type"
+                              << std::endl;
+                }
+            );
+            return false;
+        }
+        debugPrint(
+            [&]() {
+                std::cout << nonRefType.getUnqualifiedType().getAsString() << " isDeduced=" << autoType->isDeduced()
+                          << " isSugared=" << autoType->isSugared() << std::endl;
+            }
+        );
+        auto deducedType{autoType->getDeducedType()};
+        if (deducedType.isNull())
+        {
+            debugPrint(
+                [&]() {
+                    std::cout << nonRefType.getUnqualifiedType().getAsString() << " cannot get deducedType"
+                              << std::endl;
+                }
+            );
+            return false;
+        }
+        return IsRuntimeClassMethodType(deducedType, projectedOnly);
     }
     auto record{StripReferenceAndGetClassDecl(type)};
     if (record == nullptr)

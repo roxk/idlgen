@@ -70,6 +70,8 @@ namespace winrt::Root::A::implementation
 		Windows::Foundation::Numerics::Vector2 Struct();
 		[[clang::annotate("idlgen::property")]]
 		bool Getter();
+		[[clang::annotate("idlgen::property")]]
+		bool const& ConstRefGetter();
 		void MethodPure();
 		void MethodOverriden(uint32_t a) override;
 		void MethodEnum(TestEnumInMethod a);

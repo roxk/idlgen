@@ -155,8 +155,8 @@ absent -src $blankPageOutput -line "Root.A.SameViewModel ParamDisallowImplEvenRe
 absent -src $blankPageOutput -line "void MethodMixingImplAndProjected(Root.A.SameViewModel a, Root.A.SameViewModel b);"
 absent -src $blankPageOutput -line "void PrivateMethod();"
 absent -src $blankPageOutput -line "void HideMethod();"
-absent -src $blankPageOutput -line "Root.A.factory_implementation";
-absent -src $blankPageOutput -line "warning";
+absent -src $blankPageOutput -line "Root.A.factory_implementation"
+absent -src $blankPageOutput -line "warning"
 
 $propertyBagOutput = get-gen-output "$testCodeDir\PropertyBag.h"
 exists -src $propertyBagOutput -line "runtimeclass PropertyBag"
@@ -169,6 +169,7 @@ exists -src $propertyBagOutput -line "Boolean IsIdle{get;};"
 exists -src $propertyBagOutput -line "Windows.Foundation.IAsyncAction MethodAsync();"
 exists -src $propertyBagOutput -line "void MethodPure();"
 exists -src $propertyBagOutput -line "void MethodBool(Boolean a);"
+exists -src $propertyBagOutput -line "Boolean CppXamlProperty;"
 
 $sameVmOutput = get-gen-output "$testCodeDir\SameViewModel.h"
 exists -src $sameVmOutput -line "[default_interface]"
