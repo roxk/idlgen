@@ -33,6 +33,8 @@ namespace winrt
 {
 	struct hstring {};
 	struct event_token {};
+	template<typename T>
+	struct event {};
 	namespace Windows::Foundation
 	{
 		struct IUnknown
@@ -56,6 +58,7 @@ namespace winrt
 	};
 	namespace Windows::Foundation
 	{
+		template<typename T>
 		struct EventHandler : Windows::Foundation::IUnknown {};
 
 		template<typename T, typename A>

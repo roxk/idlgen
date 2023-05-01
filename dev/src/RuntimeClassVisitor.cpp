@@ -73,7 +73,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     std::optional<std::vector<clang::QualType>> extend{GetExtend(record)};
     std::set<clang::CXXMethodDecl*> ctors;
     std::map<std::string, MethodHolder> methodGroups;
-    std::set<clang::CXXMethodDecl*> events;
+    std::map<std::string, clang::CXXMethodDecl*> events;
     auto cxxAttrs{record->attrs()};
     bool isPropertyDefault = false;
     for (auto&& attr : cxxAttrs)
@@ -140,7 +140,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         if (IsEventRegistrar(method))
         {
-            events.insert(method);
+            events.insert({std::move(name), method});
             return;
         }
         debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
@@ -219,22 +219,23 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         // Check if the type has overloaded operator()
         // TODO: Should check for all callable? e.g. std::function
-        auto fieldMethods{typeRecord->methods()};
-        for (auto&& fieldMethod : fieldMethods)
-        {
-            if (fieldMethod->getNameAsString() != "operator()")
+        ForThisAndBaseMethods(
+            typeRecord,
+            [&](clang::CXXMethodDecl* fieldMethod)
             {
-                continue;
-            }
-            debugPrint(
-                [&]()
+                if (fieldMethod->getNameAsString() != "operator()")
                 {
-                    std::cout << "Checking if " << field->getNameAsString() << " is runtime class method"
-                        << std::endl;
+                    return;
                 }
-            );
-            tryAddMethod(fieldMethod, field->getNameAsString());
-        }
+                debugPrint(
+                    [&]() {
+                        std::cout << "Checking if " << field->getNameAsString() << " is runtime class method"
+                                  << std::endl;
+                    }
+                );
+                tryAddMethod(fieldMethod, field->getNameAsString());
+            }
+        );
     }
     // Add default_interface if the runtime class is empty
     if (methodGroups.empty())
@@ -309,11 +310,13 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         group.printer->Print(*this, out);
         out << "\n";
     }
-    for (auto&& ev : events)
+    for (auto&& entry : events)
     {
+        auto& name{entry.first};
+        auto& ev{entry.second};
         assert(ev->parameters().size() > 0);
         auto handler{TranslateCxxTypeToWinRtType(ev->parameters().front()->getType())};
-        out << "event " << handler << " " << ev->getNameAsString() << ";"
+        out << "event " << handler << " " << name << ";"
             << "\n";
     }
     out << "}"

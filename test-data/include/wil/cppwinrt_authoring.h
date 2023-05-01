@@ -1,5 +1,6 @@
 #pragma once
 
+#include <winrt/base.h>
 #include <utility>
 
 // Copied directly from
@@ -73,4 +74,34 @@ namespace wil
             return *this;
         }
     };
+
+    namespace details
+    {
+        template<typename T>
+        struct event_base {
+            winrt::event_token operator()(T&& handler)
+            {
+                return m_handler.add(std::forward<T>(handler));
+            }
+
+            auto operator()(const winrt::event_token& token) noexcept
+            {
+                return m_handler.remove(token);
+            }
+
+            template<typename... TArgs>
+            auto invoke(TArgs&&... args)
+            {
+                return m_handler(std::forward<TArgs>(args)...);
+            }
+        private:
+            winrt::event<T> m_handler;
+        };
+    }
+
+    template<typename T>
+    struct simple_event : wil::details::event_base<winrt::Windows::Foundation::EventHandler<T>> {};
+
+    template<typename TSender, typename TArgs>
+    struct typed_event : wil::details::event_base<winrt::Windows::Foundation::TypedEventHandler<TSender, TArgs>> {};
 }

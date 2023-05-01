@@ -171,6 +171,30 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     clang::QualType GetFirstTemplateTypeParam(clang::ClassTemplateSpecializationDecl const* templateSpecDecl);
     std::optional<std::string> GetLocFilePath(clang::NamedDecl* decl);
     std::optional<std::string> GetLocFileName(clang::CXXRecordDecl* record);
+    template <typename Func>
+    void ForThisAndBaseMethods(clang::CXXRecordDecl const* record, Func&& func)
+    {
+        auto fieldMethods{record->methods()};
+        for (auto&& fieldMethod : fieldMethods)
+        {
+            func(fieldMethod);
+        }
+        auto bases{record->bases()};
+        for (auto&& base : bases)
+        {
+            auto baseType{base.getType().getTypePtrOrNull()};
+            if (baseType == nullptr)
+            {
+                continue;
+            }
+            auto cxxType{baseType->getAsCXXRecordDecl()};
+            if (cxxType == nullptr)
+            {
+                continue;
+            }
+            ForThisAndBaseMethods(cxxType, std::forward<Func>(func));
+        }
+    }
     void PrintNameSpaces(std::vector<std::string> namespaces);
     void PrintMethodParams(clang::CXXMethodDecl* method);
     /// <summary>
