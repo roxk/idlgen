@@ -23,9 +23,6 @@ namespace cppxaml
             return *this;
         }
 
-        XamlProperty(const XamlProperty&) = delete;
-        XamlProperty(XamlProperty&&) = delete;
-
         template<typename... TArgs>
         XamlProperty(TArgs&&... args) : m_value(std::forward<TArgs>(args)...) {}
 
