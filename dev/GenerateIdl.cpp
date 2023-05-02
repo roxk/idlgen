@@ -29,14 +29,22 @@ class GenIdlFrontendAction : public clang::ASTFrontendAction
   private:
     llvm::raw_ostream& out;
     bool verbose;
+    std::vector<std::string> const& getterTemplates;
+    std::vector<std::string> const& propertyTemplates;
 
   public:
-    GenIdlFrontendAction(llvm::raw_ostream& out, bool verbose) : out(out), verbose(verbose)
+    GenIdlFrontendAction(
+        llvm::raw_ostream& out,
+        bool verbose,
+        std::vector<std::string> const& getterTemplates,
+        std::vector<std::string> const& propertyTemplates
+    )
+        : out(out), verbose(verbose), getterTemplates(getterTemplates), propertyTemplates(propertyTemplates)
     {
     }
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
     {
-        return std::make_unique<GenIdlAstConsumer>(ci, out, verbose);
+        return std::make_unique<GenIdlAstConsumer>(ci, out, verbose, getterTemplates, propertyTemplates);
     }
 };
 } // namespace idlgen
@@ -52,6 +60,14 @@ static lc::opt<std::string> GenerateOutputPath(
 static lc::list<std::string> Includes("include", lc::desc("include folder(s)"));
 
 static lc::list<std::string> Defines("define", lc::desc("preprocessor definition(s)"));
+
+static lc::list<std::string> GetterTemplates(
+    "getter-template", lc::desc("Qualified name of templates that should be treated as a getter")
+);
+
+static lc::list<std::string> PropertyTemplates(
+    "property-template", lc::desc("Qualified name of templates that should be treated as a property")
+);
 
 static lc::list<std::string> FileNames(lc::Positional, lc::desc("[<file> ...]"));
 
@@ -108,6 +124,8 @@ int main(int argc, const char** argv)
                   << std::endl;
         return 1;
     }
+    std::vector<std::string> getterTemplates(GetterTemplates);
+    std::vector<std::string> propertyTemplates(PropertyTemplates);
     std::optional<std::reference_wrapper<std::string>> outputFile;
     if (Generate && !GenerateOutputPath.empty())
     {
@@ -172,7 +190,12 @@ int main(int argc, const char** argv)
             return 1;
         }
         const auto result = ct::runToolOnCodeWithArgs(
-            std::make_unique<idlgen::GenIdlFrontendAction>(out.value().get(), Verbose), buffer, clangArgs, filePath
+            std::make_unique<idlgen::GenIdlFrontendAction>(
+                out.value().get(), Verbose, getterTemplates, propertyTemplates
+            ),
+            buffer,
+            clangArgs,
+            filePath
         );
         if (Generate)
         {

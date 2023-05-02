@@ -12,11 +12,23 @@
 #include <sstream>
 #include <string>
 
-idlgen::RuntimeClassVisitor::RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose)
+idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
+    clang::CompilerInstance& ci,
+    llvm::raw_ostream& out,
+    bool verbose,
+    std::vector<std::string> const& getterTemplates,
+    std::vector<std::string> const& propertyTemplates
+)
     : ci(ci), astContext(ci.getASTContext()), out(std::move(out)), verbose(verbose)
 {
-    getterTemplates.insert("wil::single_threaded_property");
-    propertyTemplates.insert("wil::single_threaded_rw_property");
+    for (auto&& getterTemplate : getterTemplates)
+    {
+        this->getterTemplates.insert(getterTemplate);
+    }
+    for (auto&& propertyTemplate : propertyTemplates)
+    {
+        this->propertyTemplates.insert(propertyTemplate);
+    }
 }
 
 void idlgen::RuntimeClassVisitor::Reset()

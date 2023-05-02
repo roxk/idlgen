@@ -17,7 +17,13 @@ class GenIdlAstConsumer : public clang::ASTConsumer
     std::unique_ptr<RuntimeClassVisitor> visitor;
 
   public:
-    explicit GenIdlAstConsumer(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose);
+    explicit GenIdlAstConsumer(
+        clang::CompilerInstance& ci,
+        llvm::raw_ostream& out,
+        bool verbose,
+        std::vector<std::string> const& getterTemplates,
+        std::vector<std::string> const& propertyTemplates
+    );
 
     virtual void HandleTranslationUnit(clang::ASTContext& context) override;
 };

@@ -133,7 +133,13 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     bool verbose;
 
   public:
-    explicit RuntimeClassVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose);
+    explicit RuntimeClassVisitor(
+        clang::CompilerInstance& ci,
+        llvm::raw_ostream& out,
+        bool verbose,
+        std::vector<std::string> const& getterTemplates,
+        std::vector<std::string> const& propertyTemplates
+    );
 
     void Reset();
 

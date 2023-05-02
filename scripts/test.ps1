@@ -16,15 +16,19 @@ $testDataDir = "$srcDir\..\test-data"
 $testCodeDir = "$testDataDir\src"
 $testIncludeDirs = "$testCodeDir", "$testDataDir\include\", "$testDataDir\include B\", "$srcDir\..\nuget\include\idlgen"
 $idlgen = "$srcDir/../dev/out/build/x64-$config/idlgen.exe"
+$getterTemplates = @("wil::single_threaded_property")
+$propertyTemplates = @("wil::single_threaded_rw_property")
 $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
+$getterTemplatesFlags = $getterTemplates | ForEach-Object { "--getter-template=`"$_`"" }
+$propertyTemplatesFlags = $propertyTemplates | ForEach-Object { "--property-template=`"$_`"" }
 # Test generated output
 
 function gen {
 	param([string]$filePath)
 	$LASTEXITCODE = 0
 	push-location $testCodeDir
-	&$idlgen $includes $verboseFlag $filePath --gen | out-host
+	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags | out-host
 	pop-location
 	if ($LASTEXITCODE -ne 0) {
 		echo "idlgen returned $LASTEXITCODE"
