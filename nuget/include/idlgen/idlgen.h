@@ -10,9 +10,9 @@ namespace idlgen
 		// TODO: Verify if we need `no_unique_address`. winrt already applies `empty_bases` on classes
 	};
 
-	using enum_normal = int64_t;
+	using author_enum = int64_t;
 
-	using enum_flag = uint64_t;
+	using author_enum_flags = uint64_t;
 
 	struct author_struct
 	{

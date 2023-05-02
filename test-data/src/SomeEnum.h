@@ -6,7 +6,7 @@ using namespace idlgen;
 
 namespace winrt::Root
 {
-	enum class SomeEnum : enum_normal
+	enum class SomeEnum : author_enum
 	{
 		Active,
 		InActive,

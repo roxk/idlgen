@@ -12,6 +12,9 @@
 #include <sstream>
 #include <string>
 
+constexpr auto nameAuthorEnum = "idlgen::author_enum";
+constexpr auto nameAuthorEnumFlags = "idlgen::author_enum_flags";
+
 idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
     clang::CompilerInstance& ci,
     llvm::raw_ostream& out,
@@ -1100,11 +1103,11 @@ std::optional<idlgen::EnumKind> idlgen::RuntimeClassVisitor::GetEnumKind(clang::
     }
     auto name{typedefType->getDecl()->getQualifiedNameAsString()};
     debugPrint([&]() { std::cout << decl->getNameAsString() << "'s underlying's name is " << name << std::endl; });
-    if (name == "idlgen::enum_normal")
+    if (name == nameAuthorEnum)
     {
         return EnumKind::Normal;
     }
-    else if (name == "idlgen::enum_flag")
+    else if (name == nameAuthorEnumFlags)
     {
         return EnumKind::Flag;
     }
