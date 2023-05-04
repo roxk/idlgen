@@ -74,6 +74,8 @@ namespace winrt::Root::A::implementation
 		bool Getter();
 		[[clang::annotate("idlgen::property")]]
 		bool const& ConstRefGetter();
+		uint32_t MethodPropertyLike();
+		void MethodPropertyLike(uint32_t a);
 		void MethodPure();
 		void MethodOverriden(uint32_t a) override;
 		void MethodEnum(TestEnumInMethod a);
