@@ -5,13 +5,13 @@
 
 namespace winrt::SampleApp::implementation
 {
-    enum class Category : idlgen::enum_normal
+    enum class Category : idlgen::author_enum
     {
         Literature,
         Science
     };
 
-    enum class Permission : idlgen::enum_flag
+    enum class Permission : idlgen::author_enum_flags
     {
         Camera = 0x00000001,
         Microphone = 0x00000002
