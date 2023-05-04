@@ -24,6 +24,11 @@
 						Description="Exclude C++ header files from generating idl. Override the default behavior where App.h and pch.h are excluded."
 						Category="General"/>
 
+	<StringListProperty Name="IdlGenCppPch"
+						DisplayName="Pch files"
+						Description="C++ PCH files"
+						Category="General"/>
+
 	<StringListProperty Name="IdlGenCppGetterTemplate"
 						DisplayName="Getter Templates"
 						Description="Qualified names of templates with overloaded operator() which should be treated as getter when declared as non-statc data member"

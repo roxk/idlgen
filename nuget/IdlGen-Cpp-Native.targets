@@ -21,6 +21,7 @@
 		<IdlGenCppAdditionalDefines Include="$(IdlGenCppAdditionalDefines)"/>
 	</ItemGroup>
 	<ItemGroup>
+		<IdlGenCppPch Include="$(IdlGenCppPch)"/>
 		<IdlGenCppGetterTemplates Include="$(IdlGenCppGetterTemplate)"/>
 		<IdlGenCppPropertyTemplates Include="$(IdlGenCppPropertyTemplate)"/>
 	</ItemGroup>
@@ -31,17 +32,20 @@
 		<ClCompile>
 			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)..\..\include\idlgen</AdditionalIncludeDirectories>
 		</ClCompile>
+		<IdlGenCppPch>
+			<PchOutput>$(OutDir)idlgen\%(Filename)%(Extension).gch</PchOutput>
+		</IdlGenCppPch>
 		<IdlGenCppInclude>
 			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
-	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" Inputs="pch.h" Outputs="$(OutDir)idlgen\pch.h.gch" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-		<Message Text="Generating idlgen PCH..." Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=pch.h -pch-out-dir=&quot;$(OutDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" Inputs="@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=&quot;%(IdlGenCppPch.Identity)&quot; -pch-out-dir=&quot;$(OutDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
 	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="ClCompile" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen --pch=pch.h -pch-out-dir=&quot;$(OutDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(OutDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
 	<Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateIDL" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="Running idlgen on C++ header" Importance="high" />

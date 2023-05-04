@@ -21,6 +21,7 @@
     <IdlGenCppDisableUnknownAttributeWarning>
     </IdlGenCppDisableUnknownAttributeWarning>
     <IdlGenCppAdditionalDefines>NOMINMAX</IdlGenCppAdditionalDefines>
+    <IdlGenCppPch>pch.h;pch2.h</IdlGenCppPch>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -123,6 +124,7 @@
     <ClInclude Include="MainPage.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="pch2.h" />
     <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h" />
   </ItemGroup>
   <ItemGroup>
