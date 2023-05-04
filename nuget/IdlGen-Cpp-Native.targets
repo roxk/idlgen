@@ -20,6 +20,10 @@
 		<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
 		<IdlGenCppAdditionalDefines Include="$(IdlGenCppAdditionalDefines)"/>
 	</ItemGroup>
+	<ItemGroup>
+		<IdlGenCppGetterTemplates Include="$(IdlGenCppGetterTemplate)"/>
+		<IdlGenCppPropertyTemplates Include="$(IdlGenCppPropertyTemplate)"/>
+	</ItemGroup>
 	<ItemDefinitionGroup>
 		<ClCompile Condition="'$(IdlGenCppDisableUnknownAttributeWarning)' == 'true'">
 			<DisableSpecificWarnings>%(DisableSpecificWarnings);5030;</DisableSpecificWarnings>
@@ -31,9 +35,13 @@
 			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
+	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" Inputs="pch.h" Outputs="$(OutDir)idlgen\pch.h.gch" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<Message Text="Generating idlgen PCH..." Importance="high" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=pch.h -pch-out-dir=&quot;$(OutDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+	</Target>
 	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="ClCompile" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen --pch=pch.h -pch-out-dir=&quot;$(OutDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
 	<Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateIDL" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="Running idlgen on C++ header" Importance="high" />

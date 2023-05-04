@@ -1,37 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Rule Name="IdlGenCpp" DisplayName="C++/IdlGen" Order="75" PageTemplate="generic" xmlns="http://schemas.microsoft.com/build/2009/properties">
 
-  <Rule.Categories>
-    <Category Name="General" DisplayName="General"/>
-  </Rule.Categories>
+	<Rule.Categories>
+		<Category Name="General" DisplayName="General"/>
+	</Rule.Categories>
 
-  <Rule.DataSource>
-    <DataSource Persistence="ProjectFile" HasConfigurationCondition="false" Label="Globals" />
-  </Rule.DataSource>
+	<Rule.DataSource>
+		<DataSource Persistence="ProjectFile" HasConfigurationCondition="false" Label="Globals" />
+	</Rule.DataSource>
 
-  <BoolProperty Name="IdlGenCppGenerateIDL"
-                DisplayName="Generate IDL"
-                Description="Generate IDL for C++ headers. Default is true."
-                Category="General" />
+	<BoolProperty Name="IdlGenCppGenerateIDL"
+				  DisplayName="Generate IDL"
+				  Description="Generate IDL for C++ headers. Default is true."
+				  Category="General" />
 
-  <StringListProperty Name="IdlGenCppInclude"
-						DisplayName="Include files"
-						Description="Include C++ header files when generating idl. Override the default behavior where all C++ headers are included."
+	<StringListProperty Name="IdlGenCppInclude"
+						  DisplayName="Include files"
+						  Description="Include C++ header files when generating idl. Override the default behavior where all C++ headers are included."
+						  Category="General"/>
+
+	<StringListProperty Name="IdlGenCppExclude"
+						DisplayName="Exclude files"
+						Description="Exclude C++ header files from generating idl. Override the default behavior where App.h and pch.h are excluded."
 						Category="General"/>
 
-  <StringListProperty Name="IdlGenCppExclude" 
-                      DisplayName="Exclude files" 
-                      Description="Exclude C++ header files from generating idl. Override the default behavior where App.h and pch.h are excluded."
-                      Category="General"/>
-
-  <StringListProperty Name="IdlGenCppAdditionalDefines"
-						DisplayName="Additional Preprocessor definitions"
-						Description="Additional preprocessor definitions."
+	<StringListProperty Name="IdlGenCppGetterTemplate"
+						DisplayName="Getter Templates"
+						Description="Qualified names of templates with overloaded operator() which should be treated as getter when declared as non-statc data member"
 						Category="General"/>
 
-  <BoolProperty Name="IdlGenCppDisableUnknownAttributeWarning"
-                DisplayName="Disable unknown attribute warning"
-			    Description="Disable unknown attribute warning caused by [[clang::annotate]]. Default is true."
-			    Category="General"/>
+	<StringListProperty Name="IdlGenCppPropertyTemplate"
+						DisplayName="Property Templates"
+						Description="Qualified names of templates with overloaded operator() which should be treated as property when declared as non-statc data member"
+						Category="General"/>
+
+	<StringListProperty Name="IdlGenCppAdditionalDefines"
+						  DisplayName="Additional Preprocessor definitions"
+						  Description="Additional preprocessor definitions."
+						  Category="General"/>
+
+	<BoolProperty Name="IdlGenCppDisableUnknownAttributeWarning"
+				  DisplayName="Disable unknown attribute warning"
+				  Description="Disable unknown attribute warning caused by [[clang::annotate]]. Default is true."
+				  Category="General"/>
 
 </Rule>

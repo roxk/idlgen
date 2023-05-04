@@ -2,14 +2,17 @@
 #include "RuntimeClassVisitor.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include <filesystem>
 #include <iostream>
 #include <memory>
 
@@ -21,6 +24,7 @@ class raw_ostream;
 namespace lc = llvm::cl;
 namespace ct = clang::tooling;
 namespace lfs = llvm::sys::fs;
+namespace lsp = llvm::sys::path;
 
 namespace idlgen
 {
@@ -49,17 +53,33 @@ class GenIdlFrontendAction : public clang::ASTFrontendAction
 };
 } // namespace idlgen
 
+class GeneratePchActionWrapper : public clang::GeneratePCHAction
+{
+  private:
+    std::string output;
+
+  public:
+    GeneratePchActionWrapper(std::string output) : output(std::move(output))
+    {
+    }
+    std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
+    {
+        ci.getFrontendOpts().OutputFile = output;
+        return clang::GeneratePCHAction::CreateASTConsumer(ci, file);
+    }
+};
+
 static lc::opt<bool> Help("h", lc::desc("Alias for -help"), lc::Hidden);
 
-static lc::opt<bool> Generate("gen", lc::desc("generate IDL next to the input file"));
+static lc::opt<bool> Generate("gen", lc::desc("Generate IDL next to the input file"));
 
 static lc::opt<std::string> GenerateOutputPath(
-    "gen-out", lc::desc("if specified and --gen is applied, control the output path of the generated IDL")
+    "gen-out", lc::desc("If specified and --gen is applied, control the output path of the generated IDL")
 );
 
-static lc::list<std::string> Includes("include", lc::desc("include folder(s)"));
+static lc::list<std::string> Includes("include", lc::desc("Include folder(s)"));
 
-static lc::list<std::string> Defines("define", lc::desc("preprocessor definition(s)"));
+static lc::list<std::string> Defines("define", lc::desc("Preprocessor definition(s)"));
 
 static lc::list<std::string> GetterTemplates(
     "getter-template", lc::desc("Qualified name of templates that should be treated as a getter")
@@ -75,6 +95,12 @@ static lc::opt<bool> Verbose(
     "verbose", lc::desc("Enable verbose printing for debug. Note this breaks printing into stdout")
 );
 
+static lc::list<std::string> Pchs("pch", lc::desc("Pch files"));
+
+static lc::opt<std::string> PchOutDir("pch-out-dir", lc::desc("Directory for pch output"));
+
+static lc::opt<bool> GeneratePch("gen-pch", lc::desc("Generate pch"));
+
 static void PrintVersion(llvm::raw_ostream& OS)
 {
     OS << "idlgen 0.0.1" << '\n';
@@ -89,7 +115,7 @@ int main(int argc, const char** argv)
         lc::PrintHelpMessage();
         return 0;
     }
-    if (FileNames.empty())
+    if (Pchs.empty() && FileNames.empty())
     {
         std::cerr << "No files specified" << std::endl;
         return 1;
@@ -130,6 +156,55 @@ int main(int argc, const char** argv)
     if (Generate && !GenerateOutputPath.empty())
     {
         outputFile = GenerateOutputPath;
+    }
+    auto pchOutGetter = [&](std::string const& pch)
+    {
+        std::filesystem::path outFile{PchOutDir.c_str()};
+        outFile.append(pch + ".gch");
+        return outFile.string();
+    };
+    if (GeneratePch)
+    {
+        if (!lfs::exists(PchOutDir))
+        {
+            auto ec{lfs::create_directories(PchOutDir.c_str())};
+            if (ec)
+            {
+                std::cerr << "Failed to create pch output dir" << std::endl;
+                return 1;
+            }
+        }
+        for (auto&& pch : Pchs)
+        {
+            auto outFile{pchOutGetter(pch)};
+            auto codeOrErr{llvm::MemoryBuffer::getFileAsStream(pch)};
+            if (std::error_code ec = codeOrErr.getError())
+            {
+                std::cerr << ec.message() << std::endl;
+                return 1;
+            }
+            auto code(std::move(codeOrErr.get()));
+            if (code->getBufferSize() == 0)
+            {
+                continue;
+            }
+            auto buffer{code->getBuffer()};
+            auto fileName{llvm::sys::path::filename(pch).str()};
+            auto result{ct::runToolOnCodeWithArgs(
+                std::make_unique<GeneratePchActionWrapper>(std::move(outFile)), buffer, clangArgs, pch
+            )};
+            if (!result)
+            {
+                std::cerr << "fatal: Failed to generate pch" << std::endl;
+                return 1;
+            }
+        }
+    }
+    for (auto&& pch : Pchs)
+    {
+        auto outFile{pchOutGetter(pch)};
+        clangArgs.emplace_back("-include-pch");
+        clangArgs.emplace_back(outFile);
     }
     for (auto&& filePath : FileNames)
     {

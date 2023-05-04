@@ -8,3 +8,4 @@ test-data/src/**/*.testidl
 *.idl.bak
 bin
 obj
+out
