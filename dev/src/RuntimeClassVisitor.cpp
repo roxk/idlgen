@@ -160,7 +160,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             return;
         }
         debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
-        auto& group{GetMethodGroup(methodGroups, method, std::move(name))};
+        auto& group{GetMethodGroup(methodGroups, method, *methodKind, std::move(name))};
         if (methodKind == idlgen::MethodKind::Setter)
         {
             group.setter = method;
@@ -526,7 +526,10 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
 }
 
 idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
-    std::map<std::string, MethodHolder>& methodGroups, clang::CXXMethodDecl* method, std::string methodName
+    std::map<std::string, MethodHolder>& methodGroups,
+    clang::CXXMethodDecl* method,
+    idlgen::MethodKind kind,
+    std::string methodName
 )
 {
     auto tryPrintParamName = [&](std::string& name, clang::QualType type)
@@ -537,11 +540,22 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
             name += TranslateCxxTypeToWinRtType(type);
         }
     };
-    auto paramStrGetter = [&]()
+    auto paramStrGetter = [&](std::string methodName)
     {
         std::string name;
-        auto returnType{method->getReturnType()};
-        tryPrintParamName(name, returnType);
+        if (kind == idlgen::MethodKind::Method)
+        {
+            auto returnType{method->getReturnType()};
+            tryPrintParamName(name, returnType);
+            name += "_";
+            name += std::move(methodName);
+        }
+        else
+        {
+            name = std::move(methodName);
+            auto returnType{method->getReturnType()};
+            tryPrintParamName(name, returnType);
+        }
         auto params{method->parameters()};
         for (auto&& param : params)
         {
@@ -549,7 +563,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
         }
         return name;
     };
-    auto key{methodName + paramStrGetter()};
+    auto key{paramStrGetter(methodName)};
     if (auto result{methodGroups.find(key)}; result != methodGroups.end() && result->second.groupOpt.has_value())
     {
         return result->second.groupOpt.value();

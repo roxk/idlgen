@@ -152,7 +152,10 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     friend class PropertyMethodPrinter;
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
     MethodGroup& GetMethodGroup(
-        std::map<std::string, MethodHolder>& methodGroups, clang::CXXMethodDecl* method, std::string methodName
+        std::map<std::string, MethodHolder>& methodGroups,
+        clang::CXXMethodDecl* method,
+        idlgen::MethodKind kind,
+        std::string methodName
     );
     void FindFileToInclude(std::set<std::string>& includes, clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
