@@ -18,17 +18,23 @@ $testIncludeDirs = "$testCodeDir", "$testDataDir\include\", "$testDataDir\includ
 $idlgen = "$srcDir/../dev/out/build/x64-$config/idlgen.exe"
 $getterTemplates = @("wil::single_threaded_property")
 $propertyTemplates = @("wil::single_threaded_rw_property")
+$pch = "pch.h"
+$pchOutDir = "$testDataDir\out"
 $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
 $getterTemplatesFlags = $getterTemplates | ForEach-Object { "--getter-template=`"$_`"" }
 $propertyTemplatesFlags = $propertyTemplates | ForEach-Object { "--property-template=`"$_`"" }
-# Test generated output
+$pchFlags = "--pch=`"$pch`""
+$pchOutDirFlags = "--pch-out-dir=$pchOutDir"
 
 function gen {
-	param([string]$filePath)
+	param([string]$filePath, [switch]$genPch)
 	$LASTEXITCODE = 0
 	push-location $testCodeDir
-	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags | out-host
+	if ($genPch.IsPresent) {
+		$genPchFlags = "--gen-pch"
+	}
+	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags $pchFlags $pchOutDirFlags $genPchFlags | out-host
 	pop-location
 	if ($LASTEXITCODE -ne 0) {
 		echo "idlgen returned $LASTEXITCODE"
@@ -81,6 +87,12 @@ function absent {
 	}
 	assert "`"$line`" is absent" -actual $actual
 }
+
+# Test only pch generation
+if (test-path $pchOutDir) {
+	remove-item $pchOutDir -Recurse
+}
+gen -filePath "" -genPch
 
 # Test BlankPage
 # TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <cstdint>
-#include "idlgen.h"
+#include "pch.h"
 // Test inconsistent file name case
 #include "blankpage.g.h"
 #include "SameViewModel.h"
@@ -10,6 +9,7 @@
 #include "SomeNamespace/DifferentPathViewModel.h"
 #include "wil/cppwinrt_authoring.h"
 #include "cppxaml/cppxaml.h"
+#include <cstdint>
 
 namespace winrt::Root::A::implementation
 {
