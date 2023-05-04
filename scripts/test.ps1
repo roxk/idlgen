@@ -28,10 +28,13 @@ $pchFlags = "--pch=`"$pch`""
 $pchOutDirFlags = "--pch-out-dir=$pchOutDir"
 
 function gen {
-	param([string]$filePath)
+	param([string]$filePath, [switch]$genPch)
 	$LASTEXITCODE = 0
 	push-location $testCodeDir
-	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags $pchFlags $pchOutDirFlags | out-host
+	if ($genPch.IsPresent) {
+		$genPchFlags = "--gen-pch"
+	}
+	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags $pchFlags $pchOutDirFlags $genPchFlags | out-host
 	pop-location
 	if ($LASTEXITCODE -ne 0) {
 		echo "idlgen returned $LASTEXITCODE"
@@ -89,7 +92,7 @@ function absent {
 if (test-path $pchOutDir) {
 	remove-item $pchOutDir -Recurse
 }
-gen -filePath ""
+gen -filePath "" -genPch
 
 # Test BlankPage
 # TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })

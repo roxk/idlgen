@@ -98,6 +98,8 @@ static lc::list<std::string> Pchs("pch", lc::desc("Pch files"));
 
 static lc::opt<std::string> PchOutDir("pch-out-dir", lc::desc("Directory for pch output"));
 
+static lc::opt<bool> GeneratePch("gen-pch", lc::desc("Generate pch"));
+
 static void PrintVersion(llvm::raw_ostream& OS)
 {
     OS << "idlgen 0.0.1" << '\n';
@@ -160,45 +162,41 @@ int main(int argc, const char** argv)
         outFile.append(pch + ".gch");
         return outFile.string();
     };
-    if (!lfs::exists(PchOutDir))
+    if (GeneratePch)
     {
-        auto ec{lfs::create_directories(PchOutDir.c_str())};
-        if (ec)
+        if (!lfs::exists(PchOutDir))
         {
-            std::cerr << "Failed to create pch output dir" << std::endl;
-            return 1;
+            auto ec{lfs::create_directories(PchOutDir.c_str())};
+            if (ec)
+            {
+                std::cerr << "Failed to create pch output dir" << std::endl;
+                return 1;
+            }
         }
-    }
-    for (auto&& pch : Pchs)
-    {
-        auto outFile{pchOutGetter(pch)};
-        if (lfs::exists(outFile))
+        for (auto&& pch : Pchs)
         {
-            continue;
-        }
-        auto codeOrErr{llvm::MemoryBuffer::getFileAsStream(pch)};
-        if (std::error_code ec = codeOrErr.getError())
-        {
-            std::cerr << ec.message() << std::endl;
-            return 1;
-        }
-        auto code(std::move(codeOrErr.get()));
-        if (code->getBufferSize() == 0)
-        {
-            continue;
-        }
-        auto buffer{code->getBuffer()};
-        auto fileName{llvm::sys::path::filename(pch).str()};
-        auto result{
-            ct::runToolOnCodeWithArgs(std::make_unique<GeneratePchActionWrapper>(std::move(outFile)),
-            buffer,
-            clangArgs,
-            pch
-        )};
-        if (!result)
-        {
-            std::cerr << "fatal: Failed to generate pch" << std::endl;
-            return 1;
+            auto outFile{pchOutGetter(pch)};
+            auto codeOrErr{llvm::MemoryBuffer::getFileAsStream(pch)};
+            if (std::error_code ec = codeOrErr.getError())
+            {
+                std::cerr << ec.message() << std::endl;
+                return 1;
+            }
+            auto code(std::move(codeOrErr.get()));
+            if (code->getBufferSize() == 0)
+            {
+                continue;
+            }
+            auto buffer{code->getBuffer()};
+            auto fileName{llvm::sys::path::filename(pch).str()};
+            auto result{ct::runToolOnCodeWithArgs(
+                std::make_unique<GeneratePchActionWrapper>(std::move(outFile)), buffer, clangArgs, pch
+            )};
+            if (!result)
+            {
+                std::cerr << "fatal: Failed to generate pch" << std::endl;
+                return 1;
+            }
         }
     }
     for (auto&& pch : Pchs)
