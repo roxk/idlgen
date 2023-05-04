@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "pch.h"
+#include "pch2.h"
 #include "BlankPage.g.h"
 
 namespace winrt::SampleApp::implementation

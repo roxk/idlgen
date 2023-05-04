@@ -23,6 +23,7 @@
     <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h">
       <Filter>SomeFolder</Filter>
     </ClInclude>
+    <ClInclude Include="pch2.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
