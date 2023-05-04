@@ -2,19 +2,19 @@
 #include "RuntimeClassVisitor.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Tooling.h"
-#include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include <filesystem>
 #include <iostream>
 #include <memory>
-#include <filesystem>
 
 namespace llvm
 {
@@ -57,6 +57,7 @@ class GeneratePchActionWrapper : public clang::GeneratePCHAction
 {
   private:
     std::string output;
+
   public:
     GeneratePchActionWrapper(std::string output) : output(std::move(output))
     {
