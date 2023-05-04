@@ -6,6 +6,8 @@
 
 A library for generating idl files when implementing WinRT components. Currently, only C++ is supported.
 
+![Generate idl from C++ header](banner.png)
+
 ## Installation
 
 ### Nuget
