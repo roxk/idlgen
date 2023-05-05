@@ -87,7 +87,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     std::vector<IdlGenAttr> attrs;
     std::optional<std::vector<clang::QualType>> extend{GetExtend(record)};
     std::set<clang::CXXMethodDecl*> ctors;
-    std::map<std::string, MethodHolder> methodGroups;
+    std::map<std::string, MethodHolder> methodHolders;
     std::map<std::string, clang::CXXMethodDecl*> events;
     auto cxxAttrs{record->attrs()};
     bool isClassPropertyDefault = false;
@@ -129,11 +129,11 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     auto methods(record->methods());
     auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault)
     {
+        debugPrint([&]() { std::cout << "Checking if " << name << " is runtime class method" << std::endl; });
         assert(method != nullptr);
         auto methodKind{GetRuntimeClassMethodKind(isPropertyDefault, method)};
         if (!methodKind)
         {
-            debugPrint([&]() { std::cout << name << " is not a runtime class method" << std::endl; });
             return;
         }
         auto params{method->parameters()};
@@ -160,7 +160,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             return;
         }
         debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
-        auto& group{GetMethodGroup(methodGroups, method, *methodKind, std::move(name))};
+        auto& group{GetOrCreateMethodGroup(methodHolders, method, *methodKind, std::move(name))};
         if (methodKind == idlgen::MethodKind::Setter)
         {
             group.setter = method;
@@ -177,10 +177,6 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     };
     for (auto&& method : methods)
     {
-        debugPrint(
-            [&]()
-            { std::cout << "Checking if " << method->getNameAsString() << " is runtime class method" << std::endl; }
-        );
         tryAddMethod(method, method->getNameAsString(), isClassPropertyDefault);
     }
     auto fields{record->fields()};
@@ -209,47 +205,17 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             continue;
         }
         auto type{field->getType()};
-        clang::CXXRecordDecl const* typeRecord{type->getAsCXXRecordDecl()};
+        auto printer{GetMethodPrinter(field, type)};
+        if (printer != nullptr)
+        {
+            methodHolders.insert({field->getNameAsString(), MethodHolder{std::move(printer), std::nullopt}});
+            continue;
+        }
+        auto typeRecord{type->getAsCXXRecordDecl()};
         if (typeRecord == nullptr)
         {
             debugPrint([&]() { std::cout << field->getNameAsString() << "'s type is not a CXXRecord" << std::endl; });
             continue;
-        }
-        if (auto templateSpecDecl = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(typeRecord))
-        {
-            debugPrint([&]() { std::cout << field->getNameAsString() << " is a template" << std::endl; });
-            auto templateSpecType{type->getAs<clang::TemplateSpecializationType>()};
-            if (templateSpecType != nullptr && templateSpecDecl != nullptr)
-            {
-                auto propertyType{GetFirstTemplateTypeParam(templateSpecDecl)};
-                if (!propertyType.isNull())
-                {
-                    auto templateName{
-                        templateSpecType->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString()};
-                    std::optional<std::unique_ptr<MethodPrinter>> printerOpt;
-                    if (getterTemplates.find(templateName) != getterTemplates.end())
-                    {
-                        printerOpt.emplace(std::make_unique<PropertyMethodPrinter>(
-                            field->getNameAsString(), propertyType, PropertyKind::Getter, false
-                        ));
-                    }
-                    else if (propertyTemplates.find(templateName) != propertyTemplates.end())
-                    {
-                        printerOpt.emplace(std::make_unique<PropertyMethodPrinter>(
-                            field->getNameAsString(), propertyType, PropertyKind::Property, false
-                        ));
-                    }
-                    if (printerOpt)
-                    {
-                        methodGroups.insert({
-                            field->getNameAsString(),
-                            MethodHolder{std::move(*printerOpt), std::nullopt},
-                        });
-                        continue;
-                    }
-                }
-            }
-            typeRecord = templateSpecDecl;
         }
         // Check if the type has overloaded operator()
         // TODO: Should check for all callable? e.g. std::function
@@ -261,18 +227,12 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
                 {
                     return;
                 }
-                debugPrint(
-                    [&]() {
-                        std::cout << "Checking if " << field->getNameAsString() << " is runtime class method"
-                                  << std::endl;
-                    }
-                );
                 tryAddMethod(fieldMethod, field->getNameAsString(), isFieldPropertyDefault);
             }
         );
     }
     // Add default_interface if the runtime class is empty
-    if (methodGroups.empty())
+    if (methodHolders.empty())
     {
         attrs.emplace_back(IdlGenAttr{IdlGenAttrType::Attribute, {"default_interface"}});
     }
@@ -338,7 +298,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         PrintMethodParams(ctor);
         out << "\n";
     }
-    for (auto&& entry : methodGroups)
+    for (auto&& entry : methodHolders)
     {
         auto& group{entry.second};
         group.printer->Print(*this, out);
@@ -525,7 +485,7 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     return std::nullopt;
 }
 
-idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
+idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
     std::map<std::string, MethodHolder>& methodGroups,
     clang::CXXMethodDecl* method,
     idlgen::MethodKind kind,
@@ -574,6 +534,46 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetMethodGroup(
     auto& groupOpt = entry.first->second.groupOpt;
     assert(groupOpt.has_value());
     return *groupOpt;
+}
+
+std::unique_ptr<idlgen::MethodPrinter> idlgen::RuntimeClassVisitor::GetMethodPrinter(
+    clang::FieldDecl* field, clang::QualType type
+)
+{
+    auto record{type->getAsCXXRecordDecl()};
+    if (record == nullptr)
+    {
+        return nullptr;
+    }
+    auto templateSpecDecl = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(record);
+    if (templateSpecDecl == nullptr)
+    {
+        return nullptr;
+    }
+    auto templateSpecType{type->getAs<clang::TemplateSpecializationType>()};
+    if (templateSpecType == nullptr)
+    {
+        return nullptr;
+    }
+    auto propertyType{GetFirstTemplateTypeParam(templateSpecDecl)};
+    if (!propertyType.isNull())
+    {
+        auto templateName{templateSpecType->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString()};
+        std::optional<std::unique_ptr<MethodPrinter>> printerOpt;
+        if (getterTemplates.find(templateName) != getterTemplates.end())
+        {
+            return std::make_unique<PropertyMethodPrinter>(
+                field->getNameAsString(), propertyType, PropertyKind::Getter, false
+            );
+        }
+        else if (propertyTemplates.find(templateName) != propertyTemplates.end())
+        {
+            return std::make_unique<PropertyMethodPrinter>(
+                field->getNameAsString(), propertyType, PropertyKind::Property, false
+            );
+        }
+    }
+    return nullptr;
 }
 
 void idlgen::RuntimeClassVisitor::FindFileToInclude(std::set<std::string>& includes, clang::QualType type)
