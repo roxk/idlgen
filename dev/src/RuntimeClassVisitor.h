@@ -51,10 +51,15 @@ class MethodGroup : public MethodPrinter
 {
   private:
     std::string methodName;
+    bool isStatic;
 
   public:
     MethodGroup(
-        std::string methodName, clang::CXXMethodDecl* method, clang::CXXMethodDecl* getter, clang::CXXMethodDecl* setter
+        std::string methodName,
+        clang::CXXMethodDecl* method,
+        clang::CXXMethodDecl* getter,
+        clang::CXXMethodDecl* setter,
+        bool isStatic
     );
     clang::CXXMethodDecl* method;
     clang::CXXMethodDecl* getter;
@@ -155,9 +160,12 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
         std::map<std::string, MethodHolder>& methodGroups,
         clang::CXXMethodDecl* method,
         idlgen::MethodKind kind,
-        std::string methodName
+        std::string methodName,
+        bool isStatic
     );
-    std::unique_ptr<idlgen::MethodPrinter> GetMethodPrinter(clang::FieldDecl* field, clang::QualType type);
+    std::unique_ptr<idlgen::MethodPrinter> GetMethodPrinter(
+        clang::NamedDecl* field, clang::QualType type, bool isStatic
+    );
     void FindFileToInclude(std::set<std::string>& includes, clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     std::string TranslateCxxTypeToWinRtType(clang::QualType type);

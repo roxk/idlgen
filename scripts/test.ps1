@@ -194,10 +194,12 @@ exists -src $propertyBagOutput -line "Windows.Foundation.IAsyncAction MethodAsyn
 exists -src $propertyBagOutput -line "void MethodPure();"
 exists -src $propertyBagOutput -line "void MethodBool(Boolean a);"
 exists -src $propertyBagOutput -line "Boolean CppXamlProperty;"
+exists -src $propertyBagOutput -line "static Boolean StaticCppXamlProperty;"
 exists -src $propertyBagOutput -line "Root.A.SameViewModel WilProp{get;};"
 exists -src $propertyBagOutput -line "Root.A.SameViewModel WilRwProp;"
 # hidden
 absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateCppXamlProperty"
+absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateStaticCppXamlProperty"
 absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateWilProp"
 absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateWilRwProp"
 

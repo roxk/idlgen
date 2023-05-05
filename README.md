@@ -56,7 +56,7 @@ To specify the base type and interface for a runtime class, the class should inh
 
 #### Property
 
-Template types that has a single template parameter and overloads `operator()` can be configured as getter or property templates. When a data member is defined with these types, idlgen would recognize these overloaded `operator()` as runtime class methods. When configured, these methods would be considered as getter or setter (property).
+Template types that has a single template parameter and overloads `operator()` can be configured as getter or property templates. When a (static) data member is defined with these types, idlgen would recognize these overloaded `operator()` as runtime class methods. When configured, these methods would be considered as getter or setter (property).
 
 To specify a template type as getter, add the qualified name of the template to project property `IdlGenCppGetterTemplate`.
 
