@@ -21,4 +21,8 @@ namespace idlgen
 	struct author_delegate
 	{
 	};
+	
+	struct author_interface
+	{
+	};
 }

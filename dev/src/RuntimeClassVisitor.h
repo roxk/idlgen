@@ -217,6 +217,11 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     /// <summary>
     /// </summary>
     /// <param name="decl"></param>
+    /// <returns>True if is interface</returns>
+    bool TryHandleAsInterface(clang::CXXRecordDecl* decl);
+    /// <summary>
+    /// </summary>
+    /// <param name="decl"></param>
     /// <returns>True if is delegate</returns>
     bool TryHandleAsDelegate(clang::CXXRecordDecl* decl);
     /// <summary>
