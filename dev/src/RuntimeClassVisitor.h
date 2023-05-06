@@ -133,6 +133,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     llvm::raw_ostream& out;
     static std::unordered_map<std::string, std::string> cxxTypeToWinRtTypeMap;
     std::unordered_map<std::string, clang::CXXRecordDecl*> implementationTypes;
+    std::set<std::string> includes;
     std::unordered_set<std::string> getterTemplates;
     std::unordered_set<std::string> propertyTemplates;
     bool verbose;
@@ -153,6 +154,12 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     bool VisitEnumDecl(clang::EnumDecl* decl);
 
   private:
+    struct GetMethodResponse
+    {
+        std::map<std::string, MethodHolder> holders;
+        std::map<std::string, clang::CXXMethodDecl*> events;
+        std::set<clang::CXXMethodDecl*> ctors;
+    };
     friend class MethodGroup;
     friend class PropertyMethodPrinter;
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
@@ -168,6 +175,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     );
     void FindFileToInclude(std::set<std::string>& includes, clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
+    GetMethodResponse GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault);
     std::string TranslateCxxTypeToWinRtType(clang::QualType type);
     static bool IsCppWinRtPrimitive(std::string const& type);
     bool IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly = false);
@@ -214,6 +222,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     }
     void PrintNameSpaces(std::vector<std::string> namespaces);
     void PrintMethodParams(clang::CXXMethodDecl* method);
+    void PrintEvent(std::string_view name, clang::CXXMethodDecl* method);
     /// <summary>
     /// </summary>
     /// <param name="decl"></param>
