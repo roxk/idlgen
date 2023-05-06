@@ -245,8 +245,9 @@ exists -src $someInterfaceOutput -line "void Method();"
 exists -src $someInterfaceOutput -line "Int32 AnotherMethod(Int32 a);"
 exists -src $someInterfaceOutput -line "Int32 PropLikeMethod();"
 exists -src $someInterfaceOutput -line "void PropLikeMethod(Int32 a);"
+exists -src $someInterfaceOutput -line "Boolean WilProp;"
+exists -src $someInterfaceOutput -line "event Windows.Foundation.EventHandler<Boolean> WilEvent;"
 # hidden
-absent -src $someInterfaceOutput -line "void NonPureVirtual"
 absent -src $someInterfaceOutput -line "void PrivateMethod"
 
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"

@@ -34,6 +34,7 @@ idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
 void idlgen::RuntimeClassVisitor::Reset()
 {
     implementationTypes.clear();
+    includes.clear();
 }
 
 std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::cxxTypeToWinRtTypeMap{
@@ -84,12 +85,8 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     {
         return true;
     }
-    std::set<std::string> includes;
     std::vector<IdlGenAttr> attrs;
     std::optional<std::vector<clang::QualType>> extend{GetExtend(record)};
-    std::set<clang::CXXMethodDecl*> ctors;
-    std::map<std::string, MethodHolder> methodHolders;
-    std::map<std::string, clang::CXXMethodDecl*> events;
     auto cxxAttrs{record->attrs()};
     bool isClassPropertyDefault = false;
     for (auto&& attr : cxxAttrs)
@@ -124,133 +121,13 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
             isClassPropertyDefault = false;
         }
     }
+    auto response{GetMethods(record, isClassPropertyDefault)};
+    auto& methodHolders{response.holders};
+    auto& events{response.events};
+    auto& ctors{response.ctors};
     debugPrint([&]()
                { std::cout << record->getNameAsString() << " propertyDefault=" << isClassPropertyDefault << std::endl; }
     );
-    auto methods(record->methods());
-    auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault, bool isStatic)
-    {
-        debugPrint([&]() { std::cout << "Checking if " << name << " is runtime class method" << std::endl; });
-        assert(method != nullptr);
-        auto methodKind{GetRuntimeClassMethodKind(isPropertyDefault, method)};
-        if (!methodKind)
-        {
-            return;
-        }
-        auto params{method->parameters()};
-        for (auto&& param : params)
-        {
-            FindFileToInclude(includes, param->getType());
-        }
-        if (IsDestructor(method))
-        {
-            return;
-        }
-        if (IsConstructor(method))
-        {
-            ctors.insert(method);
-            return;
-        }
-        if (IsEventRevoker(method))
-        {
-            return;
-        }
-        if (IsEventRegistrar(method))
-        {
-            events.insert({std::move(name), method});
-            return;
-        }
-        debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
-        auto& group{GetOrCreateMethodGroup(methodHolders, method, *methodKind, std::move(name), isStatic)};
-        if (methodKind == idlgen::MethodKind::Setter)
-        {
-            group.setter = method;
-        }
-        else if (methodKind == idlgen::MethodKind::Getter)
-        {
-            group.getter = method;
-        }
-        else
-        {
-            group.method = method;
-        }
-        FindFileToInclude(includes, method->getReturnType());
-    };
-    for (auto&& method : methods)
-    {
-        tryAddMethod(method, method->getNameAsString(), isClassPropertyDefault, method->isStatic());
-    }
-    auto handleDataMember = [&](clang::ValueDecl* dataMember, bool isStatic)
-    {
-        debugPrint(
-            [&]()
-            { std::cout << dataMember->getNameAsString() << " is data member isStatic=" << isStatic << std::endl; }
-        );
-        bool isFieldPropertyDefault{isClassPropertyDefault};
-        auto fieldAttrs{dataMember->attrs()};
-        for (auto&& fieldAttr : fieldAttrs)
-        {
-            auto idlgenAttr{GetIdlGenAttr(fieldAttr)};
-            if (!idlgenAttr)
-            {
-                continue;
-            }
-            if (idlgenAttr->type == idlgen::IdlGenAttrType::Property)
-            {
-                isFieldPropertyDefault = true;
-            }
-            else if (idlgenAttr->type == idlgen::IdlGenAttrType::Method)
-            {
-                isFieldPropertyDefault = false;
-            }
-        }
-        if (dataMember->getAccess() != clang::AccessSpecifier::AS_public)
-        {
-            return;
-        }
-        auto type{dataMember->getType()};
-        auto printer{GetMethodPrinter(dataMember, type, isStatic)};
-        if (printer != nullptr)
-        {
-            methodHolders.insert({dataMember->getNameAsString(), MethodHolder{std::move(printer), std::nullopt}});
-            return;
-        }
-        auto typeRecord{type->getAsCXXRecordDecl()};
-        if (typeRecord == nullptr)
-        {
-            debugPrint([&]()
-                       { std::cout << dataMember->getNameAsString() << "'s type is not a CXXRecord" << std::endl; });
-            return;
-        }
-        // Check if the type has overloaded operator()
-        // TODO: Should check for all callable? e.g. std::function
-        ForThisAndBaseMethods(
-            typeRecord,
-            [&](clang::CXXMethodDecl* fieldMethod)
-            {
-                if (fieldMethod->getNameAsString() != "operator()")
-                {
-                    return;
-                }
-                tryAddMethod(fieldMethod, dataMember->getNameAsString(), isFieldPropertyDefault, isStatic);
-            }
-        );
-    };
-    auto fields{record->fields()};
-    for (auto&& field : fields)
-    {
-        handleDataMember(field, false);
-    }
-    auto decls{record->decls()};
-    for (auto&& decl : decls)
-    {
-        auto varDecl{clang::dyn_cast<clang::VarDecl>(decl)};
-        if (varDecl == nullptr)
-        {
-            continue;
-        }
-        handleDataMember(varDecl, varDecl->isStaticDataMember());
-    }
     // Add default_interface if the runtime class is empty
     if (methodHolders.empty())
     {
@@ -262,16 +139,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         out << "import \"" << include << "\";"
             << "\n";
     }
-    out << "namespace ";
-    const auto namespaceCount = namespaces.size();
-    for (size_t i = 0; i < namespaceCount; ++i)
-    {
-        out << namespaces[i];
-        if (i + 1 < namespaceCount)
-        {
-            out << ".";
-        }
-    }
+    PrintNameSpaces(namespaces);
     out << "\n";
     out << "{"
         << "\n";
@@ -328,10 +196,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     {
         auto& name{entry.first};
         auto& ev{entry.second};
-        assert(ev->parameters().size() > 0);
-        auto handler{TranslateCxxTypeToWinRtType(ev->parameters().front()->getType())};
-        out << "event " << handler << " " << name << ";"
-            << "\n";
+        PrintEvent(name, ev);
     }
     out << "}"
         << "\n";
@@ -750,6 +615,140 @@ std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCx
         {"float", "Single"},
         {"double", "Double"},
     };
+}
+
+idlgen::RuntimeClassVisitor::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
+    clang::CXXRecordDecl* record, bool isPropertyDefault
+)
+{
+    std::map<std::string, MethodHolder> methodHolders;
+    std::map<std::string, clang::CXXMethodDecl*> events;
+    std::set<clang::CXXMethodDecl*> ctors;
+    auto methods(record->methods());
+    auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault, bool isStatic)
+    {
+        debugPrint([&]() { std::cout << "Checking if " << name << " is runtime class method" << std::endl; });
+        assert(method != nullptr);
+        auto methodKind{GetRuntimeClassMethodKind(isPropertyDefault, method)};
+        if (!methodKind)
+        {
+            return;
+        }
+        auto params{method->parameters()};
+        for (auto&& param : params)
+        {
+            FindFileToInclude(includes, param->getType());
+        }
+        if (IsDestructor(method))
+        {
+            return;
+        }
+        if (IsConstructor(method))
+        {
+            ctors.insert(method);
+            return;
+        }
+        if (IsEventRevoker(method))
+        {
+            return;
+        }
+        if (IsEventRegistrar(method))
+        {
+            events.insert({std::move(name), method});
+            return;
+        }
+        debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
+        auto& group{GetOrCreateMethodGroup(methodHolders, method, *methodKind, std::move(name), isStatic)};
+        if (methodKind == idlgen::MethodKind::Setter)
+        {
+            group.setter = method;
+        }
+        else if (methodKind == idlgen::MethodKind::Getter)
+        {
+            group.getter = method;
+        }
+        else
+        {
+            group.method = method;
+        }
+        FindFileToInclude(includes, method->getReturnType());
+    };
+    for (auto&& method : methods)
+    {
+        tryAddMethod(method, method->getNameAsString(), isPropertyDefault, method->isStatic());
+    }
+    auto handleDataMember = [&](clang::ValueDecl* dataMember, bool isStatic)
+    {
+        debugPrint(
+            [&]()
+            { std::cout << dataMember->getNameAsString() << " is data member isStatic=" << isStatic << std::endl; }
+        );
+        bool isFieldPropertyDefault{isPropertyDefault};
+        auto fieldAttrs{dataMember->attrs()};
+        for (auto&& fieldAttr : fieldAttrs)
+        {
+            auto idlgenAttr{GetIdlGenAttr(fieldAttr)};
+            if (!idlgenAttr)
+            {
+                continue;
+            }
+            if (idlgenAttr->type == idlgen::IdlGenAttrType::Property)
+            {
+                isFieldPropertyDefault = true;
+            }
+            else if (idlgenAttr->type == idlgen::IdlGenAttrType::Method)
+            {
+                isFieldPropertyDefault = false;
+            }
+        }
+        if (dataMember->getAccess() != clang::AccessSpecifier::AS_public)
+        {
+            return;
+        }
+        auto type{dataMember->getType()};
+        auto printer{GetMethodPrinter(dataMember, type, isStatic)};
+        if (printer != nullptr)
+        {
+            methodHolders.insert({dataMember->getNameAsString(), MethodHolder{std::move(printer), std::nullopt}});
+            return;
+        }
+        auto typeRecord{type->getAsCXXRecordDecl()};
+        if (typeRecord == nullptr)
+        {
+            debugPrint([&]()
+                       { std::cout << dataMember->getNameAsString() << "'s type is not a CXXRecord" << std::endl; });
+            return;
+        }
+        // Check if the type has overloaded operator()
+        // TODO: Should check for all callable? e.g. std::function
+        ForThisAndBaseMethods(
+            typeRecord,
+            [&](clang::CXXMethodDecl* fieldMethod)
+            {
+                if (fieldMethod->getNameAsString() != "operator()")
+                {
+                    return;
+                }
+                tryAddMethod(fieldMethod, dataMember->getNameAsString(), isFieldPropertyDefault, isStatic);
+            }
+        );
+    };
+    auto fields{record->fields()};
+    for (auto&& field : fields)
+    {
+        handleDataMember(field, false);
+    }
+    auto decls{record->decls()};
+    for (auto&& decl : decls)
+    {
+        auto varDecl{clang::dyn_cast<clang::VarDecl>(decl)};
+        if (varDecl == nullptr)
+        {
+            continue;
+        }
+        handleDataMember(varDecl, varDecl->isStaticDataMember());
+    }
+    return {std::move(methodHolders), std::move(events), std::move(ctors)};
 }
 
 std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::QualType type)
@@ -1446,6 +1445,14 @@ void idlgen::RuntimeClassVisitor::PrintMethodParams(clang::CXXMethodDecl* method
     out << ");";
 }
 
+void idlgen::RuntimeClassVisitor::PrintEvent(std::string_view name, clang::CXXMethodDecl* method)
+{
+    assert(method->parameters().size() > 0);
+    auto handler{TranslateCxxTypeToWinRtType(method->parameters().front()->getType())};
+    out << "event " << handler << " " << name << ";"
+        << "\n";
+}
+
 bool idlgen::RuntimeClassVisitor::TryHandleAsInterface(clang::CXXRecordDecl* decl)
 {
     if (!IsSingleBaseOfType(decl, "idlgen::author_interface"))
@@ -1454,26 +1461,21 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsInterface(clang::CXXRecordDecl* dec
     }
     auto fields{decl->fields()};
     auto namespaces{GetWinRtNamespaces(decl)};
+    auto methodResponse{GetMethods(decl, false)};
+    auto& holders{methodResponse.holders};
+    auto& events{methodResponse.events};
     PrintNameSpaces(namespaces);
     out << "\n";
     out << "{\n";
     out << "interface " << decl->getNameAsString() << "\n";
     out << "{\n";
-    auto methods{decl->methods()};
-    for (auto&& method : methods)
+    for (auto&& holder : holders)
     {
-        if (!method->isPure())
-        {
-            continue;
-        }
-        if (GetRuntimeClassMethodKind(false, method) != MethodKind::Method)
-        {
-            continue;
-        }
-        out << TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
-        out << method->getNameAsString();
-        PrintMethodParams(method);
-        out << "\n";
+        holder.second.printer->Print(*this, out);
+    }
+    for (auto&& ev : events)
+    {
+        PrintEvent(ev.first, ev.second);
     }
     out << "};\n";
     out << "}\n";

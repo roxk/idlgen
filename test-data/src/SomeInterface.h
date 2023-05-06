@@ -1,17 +1,19 @@
 #pragma once
 
 #include "idlgen.h"
+#include "wil/cppwinrt_authoring.h"
 #include <cstdint>
 
 namespace winrt::Root
 {
 	struct SomeInterface : idlgen::author_interface
 	{
-		virtual void Method() = 0;
-		virtual int32_t AnotherMethod(int32_t a) = 0;
-		virtual int32_t PropLikeMethod() = 0;
-		virtual void PropLikeMethod(int32_t a) = 0;
-		void NonPureVirtual();
+		void Method();
+		int32_t AnotherMethod(int32_t a);
+		int32_t PropLikeMethod();
+		void PropLikeMethod(int32_t a);
+		wil::single_threaded_rw_property<bool> WilProp;
+		wil::simple_event<bool> WilEvent;
 	private:
 		void PrivateMethod();
 	};
