@@ -62,6 +62,10 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         return true;
     }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
+    if (TryHandleAsInterface(record))
+    {
+        return true;
+    }
     if (TryHandleAsDelegate(record))
     {
         return true;
@@ -1440,6 +1444,40 @@ void idlgen::RuntimeClassVisitor::PrintMethodParams(clang::CXXMethodDecl* method
         }
     }
     out << ");";
+}
+
+bool idlgen::RuntimeClassVisitor::TryHandleAsInterface(clang::CXXRecordDecl* decl)
+{
+    if (!IsSingleBaseOfType(decl, "idlgen::author_interface"))
+    {
+        return false;
+    }
+    auto fields{decl->fields()};
+    auto namespaces{GetWinRtNamespaces(decl)};
+    PrintNameSpaces(namespaces);
+    out << "\n";
+    out << "{\n";
+    out << "interface " << decl->getNameAsString() << "\n";
+    out << "{\n";
+    auto methods{decl->methods()};
+    for (auto&& method : methods)
+    {
+        if (!method->isPure())
+        {
+            continue;
+        }
+        if (GetRuntimeClassMethodKind(false, method) != MethodKind::Method)
+        {
+            continue;
+        }
+        out << TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
+        out << method->getNameAsString();
+        PrintMethodParams(method);
+        out << "\n";
+    }
+    out << "};\n";
+    out << "}\n";
+    return true;
 }
 
 bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
