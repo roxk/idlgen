@@ -104,22 +104,27 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
     }
     std::unique_ptr<Printer> printer;
-    if (printer = TryHandleAsInterface(record, isPropertyDefault); printer == nullptr)
+    if (printer = TryHandleAsInterface(record, isPropertyDefault))
     {
-        if (TryHandleAsDelegate(record))
-        {
-            return true;
-        }
-        if (printer = TryHandleAsStruct(record); printer == nullptr)
-        {
-            printer = TryHandleAsClass(record, isPropertyDefault, attrs);
-        }
+        debugPrint([]() { std::cout << "is interface" << std::endl; });
     }
-    // Generate idl
-    if (printer == nullptr)
+    else if (printer = TryHandleAsDelegate(record))
+    {
+        debugPrint([]() { std::cout << "is delegate" << std::endl; });
+    }
+    else if (printer = TryHandleAsStruct(record))
+    {
+        debugPrint([]() { std::cout << "is struct" << std::endl; });
+    }
+    else if (printer = TryHandleAsClass(record, isPropertyDefault, attrs))
+    {
+        debugPrint([]() { std::cout << "is runtime class" << std::endl; });
+    }
+    else
     {
         return true;
     }
+    // Generate idl
     for (auto&& include : includes)
     {
         out << "import \"" << include << "\";"
@@ -127,8 +132,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     }
     PrintNameSpaces(namespaces);
     out << "\n";
-    out << "{"
-        << "\n";
+    out << "{\n";
     for (auto&& attr : attrs)
     {
         if (attr.type != IdlGenAttrType::Attribute)
@@ -146,8 +150,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     {
         printer->Print(*this, out);
     }
-    out << "}"
-        << "\n";
+    out << "}\n";
     return true;
 }
 
@@ -1407,7 +1410,6 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsClass(
     {
         return nullptr;
     }
-    debugPrint([]() { std::cout << "is runtime class" << std::endl; });
     auto response{GetMethods(decl, isPropertyDefault)};
     auto& methodHolders{response.holders};
     auto& events{response.events};
@@ -1433,11 +1435,11 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterfa
     return std::make_unique<InterfacePrinter>(decl, std::move(methodResponse));
 }
 
-bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
+std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
 {
     if (!IsSingleBaseOfType(decl, "idlgen::author_delegate"))
     {
-        return false;
+        return nullptr;
     }
     clang::CXXMethodDecl* method{nullptr};
     auto methods{decl->methods()};
@@ -1448,37 +1450,27 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl
         );
         if (method != nullptr)
         {
-            return false;
+            return nullptr;
         }
         if (GetRuntimeClassMethodKind(false, candidateMethod) != MethodKind::Method)
         {
-            return false;
+            return nullptr;
         }
         if (candidateMethod->param_size() != 2)
         {
-            return false;
+            return nullptr;
         }
         method = candidateMethod;
     }
     if (method == nullptr)
     {
-        return false;
+        return nullptr;
     }
     if (method->getNameAsString() != "operator()")
     {
-        return false;
+        return nullptr;
     }
-    auto namespaces{GetWinRtNamespaces(decl)};
-    PrintNameSpaces(namespaces);
-    out << "\n";
-    out << "{\n";
-    out << "delegate ";
-    out << TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
-    out << decl->getNameAsString();
-    PrintMethodParams(method);
-    out << "\n";
-    out << "}\n";
-    return true;
+    return std::make_unique<idlgen::DelegatePrinter>(decl, method);
 }
 
 std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
@@ -1583,6 +1575,20 @@ void idlgen::PropertyMethodPrinter::Print(RuntimeClassVisitor& visitor, llvm::ra
     {
         out << ";";
     }
+}
+
+idlgen::DelegatePrinter::DelegatePrinter(clang::CXXRecordDecl* record, clang::CXXMethodDecl* method)
+    : record(record), method(method)
+{
+}
+
+void idlgen::DelegatePrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+{
+    out << "delegate ";
+    out << visitor.TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
+    out << record->getNameAsString();
+    visitor.PrintMethodParams(method);
+    out << "\n";
 }
 
 idlgen::StructPrinter::StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields)
