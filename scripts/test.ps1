@@ -251,8 +251,11 @@ exists -src $someInterfaceOutput -line "event Windows.Foundation.EventHandler<Bo
 absent -src $someInterfaceOutput -line "void PrivateMethod"
 
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
-gen -filePath $nonWinRtHeaderSrc
 $nonWinRtHeaderIdlPath = "$testCodeDir\NonWinRtHeader.idl"
+if (test-path $nonWinRtHeaderIdlPath) {
+	remove-item $nonWinRtHeaderIdlPath
+}
+gen -filePath $nonWinRtHeaderSrc
 if (test-path $nonWinRtHeaderIdlPath) {
 	$doesWinRtHeaderIdlExist = $true
 } else {
