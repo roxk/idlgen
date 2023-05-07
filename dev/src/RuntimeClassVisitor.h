@@ -39,15 +39,15 @@ struct IdlGenAttr
     std::vector<std::string> args;
 };
 class RuntimeClassVisitor;
-class MethodPrinter
+class Printer
 {
   public:
-    virtual ~MethodPrinter()
+    virtual ~Printer()
     {
     }
     virtual void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) = 0;
 };
-class MethodGroup : public MethodPrinter
+class MethodGroup : public Printer
 {
   private:
     std::string methodName;
@@ -86,6 +86,28 @@ class MethodGroup : public MethodPrinter
     }
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
+enum class PropertyKind
+{
+    Getter,
+    Property
+};
+class PropertyMethodPrinter : public Printer
+{
+  private:
+    std::string methodName;
+    clang::QualType type;
+    PropertyKind kind;
+    bool isStatic{};
+
+  public:
+    PropertyMethodPrinter(std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic);
+    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+};
+struct MethodHolder
+{
+    std::unique_ptr<Printer> printer;
+    std::optional<std::reference_wrapper<MethodGroup>> groupOpt;
+};
 enum class RuntimeClassKind
 {
     Projected,
@@ -102,27 +124,20 @@ enum class MethodKind
     Getter,
     Method
 };
-enum class PropertyKind
+struct GetMethodResponse
 {
-    Getter,
-    Property
+    std::map<std::string, MethodHolder> holders;
+    std::map<std::string, clang::CXXMethodDecl*> events;
+    std::set<clang::CXXMethodDecl*> ctors;
 };
-class PropertyMethodPrinter : public MethodPrinter
+class InterfacePrinter : public Printer
 {
   private:
-    std::string methodName;
-    clang::QualType type;
-    PropertyKind kind;
-    bool isStatic{};
-
+    clang::CXXRecordDecl* record;
+    GetMethodResponse response;
   public:
-    PropertyMethodPrinter(std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic);
+    InterfacePrinter(clang::CXXRecordDecl *record, GetMethodResponse response);
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
-};
-struct MethodHolder
-{
-    std::unique_ptr<MethodPrinter> printer;
-    std::optional<std::reference_wrapper<MethodGroup>> groupOpt;
 };
 
 class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisitor>
@@ -153,15 +168,15 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
 
     bool VisitEnumDecl(clang::EnumDecl* decl);
 
+    void PrintNameSpaces(std::vector<std::string> namespaces);
+
+    void PrintMethodParams(clang::CXXMethodDecl* method);
+
+    void PrintEvent(std::string_view name, clang::CXXMethodDecl* method);
+
+    std::string TranslateCxxTypeToWinRtType(clang::QualType type);
+
   private:
-    struct GetMethodResponse
-    {
-        std::map<std::string, MethodHolder> holders;
-        std::map<std::string, clang::CXXMethodDecl*> events;
-        std::set<clang::CXXMethodDecl*> ctors;
-    };
-    friend class MethodGroup;
-    friend class PropertyMethodPrinter;
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
     MethodGroup& GetOrCreateMethodGroup(
         std::map<std::string, MethodHolder>& methodGroups,
@@ -170,13 +185,12 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
         std::string methodName,
         bool isStatic
     );
-    std::unique_ptr<idlgen::MethodPrinter> GetMethodPrinter(
+    std::unique_ptr<idlgen::Printer> GetMethodPrinter(
         clang::NamedDecl* field, clang::QualType type, bool isStatic
     );
     void FindFileToInclude(std::set<std::string>& includes, clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     GetMethodResponse GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault);
-    std::string TranslateCxxTypeToWinRtType(clang::QualType type);
     static bool IsCppWinRtPrimitive(std::string const& type);
     bool IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly = false);
     bool IsEventRevoker(clang::CXXMethodDecl* method);
@@ -220,14 +234,16 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
             ForThisAndBaseMethods(cxxType, std::forward<Func>(func));
         }
     }
-    void PrintNameSpaces(std::vector<std::string> namespaces);
-    void PrintMethodParams(clang::CXXMethodDecl* method);
-    void PrintEvent(std::string_view name, clang::CXXMethodDecl* method);
+    /// <summary>
+    /// </summary>
+    /// <param name="decl"></param>
+    /// <returns>True if is runtime class</returns>
+    bool TryHandleAsClass(clang::CXXRecordDecl* decl);
     /// <summary>
     /// </summary>
     /// <param name="decl"></param>
     /// <returns>True if is interface</returns>
-    bool TryHandleAsInterface(clang::CXXRecordDecl* decl);
+    std::unique_ptr<Printer> TryHandleAsInterface(clang::CXXRecordDecl* decl, bool isPropertyDefault);
     /// <summary>
     /// </summary>
     /// <param name="decl"></param>

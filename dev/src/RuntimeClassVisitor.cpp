@@ -63,23 +63,6 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         return true;
     }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
-    if (TryHandleAsInterface(record))
-    {
-        return true;
-    }
-    if (TryHandleAsDelegate(record))
-    {
-        return true;
-    }
-    if (TryHandleAsStruct(record))
-    {
-        return true;
-    }
-    if (!GetRuntimeClassKind(record))
-    {
-        return true;
-    }
-    debugPrint([]() { std::cout << "is runtime class" << std::endl; });
     std::vector<std::string> namespaces{GetWinRtNamespaces(record)};
     if (!namespaces.empty() && namespaces.back() == "factory_implementation")
     {
@@ -88,7 +71,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     std::vector<IdlGenAttr> attrs;
     std::optional<std::vector<clang::QualType>> extend{GetExtend(record)};
     auto cxxAttrs{record->attrs()};
-    bool isClassPropertyDefault = false;
+    bool isPropertyDefault = false;
     for (auto&& attr : cxxAttrs)
     {
         auto idlGenAttr = GetIdlGenAttr(attr);
@@ -114,19 +97,36 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         else if (idlGenAttr->type == IdlGenAttrType::Property)
         {
-            isClassPropertyDefault = true;
+            isPropertyDefault = true;
         }
         else if (idlGenAttr->type == IdlGenAttrType::Method)
         {
-            isClassPropertyDefault = false;
+            isPropertyDefault = false;
         }
     }
-    auto response{GetMethods(record, isClassPropertyDefault)};
+    std::unique_ptr<Printer> printer;
+    printer = TryHandleAsInterface(record, isPropertyDefault);
+    if (printer == nullptr)
+    {
+        if (TryHandleAsDelegate(record))
+        {
+            return true;
+        }
+        if (TryHandleAsStruct(record))
+        {
+            return true;
+        }
+        if (!GetRuntimeClassKind(record))
+        {
+            return true;
+        }
+    }
+    auto response{GetMethods(record, isPropertyDefault)};
     auto& methodHolders{response.holders};
     auto& events{response.events};
     auto& ctors{response.ctors};
     debugPrint([&]()
-               { std::cout << record->getNameAsString() << " propertyDefault=" << isClassPropertyDefault << std::endl; }
+               { std::cout << record->getNameAsString() << " propertyDefault=" << isPropertyDefault << std::endl; }
     );
     // Add default_interface if the runtime class is empty
     if (methodHolders.empty())
@@ -156,50 +156,57 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
                 << "\n";
         }
     }
-    out << "runtimeclass " << record->getNameAsString();
-    if (extend)
+    if (printer != nullptr)
     {
-        debugPrint([&]() { std::cout << "extend size is " << extend->size() << std::endl; });
-        if (!extend->empty())
+        printer->Print(*this, out);
+    }
+    else
+    {
+        out << "runtimeclass " << record->getNameAsString();
+        if (extend)
         {
-            out << " : ";
-        }
-        auto& bases{*extend};
-        const auto baseCount = bases.size();
-        for (size_t i = 0; i < baseCount; ++i)
-        {
-            auto& base = bases[i];
-            auto name{TranslateCxxTypeToWinRtType(base)};
-            out << name;
-            if (i + 1 < baseCount)
+            debugPrint([&]() { std::cout << "extend size is " << extend->size() << std::endl; });
+            if (!extend->empty())
             {
-                out << ", ";
+                out << " : ";
+            }
+            auto& bases{*extend};
+            const auto baseCount = bases.size();
+            for (size_t i = 0; i < baseCount; ++i)
+            {
+                auto& base = bases[i];
+                auto name{TranslateCxxTypeToWinRtType(base)};
+                out << name;
+                if (i + 1 < baseCount)
+                {
+                    out << ", ";
+                }
             }
         }
-    }
-    out << "\n";
-    out << "{"
-        << "\n";
-    for (auto&& ctor : ctors)
-    {
-        out << ctor->getNameAsString();
-        PrintMethodParams(ctor);
         out << "\n";
+        out << "{"
+            << "\n";
+        for (auto&& ctor : ctors)
+        {
+            out << ctor->getNameAsString();
+            PrintMethodParams(ctor);
+            out << "\n";
+        }
+        for (auto&& entry : methodHolders)
+        {
+            auto& group{entry.second};
+            group.printer->Print(*this, out);
+            out << "\n";
+        }
+        for (auto&& entry : events)
+        {
+            auto& name{entry.first};
+            auto& ev{entry.second};
+            PrintEvent(name, ev);
+        }
+        out << "}"
+            << "\n";
     }
-    for (auto&& entry : methodHolders)
-    {
-        auto& group{entry.second};
-        group.printer->Print(*this, out);
-        out << "\n";
-    }
-    for (auto&& entry : events)
-    {
-        auto& name{entry.first};
-        auto& ev{entry.second};
-        PrintEvent(name, ev);
-    }
-    out << "}"
-        << "\n";
     out << "}"
         << "\n";
     return true;
@@ -422,7 +429,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
     return *groupOpt;
 }
 
-std::unique_ptr<idlgen::MethodPrinter> idlgen::RuntimeClassVisitor::GetMethodPrinter(
+std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::GetMethodPrinter(
     clang::NamedDecl* field, clang::QualType type, bool isStatic
 )
 {
@@ -445,7 +452,7 @@ std::unique_ptr<idlgen::MethodPrinter> idlgen::RuntimeClassVisitor::GetMethodPri
     if (!propertyType.isNull())
     {
         auto templateName{templateSpecType->getTemplateName().getAsTemplateDecl()->getQualifiedNameAsString()};
-        std::optional<std::unique_ptr<MethodPrinter>> printerOpt;
+        std::optional<std::unique_ptr<Printer>> printerOpt;
         if (getterTemplates.find(templateName) != getterTemplates.end())
         {
             return std::make_unique<PropertyMethodPrinter>(
@@ -617,7 +624,7 @@ std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCx
     };
 }
 
-idlgen::RuntimeClassVisitor::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
+idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
     clang::CXXRecordDecl* record, bool isPropertyDefault
 )
 {
@@ -1453,33 +1460,20 @@ void idlgen::RuntimeClassVisitor::PrintEvent(std::string_view name, clang::CXXMe
         << "\n";
 }
 
-bool idlgen::RuntimeClassVisitor::TryHandleAsInterface(clang::CXXRecordDecl* decl)
+bool idlgen::RuntimeClassVisitor::TryHandleAsClass(clang::CXXRecordDecl* decl)
+{
+    debugPrint([]() { std::cout << "is runtime class" << std::endl; });
+    return false;
+}
+
+std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterface(clang::CXXRecordDecl* decl, bool isPropertyDefault)
 {
     if (!IsSingleBaseOfType(decl, "idlgen::author_interface"))
     {
         return false;
     }
-    auto fields{decl->fields()};
-    auto namespaces{GetWinRtNamespaces(decl)};
-    auto methodResponse{GetMethods(decl, false)};
-    auto& holders{methodResponse.holders};
-    auto& events{methodResponse.events};
-    PrintNameSpaces(namespaces);
-    out << "\n";
-    out << "{\n";
-    out << "interface " << decl->getNameAsString() << "\n";
-    out << "{\n";
-    for (auto&& holder : holders)
-    {
-        holder.second.printer->Print(*this, out);
-    }
-    for (auto&& ev : events)
-    {
-        PrintEvent(ev.first, ev.second);
-    }
-    out << "};\n";
-    out << "}\n";
-    return true;
+    auto methodResponse{GetMethods(decl, isPropertyDefault)};
+    return std::make_unique<InterfacePrinter>(decl, std::move(methodResponse));
 }
 
 bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
@@ -1641,4 +1635,25 @@ void idlgen::PropertyMethodPrinter::Print(RuntimeClassVisitor& visitor, llvm::ra
     {
         out << ";";
     }
+}
+
+idlgen::InterfacePrinter::InterfacePrinter(clang::CXXRecordDecl* record, GetMethodResponse response) : record(record), response(std::move(response))
+{
+}
+
+void idlgen::InterfacePrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+{
+    auto& holders{response.holders};
+    auto& events{response.events};
+    out << "interface " << record->getNameAsString() << "\n";
+    out << "{\n";
+    for (auto&& holder : holders)
+    {
+        holder.second.printer->Print(visitor, out);
+    }
+    for (auto&& ev : events)
+    {
+        visitor.PrintEvent(ev.first, ev.second);
+    }
+    out << "};\n";
 }
