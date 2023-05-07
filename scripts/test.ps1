@@ -237,7 +237,14 @@ exists -src $someStructOutput -line "Int64 Y;"
 exists -src $someStructOutput -line "};"
 
 $someDelegateOutput = get-gen-output "$testCodeDir\SomeDelegate.h"
+exists -src $someDelegateOutput -line "import `"ShallowerViewModel.idl`";"
+exists -src $someDelegateOutput -line "import `"SomeFlag.idl`";"
+exists -src $someDelegateOutput -line "[webhosthidden]"
 exists -src $someDelegateOutput -line "delegate void SomeEventHandler(Root.ShallowerViewModel vm, UInt64 e);"
+# hidden
+absent -src $someDelegateOutput -line "NonWinRtTypeHandler"
+absent -src $someDelegateOutput -line "HiddenHandler"
+absent -src $someDelegateOutput -line "HiddenStructHandler"
 
 $someInterfaceOutput = get-gen-output "$testCodeDir\SomeInterface.h"
 exists -src $someInterfaceOutput -line "interface SomeInterface"
