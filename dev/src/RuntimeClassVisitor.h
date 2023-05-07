@@ -124,6 +124,11 @@ enum class MethodKind
     Getter,
     Method
 };
+enum class FieldKind
+{
+    PropertyDefault,
+    MethodDefault
+};
 struct GetMethodResponse
 {
     std::map<std::string, MethodHolder> holders;
@@ -236,6 +241,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     bool IsDestructor(clang::CXXMethodDecl* method);
     bool ShouldSkipGenerating(clang::NamedDecl* decl);
     std::optional<MethodKind> GetRuntimeClassMethodKind(bool isPropertyDefault, clang::CXXMethodDecl* method);
+    std::optional<FieldKind> GetRuntimeClassFieldKind(bool isPropertyDefault, clang::ValueDecl* value);
     static clang::QualType StripReference(clang::QualType type);
     static clang::CXXRecordDecl* StripReferenceAndGetClassDecl(clang::QualType type);
     static const clang::NamedDecl* StripReferenceAndGetNamedDecl(clang::QualType type);

@@ -626,25 +626,8 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
             [&]()
             { std::cout << dataMember->getNameAsString() << " is data member isStatic=" << isStatic << std::endl; }
         );
-        bool isFieldPropertyDefault{isPropertyDefault};
-        auto fieldAttrs{dataMember->attrs()};
-        for (auto&& fieldAttr : fieldAttrs)
-        {
-            auto idlgenAttr{GetIdlGenAttr(fieldAttr)};
-            if (!idlgenAttr)
-            {
-                continue;
-            }
-            if (idlgenAttr->type == idlgen::IdlGenAttrType::Property)
-            {
-                isFieldPropertyDefault = true;
-            }
-            else if (idlgenAttr->type == idlgen::IdlGenAttrType::Method)
-            {
-                isFieldPropertyDefault = false;
-            }
-        }
-        if (dataMember->getAccess() != clang::AccessSpecifier::AS_public)
+        auto fieldKind{GetRuntimeClassFieldKind(isPropertyDefault, dataMember)};
+        if (!fieldKind)
         {
             return;
         }
@@ -664,10 +647,15 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
         }
         // Check if the type has overloaded operator()
         // TODO: Should check for all callable? e.g. std::function
+        const auto isFieldPropertyDefault{*fieldKind == idlgen::FieldKind::PropertyDefault};
         ForThisAndBaseMethods(
             typeRecord,
             [&](clang::CXXMethodDecl* fieldMethod)
             {
+                if (!GetRuntimeClassMethodKind(isFieldPropertyDefault, fieldMethod))
+                {
+                    return;
+                }
                 if (fieldMethod->getNameAsString() != "operator()")
                 {
                     return;
@@ -1025,6 +1013,48 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
         {
             FindFileToInclude(param->getType());
         }
+    }
+    return result;
+}
+
+std::optional<idlgen::FieldKind> idlgen::RuntimeClassVisitor::GetRuntimeClassFieldKind(
+    bool isPropertyDefault, clang::ValueDecl* value
+)
+{
+    auto resultGetter = [&]() -> std::optional<idlgen::FieldKind>
+    {
+        bool isFieldPropertyDefault{isPropertyDefault};
+        auto fieldAttrs{value->attrs()};
+        if (value->getAccess() != clang::AccessSpecifier::AS_public)
+        {
+            return std::nullopt;
+        }
+        for (auto&& fieldAttr : fieldAttrs)
+        {
+            auto idlgenAttr{GetIdlGenAttr(fieldAttr)};
+            if (!idlgenAttr)
+            {
+                continue;
+            }
+            if (idlgenAttr->type == idlgen::IdlGenAttrType::Hide)
+            {
+                return std::nullopt;
+            }
+            if (idlgenAttr->type == idlgen::IdlGenAttrType::Property)
+            {
+                isFieldPropertyDefault = true;
+            }
+            else if (idlgenAttr->type == idlgen::IdlGenAttrType::Method)
+            {
+                isFieldPropertyDefault = false;
+            }
+        }
+        return isFieldPropertyDefault ? idlgen::FieldKind::PropertyDefault : idlgen::FieldKind::MethodDefault;
+    };
+    auto result{resultGetter()};
+    if (result)
+    {
+        FindFileToInclude(value->getType());
     }
     return result;
 }
@@ -1492,6 +1522,11 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsStruct(
     std::vector<clang::FieldDecl*> validFields;
     for (auto&& field : fields)
     {
+        auto fieldKind{GetRuntimeClassFieldKind(true, field)};
+        if (!fieldKind)
+        {
+            continue;
+        }
         auto fieldType = field->getType();
         if (!IsRuntimeClassMethodType(fieldType, true))
         {
