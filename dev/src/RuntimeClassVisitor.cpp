@@ -411,7 +411,7 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::GetMethodPrinter(
     return nullptr;
 }
 
-void idlgen::RuntimeClassVisitor::FindFileToInclude(std::set<std::string>& includes, clang::QualType type)
+void idlgen::RuntimeClassVisitor::FindFileToInclude(clang::QualType type)
 {
     auto paramRecord{StripReferenceAndGetClassDecl(type)};
     if (paramRecord == nullptr)
@@ -431,7 +431,7 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(std::set<std::string>& inclu
                 {
                     continue;
                 }
-                FindFileToInclude(includes, param.getAsType());
+                FindFileToInclude(param.getAsType());
             }
         }
         auto implType = implementationTypes.find(paramRecord->getNameAsString());
@@ -586,7 +586,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
         auto params{method->parameters()};
         for (auto&& param : params)
         {
-            FindFileToInclude(includes, param->getType());
+            FindFileToInclude(param->getType());
         }
         if (IsDestructor(method))
         {
@@ -620,7 +620,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
         {
             group.method = method;
         }
-        FindFileToInclude(includes, method->getReturnType());
+        FindFileToInclude(method->getReturnType());
     };
     for (auto&& method : methods)
     {
@@ -1452,6 +1452,10 @@ std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleA
         {
             return nullptr;
         }
+        if (candidateMethod->getAccess() != clang::AccessSpecifier::AS_public)
+        {
+            return nullptr;
+        }
         if (GetRuntimeClassMethodKind(false, candidateMethod) != MethodKind::Method)
         {
             return nullptr;
@@ -1469,6 +1473,12 @@ std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleA
     if (method->getNameAsString() != "operator()")
     {
         return nullptr;
+    }
+    FindFileToInclude(method->getReturnType());
+    auto params{method->parameters()};
+    for (auto&& param : params)
+    {
+        FindFileToInclude(param->getType());
     }
     return std::make_unique<idlgen::DelegatePrinter>(decl, method);
 }

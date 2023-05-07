@@ -225,7 +225,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     std::unique_ptr<idlgen::Printer> GetMethodPrinter(
         clang::NamedDecl* field, clang::QualType type, bool isStatic
     );
-    void FindFileToInclude(std::set<std::string>& includes, clang::QualType type);
+    void FindFileToInclude(clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     GetMethodResponse GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault);
     static bool IsCppWinRtPrimitive(std::string const& type);
