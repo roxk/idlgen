@@ -573,7 +573,6 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
     std::map<std::string, MethodHolder> methodHolders;
     std::map<std::string, clang::CXXMethodDecl*> events;
     std::set<clang::CXXMethodDecl*> ctors;
-    auto methods(record->methods());
     auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault, bool isStatic)
     {
         debugPrint([&]() { std::cout << "Checking if " << name << " is runtime class method" << std::endl; });
@@ -582,11 +581,6 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
         if (!methodKind)
         {
             return;
-        }
-        auto params{method->parameters()};
-        for (auto&& param : params)
-        {
-            FindFileToInclude(param->getType());
         }
         if (IsDestructor(method))
         {
@@ -620,8 +614,8 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
         {
             group.method = method;
         }
-        FindFileToInclude(method->getReturnType());
     };
+    auto methods{record->methods()};
     for (auto&& method : methods)
     {
         tryAddMethod(method, method->getNameAsString(), isPropertyDefault, method->isStatic());
@@ -964,60 +958,75 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
     bool isPropertyDefault, clang::CXXMethodDecl* method
 )
 {
-    if (method->getAccess() != clang::AccessSpecifier::AS_public)
+    auto resultGetter = [&]() -> std::optional<idlgen::MethodKind>
     {
-        return std::nullopt;
-    }
-    auto methodAttrs{method->attrs()};
-    auto isProperty{isPropertyDefault};
-    for (auto&& attr : methodAttrs)
-    {
-        auto idlGenAttr = GetIdlGenAttr(attr);
-        if (!idlGenAttr)
-        {
-            continue;
-        }
-        if (idlGenAttr->type == IdlGenAttrType::Hide)
+        if (method->getAccess() != clang::AccessSpecifier::AS_public)
         {
             return std::nullopt;
         }
-        else if (idlGenAttr->type == IdlGenAttrType::Property)
+        auto methodAttrs{method->attrs()};
+        auto isProperty{isPropertyDefault};
+        for (auto&& attr : methodAttrs)
         {
-            isProperty = true;
+            auto idlGenAttr = GetIdlGenAttr(attr);
+            if (!idlGenAttr)
+            {
+                continue;
+            }
+            if (idlGenAttr->type == IdlGenAttrType::Hide)
+            {
+                return std::nullopt;
+            }
+            else if (idlGenAttr->type == IdlGenAttrType::Property)
+            {
+                isProperty = true;
+            }
+            else if (idlGenAttr->type == IdlGenAttrType::Method)
+            {
+                isProperty = false;
+            }
         }
-        else if (idlGenAttr->type == IdlGenAttrType::Method)
+        auto params{method->parameters()};
+        auto returnType{method->getReturnType()};
+        if (isProperty && params.size() == 0)
         {
-            isProperty = false;
+            return returnType->isVoidType()               ? std::optional(idlgen::MethodKind::Method)
+                   : IsRuntimeClassMethodType(returnType) ? std::optional(idlgen::MethodKind::Getter)
+                                                          : std::nullopt;
         }
-    }
-    auto params{method->parameters()};
-    auto returnType{method->getReturnType()};
-    if (isProperty && params.size() == 0)
-    {
-        return returnType->isVoidType()               ? std::optional(idlgen::MethodKind::Method)
-               : IsRuntimeClassMethodType(returnType) ? std::optional(idlgen::MethodKind::Getter)
-                                                      : std::nullopt;
-    }
-    if (isProperty && params.size() == 1)
-    {
-        auto paramType{params[0]->getType()};
-        return IsRuntimeClassMethodType(returnType) && IsRuntimeClassMethodType(paramType, true)
-                   ? std::optional(idlgen::MethodKind::Setter)
-                   : std::nullopt;
-    }
-    // Ordinary methods
-    if (!IsRuntimeClassMethodType(returnType))
-    {
-        return std::nullopt;
-    }
-    for (auto&& param : params)
-    {
-        if (!IsRuntimeClassMethodType(param->getType(), true))
+        if (isProperty && params.size() == 1)
+        {
+            auto paramType{params[0]->getType()};
+            return IsRuntimeClassMethodType(returnType) && IsRuntimeClassMethodType(paramType, true)
+                       ? std::optional(idlgen::MethodKind::Setter)
+                       : std::nullopt;
+        }
+        // Ordinary methods
+        if (!IsRuntimeClassMethodType(returnType))
         {
             return std::nullopt;
         }
+        for (auto&& param : params)
+        {
+            auto type{param->getType()};
+            if (!IsRuntimeClassMethodType(type, true))
+            {
+                return std::nullopt;
+            }
+        }
+        return idlgen::MethodKind::Method;
+    };
+    auto result{resultGetter()};
+    if (result)
+    {
+        FindFileToInclude(method->getReturnType());
+        auto params{method->parameters()};
+        for (auto&& param : params)
+        {
+            FindFileToInclude(param->getType());
+        }
     }
-    return idlgen::MethodKind::Method;
+    return result;
 }
 
 clang::QualType idlgen::RuntimeClassVisitor::StripReference(clang::QualType type)
@@ -1452,10 +1461,6 @@ std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleA
         {
             return nullptr;
         }
-        if (candidateMethod->getAccess() != clang::AccessSpecifier::AS_public)
-        {
-            return nullptr;
-        }
         if (GetRuntimeClassMethodKind(false, candidateMethod) != MethodKind::Method)
         {
             return nullptr;
@@ -1473,12 +1478,6 @@ std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleA
     if (method->getNameAsString() != "operator()")
     {
         return nullptr;
-    }
-    FindFileToInclude(method->getReturnType());
-    auto params{method->parameters()};
-    for (auto&& param : params)
-    {
-        FindFileToInclude(param->getType());
     }
     return std::make_unique<idlgen::DelegatePrinter>(decl, method);
 }
