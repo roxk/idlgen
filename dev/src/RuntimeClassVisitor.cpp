@@ -104,18 +104,16 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
     }
     std::unique_ptr<Printer> printer;
-    printer = TryHandleAsInterface(record, isPropertyDefault);
-    if (printer == nullptr)
+    if (printer = TryHandleAsInterface(record, isPropertyDefault); printer == nullptr)
     {
         if (TryHandleAsDelegate(record))
         {
             return true;
         }
-        if (TryHandleAsStruct(record))
+        if (printer = TryHandleAsStruct(record); printer == nullptr)
         {
-            return true;
+            printer = TryHandleAsClass(record, isPropertyDefault, attrs);
         }
-        printer = TryHandleAsClass(record, isPropertyDefault, attrs);
     }
     // Generate idl
     if (printer == nullptr)
@@ -1483,19 +1481,14 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl
     return true;
 }
 
-bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
+std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
 {
     if (!IsSingleBaseOfType(decl, "idlgen::author_struct"))
     {
-        return false;
+        return nullptr;
     }
     auto fields{decl->fields()};
-    auto namespaces{GetWinRtNamespaces(decl)};
-    PrintNameSpaces(namespaces);
-    out << "\n";
-    out << "{\n";
-    out << "struct " << decl->getNameAsString() << "\n";
-    out << "{\n";
+    std::vector<clang::FieldDecl*> validFields;
     for (auto&& field : fields)
     {
         auto fieldType = field->getType();
@@ -1503,13 +1496,9 @@ bool idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
         {
             continue;
         }
-        auto typeName{TranslateCxxTypeToWinRtType(fieldType)};
-        out << typeName << " ";
-        out << field->getNameAsString() << ";\n";
+        validFields.emplace_back(field);
     }
-    out << "};\n";
-    out << "}\n";
-    return true;
+    return std::make_unique<idlgen::StructPrinter>(decl, validFields);
 }
 
 bool idlgen::RuntimeClassVisitor::IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
@@ -1594,6 +1583,25 @@ void idlgen::PropertyMethodPrinter::Print(RuntimeClassVisitor& visitor, llvm::ra
     {
         out << ";";
     }
+}
+
+idlgen::StructPrinter::StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields)
+    : record(record), fields(std::move(fields))
+{
+}
+
+void idlgen::StructPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+{
+    out << "struct " << record->getNameAsString() << "\n";
+    out << "{\n";
+    for (auto&& field : fields)
+    {
+        auto fieldType = field->getType();
+        auto typeName{visitor.TranslateCxxTypeToWinRtType(fieldType)};
+        out << typeName << " ";
+        out << field->getNameAsString() << ";\n";
+    }
+    out << "};\n";
 }
 
 idlgen::ClassPrinter::ClassPrinter(clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend)

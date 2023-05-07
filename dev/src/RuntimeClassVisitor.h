@@ -130,6 +130,15 @@ struct GetMethodResponse
     std::map<std::string, clang::CXXMethodDecl*> events;
     std::set<clang::CXXMethodDecl*> ctors;
 };
+class StructPrinter : public Printer
+{
+  private:
+    clang::CXXRecordDecl* record;
+    std::vector<clang::FieldDecl*> fields;
+  public:
+    StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields);
+    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+};
 class ClassPrinter : public Printer
 {
   private:
@@ -271,7 +280,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     /// </summary>
     /// <param name="decl"></param>
     /// <returns>True if is struct</returns>
-    bool TryHandleAsStruct(clang::CXXRecordDecl* decl);
+    std::unique_ptr<Printer> TryHandleAsStruct(clang::CXXRecordDecl* decl);
     bool IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name);
 };
 } // namespace idlgen
