@@ -130,6 +130,16 @@ struct GetMethodResponse
     std::map<std::string, clang::CXXMethodDecl*> events;
     std::set<clang::CXXMethodDecl*> ctors;
 };
+class ClassPrinter : public Printer
+{
+  private:
+    clang::CXXRecordDecl* record;
+    GetMethodResponse response;
+    std::optional<std::vector<clang::QualType>> extend;
+  public:
+    ClassPrinter(clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend);
+    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+};
 class InterfacePrinter : public Printer
 {
   private:
@@ -175,6 +185,14 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     void PrintEvent(std::string_view name, clang::CXXMethodDecl* method);
 
     std::string TranslateCxxTypeToWinRtType(clang::QualType type);
+
+    template <typename Func> void debugPrint(Func&& func)
+    {
+        if (verbose)
+        {
+            func();
+        }
+    }
 
   private:
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
@@ -238,7 +256,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     /// </summary>
     /// <param name="decl"></param>
     /// <returns>True if is runtime class</returns>
-    bool TryHandleAsClass(clang::CXXRecordDecl* decl);
+    std::unique_ptr<Printer> TryHandleAsClass(clang::CXXRecordDecl* decl, bool isPropertyDefault, std::vector<idlgen::IdlGenAttr>& attrs);
     /// <summary>
     /// </summary>
     /// <param name="decl"></param>
@@ -255,12 +273,5 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     /// <returns>True if is struct</returns>
     bool TryHandleAsStruct(clang::CXXRecordDecl* decl);
     bool IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name);
-    template <typename Func> void debugPrint(Func&& func)
-    {
-        if (verbose)
-        {
-            func();
-        }
-    }
 };
 } // namespace idlgen
