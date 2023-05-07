@@ -82,25 +82,17 @@ Types which inherit the following tag types are called authored types (similar t
 |delegate|`idlgen::author_delegate`|Overload `operator()`|`struct Handler : idlgen::author_delegate { void operator()(int32_t a, int32_t b);}`|`delegate void Handler(Int32 a, Int32 b)`|
 |enum|`idlgen::author_enum`|Must be scoped enum|`enum class State : idlgen::author_enum {A, B}`|`enum State {A, B}`|
 |enum flags|`idlgen::author_enum_flags`|Must be scoped enum|`enum class State : idlgen::author_enum_flags {A = 0x1, B = 0x2}`|`[flags] enum State {A = 0x1, B = 0x2}`|
+|interface|`idlgen::author_interface`|N/A|`struct Interface : idlgen::author_interface { void Method(); }`|`interface Interface { void Method(); }`|
 
 ### Structures Requiring Special Author Help
 
 1. Attributes
-2. Properties defined without getter or property templates
+2. Properties defined without configured getter or property templates
 3. Import file of projected types, non-authored types referenced in the runtime class
 
 The above structures require the help of class author to generate. The library defined a set of custom attributes, which, when declared on a class or methods, would allow the library to generate the missing pieces.
 
 Please see [Idlgen Custom Attributes](#Idlgen-Custom-Attributes) for more details.
-
-### Structures Not Generated
-
-- Interface
-- Or anything thing that doesn't need an implementation in C++
-
-Please define them in idl directly. They don't need any implementation in the first place.
-
-TODO: Improve idlgen to remove this section. Interface could be authored types as well.
 
 ### Idlgen Custom Attributes
 
