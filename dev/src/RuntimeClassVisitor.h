@@ -130,6 +130,16 @@ struct GetMethodResponse
     std::map<std::string, clang::CXXMethodDecl*> events;
     std::set<clang::CXXMethodDecl*> ctors;
 };
+class DelegatePrinter : public Printer
+{
+  private:
+    clang::CXXRecordDecl* record;
+    clang::CXXMethodDecl* method;
+
+  public:
+    DelegatePrinter(clang::CXXRecordDecl* record, clang::CXXMethodDecl* method);
+    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+};
 class StructPrinter : public Printer
 {
   private:
@@ -275,7 +285,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     /// </summary>
     /// <param name="decl"></param>
     /// <returns>True if is delegate</returns>
-    bool TryHandleAsDelegate(clang::CXXRecordDecl* decl);
+    std::unique_ptr<idlgen::DelegatePrinter> TryHandleAsDelegate(clang::CXXRecordDecl* decl);
     /// <summary>
     /// </summary>
     /// <param name="decl"></param>
