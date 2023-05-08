@@ -33,7 +33,7 @@ idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
 
 void idlgen::RuntimeClassVisitor::Reset()
 {
-    implementationTypes.clear();
+    importSourceTypes.clear();
     includes.clear();
 }
 
@@ -58,7 +58,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         }
         if (auto kind = *kindOpt; kind == idlgen::RuntimeClassKind::Implementation)
         {
-            implementationTypes.insert({record->getNameAsString(), record});
+            importSourceTypes.insert({record->getNameAsString(), record});
         }
         return true;
     }
@@ -158,12 +158,16 @@ bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
 {
     auto location{decl->getLocation()};
     auto isMain{astContext.getSourceManager().isInMainFile(location)};
+    auto kind{GetEnumKind(decl)};
     if (!isMain)
     {
+        if (kind)
+        {
+            importSourceTypes.insert({decl->getNameAsString(), decl});
+        }
         return true;
     }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
-    auto kind{GetEnumKind(decl)};
     if (!kind)
     {
         return true;
@@ -413,15 +417,15 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::GetMethodPrinter(
 
 void idlgen::RuntimeClassVisitor::FindFileToInclude(clang::QualType type)
 {
-    auto paramRecord{StripReferenceAndGetClassDecl(type)};
-    if (paramRecord == nullptr)
+    auto namedDecl{StripReferenceAndGetNamedDecl(type)};
+    if (namedDecl == nullptr)
     {
         return;
     }
-    debugPrint([&]() { std::cout << "Looking for include for " << paramRecord->getNameAsString() << std::endl; });
+    debugPrint([&]() { std::cout << "Looking for include for " << namedDecl->getNameAsString() << std::endl; });
     if (IsRuntimeClassMethodType(type))
     {
-        if (auto templateSpec = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(paramRecord))
+        if (auto templateSpec = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(namedDecl))
         {
             debugPrint([&]() { std::cout << "Looking also for include for template params" << std::endl; });
             auto params{templateSpec->getTemplateArgs().asArray()};
@@ -434,8 +438,8 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(clang::QualType type)
                 FindFileToInclude(param.getAsType());
             }
         }
-        auto implType = implementationTypes.find(paramRecord->getNameAsString());
-        if (implType == implementationTypes.end())
+        auto implType = importSourceTypes.find(namedDecl->getNameAsString());
+        if (implType == importSourceTypes.end())
         {
             return;
         }
@@ -1085,12 +1089,16 @@ const clang::NamedDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetNamedDe
     {
         typePtr = type.getTypePtrOrNull();
     }
-    auto namedType{typePtr->getAs<clang::TypedefType>()};
-    if (namedType == nullptr)
+    if (typePtr->isNullPtrType())
     {
-        return false;
+        return nullptr;
     }
-    return namedType->getDecl();
+    auto typedefType{typePtr->getAs<clang::TypedefType>()};
+    if (typedefType != nullptr)
+    {
+        return typedefType->getDecl();
+    }
+    return typePtr->getAsTagDecl();
 }
 
 std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::QualType type)

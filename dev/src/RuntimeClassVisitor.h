@@ -181,7 +181,8 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     clang::ASTContext& astContext;
     llvm::raw_ostream& out;
     static std::unordered_map<std::string, std::string> cxxTypeToWinRtTypeMap;
-    std::unordered_map<std::string, clang::CXXRecordDecl*> implementationTypes;
+    // Import source types = implementation types or authored types
+    std::unordered_map<std::string, clang::NamedDecl*> importSourceTypes;
     std::set<std::string> includes;
     std::unordered_set<std::string> getterTemplates;
     std::unordered_set<std::string> propertyTemplates;
