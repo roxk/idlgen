@@ -178,6 +178,13 @@ Since idl files are meant to be included in the source, there is no need to gene
 
 Just follow the advice in [Incremental Adoption in Existing Codebase](#Incremental-Adoption-in-Existing-Codebase).
 
+## Design Principles
+
+1. This library *conceptually depend*\* on only C++/WinRT. All types/names/concepts/whatever not defined by C++/WinRT required for a feature should be configurable.
+2. Use tag types in the language (currently, C++ only) whenever possible. This aligns with the design of cppwinrt, and has type safety in certain sceneario (e.g. for specifying bsse type). Only use attribute when it has to (e.g. hide/property).
+
+\**Conceptual dependence* (or logical dependence) means depending on the API or even implementation details of a library when implementing the logic of genrating idl. For example, this library depends on the existence `winrt::event_token` (i.e. the type is hard coded) in C++/WinRT to generate event, but does not depend on `wil` to generate property. `wil::*` are expected to be configured as getter/property templates in project properties instead. The implementation of this library, however, is free to take a dependency on wil (e.g. installing the nuget). 
+
 ## Contribution
 
 Contributions are welcome! If you found a bug, please file a bug report.
