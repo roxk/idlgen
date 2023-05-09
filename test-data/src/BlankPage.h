@@ -5,6 +5,7 @@
 #include "SomeEnum.h"
 #include "SomeDelegate.h"
 #include "SomeStruct.h"
+#include "SomeInterface.h"
 #include "blankpage.g.h"
 #include "SameViewModel.h"
 #include "TestIncludeImpl.h"
@@ -80,6 +81,7 @@ namespace winrt::Root::A::implementation
 		bool const& ConstRefGetter();
 		Root::SomeEnum AuthoredEnum();
 		Root::SomeStruct AuthoredStruct();
+		Root::SomeInterface AuthoredInterface();
 		uint32_t MethodPropertyLike();
 		void MethodPropertyLike(uint32_t a);
 		void MethodPure();
