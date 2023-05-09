@@ -54,13 +54,12 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             return true;
         }
-        if (auto kindOpt = GetRuntimeClassKind(record, true); kindOpt && *kindOpt == idlgen::RuntimeClassKind::Implementation)
+        if (auto kindOpt = GetRuntimeClassKind(record, true);
+            kindOpt && *kindOpt == idlgen::RuntimeClassKind::Implementation)
         {
             importSourceTypes.insert({record->getNameAsString(), record});
         }
-        else if (IsSingleBaseOfType(record, nameAuthorStruct) ||
-            IsSingleBaseOfType(record, nameAuthorDelegate) ||
-            IsSingleBaseOfType(record, nameAuthorInterface))
+        else if (IsSingleBaseOfType(record, nameAuthorStruct) || IsSingleBaseOfType(record, nameAuthorDelegate) || IsSingleBaseOfType(record, nameAuthorInterface))
         {
             importSourceTypes.insert({record->getNameAsString(), record});
         }
@@ -574,9 +573,7 @@ std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCx
     };
 }
 
-idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(
-    clang::CXXRecordDecl* record, bool isPropertyDefault
-)
+idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault)
 {
     std::map<std::string, MethodHolder> methodHolders;
     std::map<std::string, clang::CXXMethodDecl*> events;
@@ -1466,8 +1463,8 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsClass(
     auto& events{response.events};
     auto& ctors{response.ctors};
     std::optional<std::vector<clang::QualType>> extend{GetExtend(decl)};
-    debugPrint([&]()
-               { std::cout << decl->getNameAsString() << " propertyDefault=" << isPropertyDefault << std::endl; });
+    debugPrint([&]() { std::cout << decl->getNameAsString() << " propertyDefault=" << isPropertyDefault << std::endl; }
+    );
     // Add default_interface if the runtime class is empty
     if (methodHolders.empty())
     {
@@ -1476,7 +1473,9 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsClass(
     return std::make_unique<idlgen::ClassPrinter>(decl, std::move(response), std::move(extend));
 }
 
-std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterface(clang::CXXRecordDecl* decl, bool isPropertyDefault)
+std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterface(
+    clang::CXXRecordDecl* decl, bool isPropertyDefault
+)
 {
     if (!IsSingleBaseOfType(decl, "idlgen::author_interface"))
     {
@@ -1666,7 +1665,9 @@ void idlgen::StructPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostrea
     out << "};\n";
 }
 
-idlgen::ClassPrinter::ClassPrinter(clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend)
+idlgen::ClassPrinter::ClassPrinter(
+    clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
+)
     : record(record), response(std::move(response)), extend(std::move(extend))
 {
 }
@@ -1721,7 +1722,8 @@ void idlgen::ClassPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream
     out << "}\n";
 }
 
-idlgen::InterfacePrinter::InterfacePrinter(clang::CXXRecordDecl* record, GetMethodResponse response) : record(record), response(std::move(response))
+idlgen::InterfacePrinter::InterfacePrinter(clang::CXXRecordDecl* record, GetMethodResponse response)
+    : record(record), response(std::move(response))
 {
 }
 
