@@ -150,6 +150,7 @@ class StructPrinter : public Printer
   private:
     clang::CXXRecordDecl* record;
     std::vector<clang::FieldDecl*> fields;
+
   public:
     StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields);
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
@@ -160,8 +161,11 @@ class ClassPrinter : public Printer
     clang::CXXRecordDecl* record;
     GetMethodResponse response;
     std::optional<std::vector<clang::QualType>> extend;
+
   public:
-    ClassPrinter(clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend);
+    ClassPrinter(
+        clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
+    );
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
 class InterfacePrinter : public Printer
@@ -169,8 +173,9 @@ class InterfacePrinter : public Printer
   private:
     clang::CXXRecordDecl* record;
     GetMethodResponse response;
+
   public:
-    InterfacePrinter(clang::CXXRecordDecl *record, GetMethodResponse response);
+    InterfacePrinter(clang::CXXRecordDecl* record, GetMethodResponse response);
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
 
@@ -228,9 +233,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
         std::string methodName,
         bool isStatic
     );
-    std::unique_ptr<idlgen::Printer> GetMethodPrinter(
-        clang::NamedDecl* field, clang::QualType type, bool isStatic
-    );
+    std::unique_ptr<idlgen::Printer> GetMethodPrinter(clang::NamedDecl* field, clang::QualType type, bool isStatic);
     void FindFileToInclude(clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     GetMethodResponse GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault);
@@ -282,7 +285,9 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     /// </summary>
     /// <param name="decl"></param>
     /// <returns>True if is runtime class</returns>
-    std::unique_ptr<Printer> TryHandleAsClass(clang::CXXRecordDecl* decl, bool isPropertyDefault, std::vector<idlgen::IdlGenAttr>& attrs);
+    std::unique_ptr<Printer> TryHandleAsClass(
+        clang::CXXRecordDecl* decl, bool isPropertyDefault, std::vector<idlgen::IdlGenAttr>& attrs
+    );
     /// <summary>
     /// </summary>
     /// <param name="decl"></param>
