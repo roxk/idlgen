@@ -4,7 +4,7 @@
 #include "SomeEnum.h"
 #include <cstdint>
 
-namespace winrt::Root
+namespace winrt::Root::implementation
 {
 	struct
 		[[clang::annotate("idlgen::hide")]]

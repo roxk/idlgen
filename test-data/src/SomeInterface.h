@@ -4,7 +4,7 @@
 #include "wil/cppwinrt_authoring.h"
 #include <cstdint>
 
-namespace winrt::Root
+namespace winrt::Root::implementation
 {
 	struct SomeInterface : idlgen::author_interface
 	{

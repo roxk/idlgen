@@ -165,6 +165,7 @@ exists -src $blankPageOutput -line "event Windows.Foundation.EventHandler<Int32>
 exists -src $blankPageOutput -line "event Windows.Foundation.EventHandler<Int32> EventWithConstRefToken;"
 exists -src $blankPageOutput -line "event Windows.Foundation.TypedEventHandler<Root.A.BlankPage, UInt32> TypedEvent;"
 exists -src $blankPageOutput -line "event Windows.Foundation.TypedEventHandler<Root.A.TestIncludeInTemplate, UInt32> TypedIncludeEvent;"
+exists -src $blankPageOutput -line "event Root.SomeEventHandler TestIncludeDelegate;"
 exists -src $blankPageOutput -line "event Windows.Foundation.EventHandler<Int32> WilEvent;"
 exists -src $blankPageOutput -line "event Windows.Foundation.TypedEventHandler<Int32, Int32> WilTypedEvent;"
 # Stuff that should be hidden

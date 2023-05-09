@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <winrt/Root.h>
 
-namespace winrt::Root
+namespace winrt::Root::implementation
 {
 	struct [[clang::annotate("idlgen::hide")]] HiddenStructHandler : idlgen::author_delegate
 	{
