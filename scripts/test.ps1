@@ -98,6 +98,7 @@ gen -filePath "" -genPch
 # TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })
 $blankPageOutput = get-gen-output "$testCodeDir\BlankPage.h"
 # Import
+exists -src $blankPageOutput -line "import `"SomeEnum.idl`";"
 exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"ShallowerViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"SiblingViewModel.idl`";"
@@ -120,6 +121,7 @@ exists -src $blankPageOutput -line "BlankPage()"
 exists -src $blankPageOutput -line "BlankPage(UInt64 a, UInt64 b)"
 # Enum
 exists -src $blankPageOutput -line "Root.A.Category Enum{get;};"
+exists -src $blankPageOutput -line "Root.SomeEnum AuthoredEnum();"
 # Methods
 exists -src $blankPageOutput -line "Boolean Getter{get;};"
 exists -src $blankPageOutput -line "Root.A.SameViewModel ImplPropertyOnlyExposeGetter{get;};"
@@ -234,13 +236,11 @@ exists -src $someFlagOutput -line "Microphone = 0x00000002,"
 exists -src $someFlagOutput -line "};"
 
 $someStructOutput = get-gen-output "$testCodeDir\SomeStruct.h"
-exists -src $someStructOutput -line "import `"SomeEnum.idl`";"
 exists -src $someStructOutput -line "import `"SomeFlag.idl`";"
 exists -src $someStructOutput -line "[webhosthidden]"
 exists -src $someStructOutput -line "struct SomeStruct"
 exists -src $someStructOutput -line "Int64 X;"
 exists -src $someStructOutput -line "Int64 Y;"
-exists -src $someStructOutput -line "Root.SomeEnum TestInclude;"
 exists -src $someStructOutput -line "Root.ShallowerViewModel DisallowedReferenceTypeGeneratedAsIs;"
 exists -src $someStructOutput -line "};"
 # hidden

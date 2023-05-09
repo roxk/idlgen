@@ -1,7 +1,6 @@
 #pragma once
 
 #include "idlgen.h"
-#include "SomeEnum.h"
 #include <cstdint>
 
 namespace winrt::Root::implementation
@@ -22,7 +21,6 @@ namespace winrt::Root::implementation
 		int64_t HiddenProp;
 		int64_t X;
 		int64_t Y;
-		SomeEnum TestInclude;
 		Root::ShallowerViewModel DisallowedReferenceTypeGeneratedAsIs;
 	private:
 		int64_t PrivateProp;
