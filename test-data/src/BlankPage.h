@@ -2,6 +2,7 @@
 
 #include "pch.h"
 // Test inconsistent file name case
+#include "SomeEnum.h"
 #include "SomeDelegate.h"
 #include "blankpage.g.h"
 #include "SameViewModel.h"
@@ -70,6 +71,7 @@ namespace winrt::Root::A::implementation
 		void NoSetterOnlyProperty(bool a);
 		[[clang::annotate("idlgen::property")]]
 		Category Enum();
+		Root::SomeEnum AuthoredEnum();
 		[[clang::annotate("idlgen::property")]]
 		Windows::Foundation::Numerics::Vector2 Struct();
 		[[clang::annotate("idlgen::property")]]
