@@ -11,6 +11,9 @@
 
 constexpr auto nameAuthorEnum = "idlgen::author_enum";
 constexpr auto nameAuthorEnumFlags = "idlgen::author_enum_flags";
+constexpr auto nameAuthorStruct = "idlgen::author_struct";
+constexpr auto nameAuthorDelegate = "idlgen::author_delegate";
+constexpr auto nameAuthorInterface = "idlgen::author_interface";
 
 idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
     clang::CompilerInstance& ci,
@@ -51,12 +54,13 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             return true;
         }
-        auto kindOpt = GetRuntimeClassKind(record, true);
-        if (!kindOpt)
+        if (auto kindOpt = GetRuntimeClassKind(record, true); kindOpt && *kindOpt == idlgen::RuntimeClassKind::Implementation)
         {
-            return true;
+            importSourceTypes.insert({record->getNameAsString(), record});
         }
-        if (auto kind = *kindOpt; kind == idlgen::RuntimeClassKind::Implementation)
+        else if (IsSingleBaseOfType(record, nameAuthorStruct) ||
+            IsSingleBaseOfType(record, nameAuthorDelegate) ||
+            IsSingleBaseOfType(record, nameAuthorInterface))
         {
             importSourceTypes.insert({record->getNameAsString(), record});
         }
@@ -1522,7 +1526,7 @@ std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleA
 
 std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
 {
-    if (!IsSingleBaseOfType(decl, "idlgen::author_struct"))
+    if (!IsSingleBaseOfType(decl, nameAuthorStruct))
     {
         return nullptr;
     }

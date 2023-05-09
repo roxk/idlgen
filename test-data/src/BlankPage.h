@@ -4,6 +4,7 @@
 // Test inconsistent file name case
 #include "SomeEnum.h"
 #include "SomeDelegate.h"
+#include "SomeStruct.h"
 #include "blankpage.g.h"
 #include "SameViewModel.h"
 #include "TestIncludeImpl.h"
@@ -71,13 +72,14 @@ namespace winrt::Root::A::implementation
 		void NoSetterOnlyProperty(bool a);
 		[[clang::annotate("idlgen::property")]]
 		Category Enum();
-		Root::SomeEnum AuthoredEnum();
 		[[clang::annotate("idlgen::property")]]
 		Windows::Foundation::Numerics::Vector2 Struct();
 		[[clang::annotate("idlgen::property")]]
 		bool Getter();
 		[[clang::annotate("idlgen::property")]]
 		bool const& ConstRefGetter();
+		Root::SomeEnum AuthoredEnum();
+		Root::SomeStruct AuthoredStruct();
 		uint32_t MethodPropertyLike();
 		void MethodPropertyLike(uint32_t a);
 		void MethodPure();
