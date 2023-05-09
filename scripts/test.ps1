@@ -98,7 +98,9 @@ gen -filePath "" -genPch
 # TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })
 $blankPageOutput = get-gen-output "$testCodeDir\BlankPage.h"
 # Import
+exists -src $blankPageOutput -line "import `"SomeDelegate.idl`";"
 exists -src $blankPageOutput -line "import `"SomeEnum.idl`";"
+exists -src $blankPageOutput -line "import `"SomeStruct.idl`";"
 exists -src $blankPageOutput -line "import `"SameViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"ShallowerViewModel.idl`";"
 exists -src $blankPageOutput -line "import `"SiblingViewModel.idl`";"
@@ -121,8 +123,9 @@ exists -src $blankPageOutput -line "BlankPage()"
 exists -src $blankPageOutput -line "BlankPage(UInt64 a, UInt64 b)"
 # Enum
 exists -src $blankPageOutput -line "Root.A.Category Enum{get;};"
-exists -src $blankPageOutput -line "Root.SomeEnum AuthoredEnum();"
 # Methods
+exists -src $blankPageOutput -line "Root.SomeEnum AuthoredEnum();"
+exists -src $blankPageOutput -line "Root.SomeStruct AuthoredStruct();"
 exists -src $blankPageOutput -line "Boolean Getter{get;};"
 exists -src $blankPageOutput -line "Root.A.SameViewModel ImplPropertyOnlyExposeGetter{get;};"
 exists -src $blankPageOutput -line "Boolean Method(Boolean a);"
