@@ -40,4 +40,23 @@ namespace winrt::Root
 		struct DifferentPathViewModel : Base {};
 		struct DifferentPathConsumerViewModel : Base {};
 	}
+
+	struct SomeEventHandler : Windows::Foundation::IUnknown {};
+
+	enum class SomeFlag : uint32_t
+	{
+		Camera = 0x00000001,
+		Microphone = 0x0000002
+	};
+
+	enum class SomeEnum : int32_t
+	{
+		Active,
+		InActive,
+		Unknown
+	};
+
+	struct SomeStruct {};
+
+	struct SomeInterface : Windows::Foundation::IInspectable {};
 }

@@ -2,6 +2,7 @@
 
 #include "pch.h"
 // Test inconsistent file name case
+#include "SomeDelegate.h"
 #include "blankpage.g.h"
 #include "SameViewModel.h"
 #include "TestIncludeImpl.h"
@@ -64,6 +65,7 @@ namespace winrt::Root::A::implementation
 		void EventWithConstRefToken(winrt::event_token const& token);
 		winrt::event_token TypedEvent(winrt::Windows::Foundation::TypedEventHandler<BlankPage, uint32_t> const& handler);
 		winrt::event_token TypedIncludeEvent(winrt::Windows::Foundation::TypedEventHandler<Root::A::TestIncludeInTemplate, uint32_t> const& handler);
+		winrt::event_token TestIncludeDelegate(Root::SomeEventHandler const& handler);
 		void TypedEvent(winrt::event_token token);
 		void NoSetterOnlyProperty(bool a);
 		[[clang::annotate("idlgen::property")]]
