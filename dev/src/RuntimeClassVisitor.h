@@ -31,7 +31,8 @@ enum class IdlGenAttrType
     Extend,
     Hide,
     Property,
-    Method
+    Method,
+    Overridable
 };
 struct IdlGenAttr
 {
@@ -53,6 +54,7 @@ class MethodGroup : public Printer
     std::string methodName;
     bool isStatic;
     bool isProtected;
+    bool isVirtual;
 
   public:
     MethodGroup(
@@ -61,7 +63,8 @@ class MethodGroup : public Printer
         clang::CXXMethodDecl* getter,
         clang::CXXMethodDecl* setter,
         bool isStatic,
-        bool isProtected
+        bool isProtected,
+        bool isVirtual
     );
     clang::CXXMethodDecl* method;
     clang::CXXMethodDecl* getter;
@@ -101,10 +104,11 @@ class PropertyMethodPrinter : public Printer
     PropertyKind kind;
     bool isStatic;
     bool isProtected;
+    bool isVirtual;
 
   public:
     PropertyMethodPrinter(
-        std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic, bool isProtected
+        std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic, bool isProtected, bool isVirtual
     );
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
@@ -237,10 +241,11 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
         idlgen::MethodKind kind,
         std::string methodName,
         bool isStatic,
-        bool isProtected
+        bool isProtected,
+        bool isVirtual
     );
     std::unique_ptr<idlgen::Printer> GetMethodPrinter(
-        clang::NamedDecl* field, clang::QualType type, bool isStatic, bool isProtected
+        clang::NamedDecl* field, clang::QualType type, bool isStatic, bool isProtected, bool isVirtual
     );
     void FindFileToInclude(clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
