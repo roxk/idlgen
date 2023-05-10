@@ -58,5 +58,7 @@ namespace winrt::Root
 
 	struct SomeStruct {};
 
+	struct BaseInterface : Windows::Foundation::IInspectable {};
+
 	struct SomeInterface : Windows::Foundation::IInspectable {};
 }
