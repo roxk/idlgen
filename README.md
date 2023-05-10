@@ -18,8 +18,9 @@ Use your preferred way (cli/GUI) to install nuget package `IdlGen.IdlGen.Cpp`, w
 
 - [IdlgenCpp for Visual Studio 2022](https://marketplace.visualstudio.com/items?itemName=Roxk.idlgencpp)
 
-On top of the nuget package, you can also install IDE extension to streamline the code generation process. The extension provides the following command:
-- "Generate IDL" in header file context menu
+On top of the nuget package, you can also install IDE extension to streamline the code generation process. The extension provides a convenient "Generate IDL" command in a context menu. If you want to adopt idlgen incrementally in an existing code base, this extension is a must-have.
+
+![Generate IDL command in a context menu](extension-generate-idl.png)
 
 **Note**: The above nuget package is required for the extension to work. Please install it in all of your project in which you wish to generate IDL.
 
