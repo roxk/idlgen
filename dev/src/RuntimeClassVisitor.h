@@ -32,7 +32,8 @@ enum class IdlGenAttrType
     Property,
     Method,
     Overridable,
-    Protected
+    Protected,
+    Sealed
 };
 struct IdlGenAttr
 {
@@ -170,10 +171,14 @@ class ClassPrinter : public Printer
     clang::CXXRecordDecl* record;
     GetMethodResponse response;
     std::optional<std::vector<clang::QualType>> extend;
+    bool isSealed;
 
   public:
     ClassPrinter(
-        clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
+        clang::CXXRecordDecl* record,
+        GetMethodResponse response,
+        std::optional<std::vector<clang::QualType>> extend,
+        bool isSealed
     );
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
