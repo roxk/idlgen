@@ -380,7 +380,9 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
     {
         return result->second.groupOpt.value();
     }
-    auto group{std::make_unique<MethodGroup>(std::move(methodName), nullptr, nullptr, nullptr, isStatic, isProtected, isVirtual)};
+    auto group{std::make_unique<MethodGroup>(
+        std::move(methodName), nullptr, nullptr, nullptr, isStatic, isProtected, isVirtual
+    )};
     auto& groupRef{*group};
     auto entry{methodGroups.insert({std::move(key), MethodHolder{std::move(group), groupRef}})};
     auto& groupOpt = entry.first->second.groupOpt;
@@ -588,8 +590,12 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
     std::map<std::string, MethodHolder> methodHolders;
     std::map<std::string, clang::CXXMethodDecl*> events;
     std::set<clang::CXXMethodDecl*> ctors;
-    auto tryAddMethod =
-        [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault, bool isStatic, bool isProtected, bool isVirtual)
+    auto tryAddMethod = [&](clang::CXXMethodDecl* method,
+                            std::string name,
+                            bool isPropertyDefault,
+                            bool isStatic,
+                            bool isProtected,
+                            bool isVirtual)
     {
         debugPrint([&]() { std::cout << "Checking if " << name << " is runtime class method" << std::endl; });
         assert(method != nullptr);
@@ -617,7 +623,9 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
             return;
         }
         debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
-        auto& group{GetOrCreateMethodGroup(methodHolders, method, *methodKind, std::move(name), isStatic, isProtected, isVirtual)};
+        auto& group{GetOrCreateMethodGroup(
+            methodHolders, method, *methodKind, std::move(name), isStatic, isProtected, isVirtual
+        )};
         if (methodKind == idlgen::MethodKind::Setter)
         {
             group.setter = method;
@@ -638,7 +646,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
             method,
             method->getNameAsString(),
             isPropertyDefault,
-            method->isStatic(), 
+            method->isStatic(),
             IsProtected(method),
             method->isVirtual() || HasAttribute(method, IdlGenAttrType::Overridable)
         );
@@ -687,7 +695,9 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
                 {
                     return;
                 }
-                tryAddMethod(fieldMethod, dataMember->getNameAsString(), isFieldPropertyDefault, isStatic, isProtected, isVirtual);
+                tryAddMethod(
+                    fieldMethod, dataMember->getNameAsString(), isFieldPropertyDefault, isStatic, isProtected, isVirtual
+                );
             }
         );
     };
@@ -704,8 +714,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
         {
             continue;
         }
-        handleDataMember(varDecl, varDecl->isStaticDataMember(), IsProtected(varDecl)
-        );
+        handleDataMember(varDecl, varDecl->isStaticDataMember(), IsProtected(varDecl));
     }
     return {std::move(methodHolders), std::move(events), std::move(ctors)};
 }
@@ -1627,9 +1636,8 @@ idlgen::MethodGroup::MethodGroup(
     bool isProtected,
     bool isVirtual
 )
-    : methodName(std::move(methodName)), isStatic(isStatic), isProtected(isProtected), isVirtual(isVirtual), method(method),
-      getter(getter),
-      setter(setter)
+    : methodName(std::move(methodName)), isStatic(isStatic), isProtected(isProtected), isVirtual(isVirtual),
+      method(method), getter(getter), setter(setter)
 {
 }
 
