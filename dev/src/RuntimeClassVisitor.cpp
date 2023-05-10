@@ -327,6 +327,10 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     {
         return IdlGenAttr{IdlGenAttrType::Overridable, {}};
     }
+    else if (idlGenAttr == "protected")
+    {
+        return IdlGenAttr{IdlGenAttrType::Protected, {}};
+    }
     return std::nullopt;
 }
 
@@ -634,9 +638,9 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
             method,
             method->getNameAsString(),
             isPropertyDefault,
-            method->isStatic(),
-            method->getAccess() == clang::AccessSpecifier::AS_protected,
-            method->isVirtual()
+            method->isStatic(), 
+            IsProtected(method),
+            method->isVirtual() || HasAttribute(method, IdlGenAttrType::Overridable)
         );
     }
     auto handleDataMember = [&](clang::ValueDecl* dataMember, bool isStatic, bool isProtected)
@@ -654,17 +658,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
             return;
         }
         auto type{dataMember->getType()};
-        auto isVirtual{false};
-        auto attrs{dataMember->attrs()};
-        for (auto&& attr : attrs)
-        {
-            auto idlgenAttr{GetIdlGenAttr(attr)};
-            if (idlgenAttr && idlgenAttr->type == idlgen::IdlGenAttrType::Overridable)
-            {
-                isVirtual = true;
-                break;
-            }
-        }
+        auto isVirtual{HasAttribute(dataMember, IdlGenAttrType::Overridable)};
         auto printer{GetMethodPrinter(dataMember, type, isStatic, isProtected, isVirtual)};
         if (printer != nullptr)
         {
@@ -700,7 +694,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
     auto fields{record->fields()};
     for (auto&& field : fields)
     {
-        handleDataMember(field, false, field->getAccess() == clang::AccessSpecifier::AS_protected);
+        handleDataMember(field, false, IsProtected(field));
     }
     auto decls{record->decls()};
     for (auto&& decl : decls)
@@ -710,8 +704,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
         {
             continue;
         }
-        handleDataMember(
-            varDecl, varDecl->isStaticDataMember(), varDecl->getAccess() == clang::AccessSpecifier::AS_protected
+        handleDataMember(varDecl, varDecl->isStaticDataMember(), IsProtected(varDecl)
         );
     }
     return {std::move(methodHolders), std::move(events), std::move(ctors)};
@@ -1441,6 +1434,25 @@ std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFileName(clang::CX
         return std::nullopt;
     }
     return llvm::sys::path::filename(file->getName()).str();
+}
+
+bool idlgen::RuntimeClassVisitor::IsProtected(clang::Decl* decl)
+{
+    return decl->getAccess() == clang::AccessSpecifier::AS_protected || HasAttribute(decl, IdlGenAttrType::Protected);
+}
+
+bool idlgen::RuntimeClassVisitor::HasAttribute(clang::Decl* decl, idlgen::IdlGenAttrType type)
+{
+    auto attrs{decl->attrs()};
+    for (auto&& attr : attrs)
+    {
+        auto idlgenAttr{GetIdlGenAttr(attr)};
+        if (idlgenAttr && idlgenAttr->type == type)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void idlgen::RuntimeClassVisitor::PrintNameSpaces(std::vector<std::string> namespaces)

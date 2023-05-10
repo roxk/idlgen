@@ -32,7 +32,8 @@ enum class IdlGenAttrType
     Hide,
     Property,
     Method,
-    Overridable
+    Overridable,
+    Protected
 };
 struct IdlGenAttr
 {
@@ -257,6 +258,8 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     bool IsConstructor(clang::CXXMethodDecl* method);
     bool IsDestructor(clang::CXXMethodDecl* method);
     bool ShouldSkipGenerating(clang::NamedDecl* decl);
+    bool HasAttribute(clang::Decl* decl, idlgen::IdlGenAttrType type);
+    bool IsProtected(clang::Decl* decl);
     std::optional<MethodKind> GetRuntimeClassMethodKind(bool isPropertyDefault, clang::CXXMethodDecl* method);
     std::optional<FieldKind> GetRuntimeClassFieldKind(bool isPropertyDefault, clang::ValueDecl* value);
     static clang::QualType StripReference(clang::QualType type);
