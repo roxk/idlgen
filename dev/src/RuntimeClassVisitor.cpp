@@ -21,8 +21,11 @@ idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
     bool verbose,
     std::vector<std::string> const& getterTemplates,
     std::vector<std::string> const& propertyTemplates
-)
-    : ci(ci), astContext(ci.getASTContext()), out(std::move(out)), verbose(verbose)
+) :
+    ci(ci),
+    astContext(ci.getASTContext()),
+    out(std::move(out)),
+    verbose(verbose)
 {
     for (auto&& getterTemplate : getterTemplates)
     {
@@ -1664,9 +1667,14 @@ idlgen::MethodGroup::MethodGroup(
     bool isStatic,
     bool isProtected,
     bool isVirtual
-)
-    : methodName(std::move(methodName)), isStatic(isStatic), isProtected(isProtected), isVirtual(isVirtual),
-      method(method), getter(getter), setter(setter)
+) :
+    methodName(std::move(methodName)),
+    isStatic(isStatic),
+    isProtected(isProtected),
+    isVirtual(isVirtual),
+    method(method),
+    getter(getter),
+    setter(setter)
 {
 }
 
@@ -1702,9 +1710,13 @@ void idlgen::MethodGroup::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream&
 
 idlgen::PropertyMethodPrinter::PropertyMethodPrinter(
     std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic, bool isProtected, bool isVirtual
-)
-    : methodName(std::move(methodName)), type(type), kind(kind), isStatic(isStatic), isProtected(isProtected),
-      isVirtual(isVirtual)
+) :
+    methodName(std::move(methodName)),
+    type(type),
+    kind(kind),
+    isStatic(isStatic),
+    isProtected(isProtected),
+    isVirtual(isVirtual)
 {
 }
 
@@ -1734,8 +1746,9 @@ void idlgen::PropertyMethodPrinter::Print(RuntimeClassVisitor& visitor, llvm::ra
     }
 }
 
-idlgen::DelegatePrinter::DelegatePrinter(clang::CXXRecordDecl* record, clang::CXXMethodDecl* method)
-    : record(record), method(method)
+idlgen::DelegatePrinter::DelegatePrinter(clang::CXXRecordDecl* record, clang::CXXMethodDecl* method) :
+    record(record),
+    method(method)
 {
 }
 
@@ -1748,8 +1761,9 @@ void idlgen::DelegatePrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostr
     out << "\n";
 }
 
-idlgen::StructPrinter::StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields)
-    : record(record), fields(std::move(fields))
+idlgen::StructPrinter::StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields) :
+    record(record),
+    fields(std::move(fields))
 {
 }
 
@@ -1769,8 +1783,10 @@ void idlgen::StructPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostrea
 
 idlgen::ClassPrinter::ClassPrinter(
     clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
-)
-    : record(record), response(std::move(response)), extend(std::move(extend))
+) :
+    record(record),
+    response(std::move(response)),
+    extend(std::move(extend))
 {
 }
 
@@ -1826,8 +1842,10 @@ void idlgen::ClassPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream
 
 idlgen::InterfacePrinter::InterfacePrinter(
     clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
-)
-    : record(record), response(std::move(response)), extend(std::move(extend))
+) :
+    record(record),
+    response(std::move(response)),
+    extend(std::move(extend))
 {
 }
 

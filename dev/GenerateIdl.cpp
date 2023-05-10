@@ -42,8 +42,11 @@ class GenIdlFrontendAction : public clang::ASTFrontendAction
         bool verbose,
         std::vector<std::string> const& getterTemplates,
         std::vector<std::string> const& propertyTemplates
-    )
-        : out(out), verbose(verbose), getterTemplates(getterTemplates), propertyTemplates(propertyTemplates)
+    ) :
+        out(out),
+        verbose(verbose),
+        getterTemplates(getterTemplates),
+        propertyTemplates(propertyTemplates)
     {
     }
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override

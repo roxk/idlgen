@@ -7,8 +7,8 @@ idlgen::GenIdlAstConsumer::GenIdlAstConsumer(
     bool verbose,
     std::vector<std::string> const& getterTemplates,
     std::vector<std::string> const& propertyTemplates
-)
-    : visitor(std::make_unique<RuntimeClassVisitor>(ci, out, verbose, getterTemplates, propertyTemplates))
+) :
+    visitor(std::make_unique<RuntimeClassVisitor>(ci, out, verbose, getterTemplates, propertyTemplates))
 {
 }
 

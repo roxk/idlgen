@@ -6,3 +6,5 @@ BinPackArguments: false
 BinPackParameters: false
 AllowShortIfStatementsOnASingleLine: true
 AlignAfterOpenBracket: BlockIndent
+BreakConstructorInitializers: AfterColon
+PackConstructorInitializers: CurrentLine
