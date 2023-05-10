@@ -290,14 +290,6 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
         }
         return IdlGenAttr{IdlGenAttrType::Attribute, {std::move(args)}};
     }
-    else if (idlGenAttr == "extend")
-    {
-        if (args.empty())
-        {
-            return std::nullopt;
-        }
-        return IdlGenAttr{IdlGenAttrType::Extend, {std::move(args)}};
-    }
     else if (idlGenAttr == "import")
     {
         llvm::SmallVector<llvm::StringRef> splitted;

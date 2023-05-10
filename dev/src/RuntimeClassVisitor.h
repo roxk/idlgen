@@ -28,7 +28,6 @@ enum class IdlGenAttrType
 {
     Import,
     Attribute,
-    Extend,
     Hide,
     Property,
     Method,
