@@ -12,10 +12,14 @@ namespace winrt::Root::implementation
 	{
 		void Method();
 	};
+	struct BaseInterface : idlgen::author_interface
+	{
+		void BaseMethod();
+	};
 	struct
 		[[clang::annotate("idlgen::import=SomeFlag.idl")]]
 		[[clang::annotate("idlgen::attribute=webhosthidden")]]
-		SomeInterface : idlgen::author_interface
+		SomeInterface : idlgen::author_interface, idlgen::base<Root::BaseInterface>
 	{
 		[[clang::annotate("idlgen::hide")]]
 		void HiddenMethod();

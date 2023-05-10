@@ -59,7 +59,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
         {
             importSourceTypes.insert({record->getNameAsString(), record});
         }
-        else if (IsSingleBaseOfType(record, nameAuthorStruct) || IsSingleBaseOfType(record, nameAuthorDelegate) || IsSingleBaseOfType(record, nameAuthorInterface))
+        else if (IsBaseOfType(record, nameAuthorStruct) || IsBaseOfType(record, nameAuthorDelegate) || IsBaseOfType(record, nameAuthorInterface))
         {
             importSourceTypes.insert({record->getNameAsString(), record});
         }
@@ -1530,17 +1530,18 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterfa
     clang::CXXRecordDecl* decl, bool isPropertyDefault
 )
 {
-    if (!IsSingleBaseOfType(decl, "idlgen::author_interface"))
+    if (!IsBaseOfType(decl, nameAuthorInterface))
     {
         return nullptr;
     }
     auto methodResponse{GetMethods(decl, isPropertyDefault)};
-    return std::make_unique<InterfacePrinter>(decl, std::move(methodResponse));
+    auto extend{GetExtend(decl)};
+    return std::make_unique<InterfacePrinter>(decl, std::move(methodResponse), std::move(extend));
 }
 
 std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
 {
-    if (!IsSingleBaseOfType(decl, "idlgen::author_delegate"))
+    if (!IsSingleBaseOfType(decl, nameAuthorDelegate))
     {
         return nullptr;
     }
@@ -1625,6 +1626,34 @@ bool idlgen::RuntimeClassVisitor::IsSingleBaseOfType(clang::CXXRecordDecl* decl,
     }
     auto baseQualifiedName{cxxBase->getQualifiedNameAsString()};
     return baseQualifiedName == name;
+}
+
+bool idlgen::RuntimeClassVisitor::IsBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
+{
+    if (!decl->isCompleteDefinition())
+    {
+        return false;
+    }
+    auto bases{decl->bases()};
+    for (auto&& base : bases)
+    {
+        auto baseType{base.getType().getTypePtrOrNull()};
+        if (baseType == nullptr)
+        {
+            return false;
+        }
+        auto cxxBase{baseType->getAsCXXRecordDecl()};
+        if (cxxBase == nullptr)
+        {
+            return false;
+        }
+        auto baseQualifiedName{cxxBase->getQualifiedNameAsString()};
+        if (baseQualifiedName == name)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 idlgen::MethodGroup::MethodGroup(
@@ -1795,8 +1824,10 @@ void idlgen::ClassPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream
     out << "}\n";
 }
 
-idlgen::InterfacePrinter::InterfacePrinter(clang::CXXRecordDecl* record, GetMethodResponse response)
-    : record(record), response(std::move(response))
+idlgen::InterfacePrinter::InterfacePrinter(
+    clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
+)
+    : record(record), response(std::move(response)), extend(std::move(extend))
 {
 }
 
@@ -1804,7 +1835,28 @@ void idlgen::InterfacePrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ost
 {
     auto& holders{response.holders};
     auto& events{response.events};
-    out << "interface " << record->getNameAsString() << "\n";
+    out << "interface " << record->getNameAsString();
+    if (extend)
+    {
+        visitor.debugPrint([&]() { std::cout << "require size is " << extend->size() << std::endl; });
+        if (!extend->empty())
+        {
+            out << " requires ";
+        }
+        auto& bases{*extend};
+        const auto baseCount = bases.size();
+        for (size_t i = 0; i < baseCount; ++i)
+        {
+            auto& base = bases[i];
+            auto name{visitor.TranslateCxxTypeToWinRtType(base)};
+            out << name;
+            if (i + 1 < baseCount)
+            {
+                out << ", ";
+            }
+        }
+    }
+    out << "\n";
     out << "{\n";
     for (auto&& holder : holders)
     {

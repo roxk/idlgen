@@ -183,9 +183,12 @@ class InterfacePrinter : public Printer
   private:
     clang::CXXRecordDecl* record;
     GetMethodResponse response;
+    std::optional<std::vector<clang::QualType>> extend;
 
   public:
-    InterfacePrinter(clang::CXXRecordDecl* record, GetMethodResponse response);
+    InterfacePrinter(
+        clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
+    );
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
 
@@ -320,5 +323,6 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     /// <returns>True if is struct</returns>
     std::unique_ptr<Printer> TryHandleAsStruct(clang::CXXRecordDecl* decl);
     bool IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name);
+    bool IsBaseOfType(clang::CXXRecordDecl* decl, std::string_view name);
 };
 } // namespace idlgen
