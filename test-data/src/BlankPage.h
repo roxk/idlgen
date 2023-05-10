@@ -128,6 +128,10 @@ namespace winrt::Root::A::implementation
 		void MethodMixingImplAndProjected(Root::A::SameViewModel const& a, Root::A::implementation::SameViewModel const& b);
 		[[clang::annotate("idlgen::hide")]]
 		void HideMethod();
+		[[clang::annotate("idlgen::protected")]]
+		void AttrProtectedMethod();
+		[[clang::annotate("idlgen::overridable")]]
+		void AttrOverridableMethod();
 		virtual void OverridableMethod();
 		[[clang::annotate("idlgen::property")]]
 		virtual bool OverridableGetter();
