@@ -94,6 +94,14 @@ The above structures require the help of class author to generate. The library d
 
 Please see [Idlgen Custom Attributes](#Idlgen-Custom-Attributes) for more details.
 
+### Visibility
+
+By default, all generated methods/properties are public. To generate protected methods/properties, make them protected in C++. Alternatively, you can use attribute to specify a declaration should be protected.
+
+### Overridable
+
+By default, all generated methods/properties are not overridable. To generate overridable methods/properties, make them virtual in C++. For getter/property templates (static) data members, you have to use attribute to specify a declaration should be overridable.
+
 ### Idlgen Custom Attributes
 
 The syntax for idlgen's custom attributes is
@@ -109,8 +117,12 @@ Below is a table for all attributes and their usage.
 |--|--|--|--|--|--|
 |`import`|`value,value,...`|Add import statement(s)|class|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
 |`attribute`|`value`|Add an attribute|class|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
-|`property`|N/A|The method is a property|method|`[[clang::annotate("idlgen::property")]]`||
-|`hide`|N/A|Hide class or methods|class/method|`[[clang::annotate("idlgen::hide")]]`||
+|`property`|N/A|The method is a property/All applicable methods in a class are properties|class/method|`[[clang::annotate("idlgen::property")]]`||
+|`method`|N/A|The method is a method/All methods in a class are methods|class/method|`[[clang::annotate("idlgen::method")]]`||
+|`hide`|N/A|Hide class or methods or data member|class/method/data member|`[[clang::annotate("idlgen::hide")]]`||
+|`overridable`|N/A|Make a method/property overridable|method|`[[clang::annotate("idlgen::overridable]]`||
+|`protected`|N/A|Make a method protected|method|`[[clang::annotate("idlgen::protected]]`||
+|`sealed`|N/A|Make a runtimeclass sealed|class|`[[clang::annotate("idlgen::sealed"]]`||
 
 *Note*: By default, the tool would generate `[default_interface]` attribute for an empty class (a class that doesn't have any methods other than constructor) so you don't need to add it.
 
