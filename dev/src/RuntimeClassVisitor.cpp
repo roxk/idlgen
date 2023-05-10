@@ -326,6 +326,10 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     {
         return IdlGenAttr{IdlGenAttrType::Protected, {}};
     }
+    else if (idlGenAttr == "sealed")
+    {
+        return IdlGenAttr{IdlGenAttrType::Sealed, {}};
+    }
     return std::nullopt;
 }
 
@@ -1518,7 +1522,8 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsClass(
     {
         attrs.emplace_back(IdlGenAttr{IdlGenAttrType::Attribute, {"default_interface"}});
     }
-    return std::make_unique<idlgen::ClassPrinter>(decl, std::move(response), std::move(extend));
+    auto isSealed{HasAttribute(decl, IdlGenAttrType::Sealed)};
+    return std::make_unique<idlgen::ClassPrinter>(decl, std::move(response), std::move(extend), isSealed);
 }
 
 std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterface(
@@ -1774,16 +1779,24 @@ void idlgen::StructPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostrea
 }
 
 idlgen::ClassPrinter::ClassPrinter(
-    clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
+    clang::CXXRecordDecl* record,
+    GetMethodResponse response,
+    std::optional<std::vector<clang::QualType>> extend,
+    bool isSealed
 ) :
     record(record),
     response(std::move(response)),
-    extend(std::move(extend))
+    extend(std::move(extend)),
+    isSealed(isSealed)
 {
 }
 
 void idlgen::ClassPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
 {
+    if (!isSealed)
+    {
+        out << "unsealed ";
+    }
     out << "runtimeclass " << record->getNameAsString();
     auto& holders{response.holders};
     auto& events{response.events};

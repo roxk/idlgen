@@ -7,9 +7,15 @@ namespace winrt::Root::A::implementation
 
 	};
 
-	class
-	[[clang::annotate("idlgen::hide")]]
-	SameViewModelHide : SameViewModelT<SameViewModelHide>
+	
+	class [[clang::annotate("idlgen::sealed")]] 
+		SealedSameViewModel : SealedSameViewModelT<SealedSameViewModel>
+	{
+
+	};
+
+	class [[clang::annotate("idlgen::hide")]]
+		SameViewModelHide : SameViewModelHideT<SameViewModelHide>
 	{
 
 	};

@@ -115,7 +115,7 @@ exists -src $blankPageOutput -line "[default_interface]"
 exists -src $blankPageOutput -line "[bindable]"
 exists -src $blankPageOutput -line "[Windows.UI.Xaml.Markup.ContentProperty(`"Property`")]"
 # Runtime class name
-exists -src $blankPageOutput -line "runtimeclass BlankPage"
+exists -src $blankPageOutput -line "unsealed runtimeclass BlankPage"
 # Extend
 exists -src $blankPageOutput -line "BlankPage : Windows.UI.Xaml.Controls.Page, Windows.UI.Xaml.Data.INotifyPropertyChanged"
 # Constructors
@@ -212,7 +212,7 @@ absent -src $blankPageOutput -line "Root.A.factory_implementation"
 absent -src $blankPageOutput -line "warning"
 
 $propertyBagOutput = get-gen-output "$testCodeDir\PropertyBag.h"
-exists -src $propertyBagOutput -line "runtimeclass PropertyBag"
+exists -src $propertyBagOutput -line "unsealed runtimeclass PropertyBag"
 exists -src $propertyBagOutput -line "UInt32 UInt32Prop;"
 exists -src $propertyBagOutput -line "Root.A.SameViewModel ClassProp{get;};"
 exists -src $propertyBagOutput -line "void Method(UInt32 a, UInt32 b);"
@@ -234,15 +234,17 @@ absent -src $propertyBagOutput -line "Root.A.SameViewModel PrivateWilRwProp"
 
 $sameVmOutput = get-gen-output "$testCodeDir\SameViewModel.h"
 exists -src $sameVmOutput -line "[default_interface]"
-exists -src $sameVmOutput -line "runtimeclass SameViewModel"
+exists -src $sameVmOutput -line "unsealed runtimeclass SameViewModel"
+exists -src $sameVmOutput -line "runtimeclass SealedSameViewModel"
+absent -src $sameVmOutput -line "unsealed runtimeclass SealedSameViewModel"
 absent -src $sameVmOutput -line "runtimeclass SameViewModelHide"
 
 $differentPathVmOutput = get-gen-output -filePath "$testCodeDir\SomeNamespace\DifferentPathViewModel.h"
 exists -src $differentPathVmOutput -line "[default_interface]"
-exists -src $differentPathVmOutput -line "runtimeclass DifferentPathViewModel"
+exists -src $differentPathVmOutput -line "unsealed runtimeclass DifferentPathViewModel"
 
 $differentPathConsumerVmOutput = get-gen-output -filePath "$testCodeDir\SomeNamespace\DifferentPathConsumerViewModel.h"
-exists -src $differentPathConsumerVmOutput -line "runtimeclass DifferentPathConsumerViewModel"
+exists -src $differentPathConsumerVmOutput -line "unsealed runtimeclass DifferentPathConsumerViewModel"
 exists -src $differentPathConsumerVmOutput -line "import `"SomeNamespace\DifferentPathViewModel.idl`";"
 
 $someEnumOutput = get-gen-output -filePath "$testCodeDir\SomeEnum.h"
