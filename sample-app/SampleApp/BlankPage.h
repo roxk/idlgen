@@ -52,6 +52,9 @@ namespace winrt::SampleApp::implementation
         void MyProperty(int32_t value);
 
         void ClickHandler(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
+    protected:
+        friend struct winrt::impl::produce<BlankPage, SampleApp::IBlankPageProtected>;
+        bool ProtectedGetter();
     };
 }
 

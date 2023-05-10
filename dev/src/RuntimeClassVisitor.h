@@ -52,6 +52,7 @@ class MethodGroup : public Printer
   private:
     std::string methodName;
     bool isStatic;
+    bool isProtected;
 
   public:
     MethodGroup(
@@ -59,7 +60,8 @@ class MethodGroup : public Printer
         clang::CXXMethodDecl* method,
         clang::CXXMethodDecl* getter,
         clang::CXXMethodDecl* setter,
-        bool isStatic
+        bool isStatic,
+        bool isProtected
     );
     clang::CXXMethodDecl* method;
     clang::CXXMethodDecl* getter;
@@ -97,10 +99,13 @@ class PropertyMethodPrinter : public Printer
     std::string methodName;
     clang::QualType type;
     PropertyKind kind;
-    bool isStatic{};
+    bool isStatic;
+    bool isProtected;
 
   public:
-    PropertyMethodPrinter(std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic);
+    PropertyMethodPrinter(
+        std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic, bool isProtected
+    );
     void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
 };
 struct MethodHolder
@@ -231,9 +236,12 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
         clang::CXXMethodDecl* method,
         idlgen::MethodKind kind,
         std::string methodName,
-        bool isStatic
+        bool isStatic,
+        bool isProtected
     );
-    std::unique_ptr<idlgen::Printer> GetMethodPrinter(clang::NamedDecl* field, clang::QualType type, bool isStatic);
+    std::unique_ptr<idlgen::Printer> GetMethodPrinter(
+        clang::NamedDecl* field, clang::QualType type, bool isStatic, bool isProtected
+    );
     void FindFileToInclude(clang::QualType type);
     static std::unordered_map<std::string, std::string> initCxxTypeToWinRtTypeMap();
     GetMethodResponse GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault);

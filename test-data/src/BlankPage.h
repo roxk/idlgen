@@ -135,6 +135,25 @@ namespace winrt::Root::A::implementation
 		wil::single_threaded_rw_property<Root::A::SameViewModel> WilRwProp;
 		wil::simple_event<int32_t> WilEvent;
 		wil::typed_event<int32_t, int32_t> WilTypedEvent;
+	protected:
+		[[clang::annotate("idlgen::hide")]]
+		void HideProtectedMethod();
+		void ProtecedMethod();
+		[[clang::annotate("idlgen::property")]]
+		bool ProtecedGetter();
+		[[clang::annotate("idlgen::property")]]
+		uint32_t ProtecedProp();
+		[[clang::annotate("idlgen::property")]]
+		void ProtecedProp(uint32_t a);
+		[[clang::annotate("idlgen::property")]]
+		cppxaml::XamlProperty<bool> ProtectedCppXamlProperty;
+		wil::single_threaded_property<Root::A::SameViewModel> ProtectedWilProp;
+		wil::single_threaded_rw_property<Root::A::SameViewModel> ProtectedWilRwProp;
+		static void ProtecedStaticMethod();
+		[[clang::annotate("idlgen::property")]]
+		static cppxaml::XamlProperty<bool> ProtectedStaticCppXamlProperty;
+		static wil::single_threaded_property<Root::A::SameViewModel> ProtectedStaticWilProp;
+		static wil::single_threaded_rw_property<Root::A::SameViewModel> ProtectedStaticWilRwProp;
 	private:
 		void PrivateMethod();
 	};

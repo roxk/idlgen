@@ -23,4 +23,8 @@ namespace winrt::SampleApp::implementation
     {
         Button().Content(box_value(L"Clicked"));
     }
+    bool BlankPage::ProtectedGetter()
+    {
+        return false;
+    }
 }

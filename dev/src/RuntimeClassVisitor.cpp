@@ -331,7 +331,8 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
     clang::CXXMethodDecl* method,
     idlgen::MethodKind kind,
     std::string methodName,
-    bool isStatic
+    bool isStatic,
+    bool isProtected
 )
 {
     auto tryPrintParamName = [&](std::string& name, clang::QualType type)
@@ -370,7 +371,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
     {
         return result->second.groupOpt.value();
     }
-    auto group{std::make_unique<MethodGroup>(std::move(methodName), nullptr, nullptr, nullptr, isStatic)};
+    auto group{std::make_unique<MethodGroup>(std::move(methodName), nullptr, nullptr, nullptr, isStatic, isProtected)};
     auto& groupRef{*group};
     auto entry{methodGroups.insert({std::move(key), MethodHolder{std::move(group), groupRef}})};
     auto& groupOpt = entry.first->second.groupOpt;
@@ -379,7 +380,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
 }
 
 std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::GetMethodPrinter(
-    clang::NamedDecl* field, clang::QualType type, bool isStatic
+    clang::NamedDecl* field, clang::QualType type, bool isStatic, bool isProtected
 )
 {
     auto record{type->getAsCXXRecordDecl()};
@@ -405,13 +406,13 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::GetMethodPrinter(
         if (getterTemplates.find(templateName) != getterTemplates.end())
         {
             return std::make_unique<PropertyMethodPrinter>(
-                field->getNameAsString(), propertyType, PropertyKind::Getter, isStatic
+                field->getNameAsString(), propertyType, PropertyKind::Getter, isStatic, isProtected
             );
         }
         else if (propertyTemplates.find(templateName) != propertyTemplates.end())
         {
             return std::make_unique<PropertyMethodPrinter>(
-                field->getNameAsString(), propertyType, PropertyKind::Property, isStatic
+                field->getNameAsString(), propertyType, PropertyKind::Property, isStatic, isProtected
             );
         }
     }
@@ -578,7 +579,8 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
     std::map<std::string, MethodHolder> methodHolders;
     std::map<std::string, clang::CXXMethodDecl*> events;
     std::set<clang::CXXMethodDecl*> ctors;
-    auto tryAddMethod = [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault, bool isStatic)
+    auto tryAddMethod =
+        [&](clang::CXXMethodDecl* method, std::string name, bool isPropertyDefault, bool isStatic, bool isProtected)
     {
         debugPrint([&]() { std::cout << "Checking if " << name << " is runtime class method" << std::endl; });
         assert(method != nullptr);
@@ -606,7 +608,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
             return;
         }
         debugPrint([&]() { std::cout << name << " is a runtime class method/prop" << std::endl; });
-        auto& group{GetOrCreateMethodGroup(methodHolders, method, *methodKind, std::move(name), isStatic)};
+        auto& group{GetOrCreateMethodGroup(methodHolders, method, *methodKind, std::move(name), isStatic, isProtected)};
         if (methodKind == idlgen::MethodKind::Setter)
         {
             group.setter = method;
@@ -623,13 +625,22 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
     auto methods{record->methods()};
     for (auto&& method : methods)
     {
-        tryAddMethod(method, method->getNameAsString(), isPropertyDefault, method->isStatic());
+        tryAddMethod(
+            method,
+            method->getNameAsString(),
+            isPropertyDefault,
+            method->isStatic(),
+            method->getAccess() == clang::AccessSpecifier::AS_protected
+        );
     }
-    auto handleDataMember = [&](clang::ValueDecl* dataMember, bool isStatic)
+    auto handleDataMember = [&](clang::ValueDecl* dataMember, bool isStatic, bool isProtected)
     {
         debugPrint(
             [&]()
-            { std::cout << dataMember->getNameAsString() << " is data member isStatic=" << isStatic << std::endl; }
+            {
+                std::cout << dataMember->getNameAsString() << " is data member isStatic=" << isStatic
+                          << " isProtected=" << isProtected << std::endl;
+            }
         );
         auto fieldKind{GetRuntimeClassFieldKind(isPropertyDefault, dataMember)};
         if (!fieldKind)
@@ -637,7 +648,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
             return;
         }
         auto type{dataMember->getType()};
-        auto printer{GetMethodPrinter(dataMember, type, isStatic)};
+        auto printer{GetMethodPrinter(dataMember, type, isStatic, isProtected)};
         if (printer != nullptr)
         {
             methodHolders.insert({dataMember->getNameAsString(), MethodHolder{std::move(printer), std::nullopt}});
@@ -665,14 +676,14 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
                 {
                     return;
                 }
-                tryAddMethod(fieldMethod, dataMember->getNameAsString(), isFieldPropertyDefault, isStatic);
+                tryAddMethod(fieldMethod, dataMember->getNameAsString(), isFieldPropertyDefault, isStatic, isProtected);
             }
         );
     };
     auto fields{record->fields()};
     for (auto&& field : fields)
     {
-        handleDataMember(field, false);
+        handleDataMember(field, false, field->getAccess() == clang::AccessSpecifier::AS_protected);
     }
     auto decls{record->decls()};
     for (auto&& decl : decls)
@@ -682,7 +693,9 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
         {
             continue;
         }
-        handleDataMember(varDecl, varDecl->isStaticDataMember());
+        handleDataMember(
+            varDecl, varDecl->isStaticDataMember(), varDecl->getAccess() == clang::AccessSpecifier::AS_protected
+        );
     }
     return {std::move(methodHolders), std::move(events), std::move(ctors)};
 }
@@ -953,7 +966,8 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
 {
     auto resultGetter = [&]() -> std::optional<idlgen::MethodKind>
     {
-        if (method->getAccess() != clang::AccessSpecifier::AS_public)
+        const auto access{method->getAccess()};
+        if (!(access == clang::AccessSpecifier::AS_public || access == clang::AccessSpecifier::AS_protected))
         {
             return std::nullopt;
         }
@@ -1030,7 +1044,8 @@ std::optional<idlgen::FieldKind> idlgen::RuntimeClassVisitor::GetRuntimeClassFie
     {
         bool isFieldPropertyDefault{isPropertyDefault};
         auto fieldAttrs{value->attrs()};
-        if (value->getAccess() != clang::AccessSpecifier::AS_public)
+        const auto access{value->getAccess()};
+        if (!(access == clang::AccessSpecifier::AS_public || access == clang::AccessSpecifier::AS_protected))
         {
             return std::nullopt;
         }
@@ -1579,14 +1594,20 @@ idlgen::MethodGroup::MethodGroup(
     clang::CXXMethodDecl* method,
     clang::CXXMethodDecl* getter,
     clang::CXXMethodDecl* setter,
-    bool isStatic
+    bool isStatic,
+    bool isProtected
 )
-    : isStatic(isStatic), methodName(std::move(methodName)), method(method), getter(getter), setter(setter)
+    : methodName(std::move(methodName)), isStatic(isStatic), isProtected(isProtected), method(method), getter(getter),
+      setter(setter)
 {
 }
 
 void idlgen::MethodGroup::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
 {
+    if (isProtected)
+    {
+        out << "protected ";
+    }
     if (isStatic)
     {
         out << "static ";
@@ -1608,14 +1629,18 @@ void idlgen::MethodGroup::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream&
 }
 
 idlgen::PropertyMethodPrinter::PropertyMethodPrinter(
-    std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic
+    std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic, bool isProtected
 )
-    : methodName(std::move(methodName)), type(type), kind(kind), isStatic(isStatic)
+    : methodName(std::move(methodName)), type(type), kind(kind), isStatic(isStatic), isProtected(isProtected)
 {
 }
 
 void idlgen::PropertyMethodPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
 {
+    if (isProtected)
+    {
+        out << "protected ";
+    }
     if (isStatic)
     {
         out << "static ";
