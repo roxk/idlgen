@@ -90,7 +90,7 @@ Types which inherit the following tag types are called authored types (similar t
 2. Properties defined without configured getter or property templates
 3. Import file of projected types, non-authored types referenced in the runtime class
 
-The above structures require the help of class author to generate. The library defined a set of custom attributes, which, when declared on a class or methods, would allow the library to generate the missing pieces.
+The above structures require the help of class author to generate. The library defined a set of custom attributes, which, when declared on a class or methods, would allow the library to generate specified structures.
 
 Please see [Idlgen Custom Attributes](#Idlgen-Custom-Attributes) for more details.
 
