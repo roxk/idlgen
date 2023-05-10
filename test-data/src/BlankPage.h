@@ -128,11 +128,25 @@ namespace winrt::Root::A::implementation
 		void MethodMixingImplAndProjected(Root::A::SameViewModel const& a, Root::A::implementation::SameViewModel const& b);
 		[[clang::annotate("idlgen::hide")]]
 		void HideMethod();
+		virtual void OverridableMethod();
+		[[clang::annotate("idlgen::property")]]
+		virtual bool OverridableGetter();
+		[[clang::annotate("idlgen::property")]]
+		virtual void OverridableProp(bool a);
+		[[clang::annotate("idlgen::property")]]
+		virtual bool OverridableProp();
 		[[clang::annotate("idlgen::property")]]
 		cppxaml::XamlProperty<bool> CppXamlProperty;
 		// Don't need property attribute here or at class level
 		wil::single_threaded_property<Root::A::SameViewModel> WilProp;
 		wil::single_threaded_rw_property<Root::A::SameViewModel> WilRwProp;
+		[[clang::annotate("idlgen::property")]]
+		[[clang::annotate("idlgen::overridable")]]
+		cppxaml::XamlProperty<bool> OverridableCppXamlProperty;
+		[[clang::annotate("idlgen::overridable")]]
+		wil::single_threaded_property<Root::A::SameViewModel> OverridableWilProp;
+		[[clang::annotate("idlgen::overridable")]]
+		wil::single_threaded_rw_property<Root::A::SameViewModel> OverridableWilRwProp;
 		wil::simple_event<int32_t> WilEvent;
 		wil::typed_event<int32_t, int32_t> WilTypedEvent;
 	protected:

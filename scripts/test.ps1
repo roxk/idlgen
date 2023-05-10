@@ -185,6 +185,12 @@ exists -src $blankPageOutput -line "protected static void ProtecedStaticMethod()
 exists -src $blankPageOutput -line "protected static Boolean ProtectedStaticCppXamlProperty;"
 exists -src $blankPageOutput -line "protected static Root.A.SameViewModel ProtectedStaticWilProp{get;};"
 exists -src $blankPageOutput -line "protected static Root.A.SameViewModel ProtectedStaticWilRwProp;"
+exists -src $blankPageOutput -line "overridable void OverridableMethod();"
+exists -src $blankPageOutput -line "overridable Boolean OverridableGetter{get;};"
+exists -src $blankPageOutput -line "overridable Boolean OverridableProp;"
+exists -src $blankPageOutput -line "overridable Boolean OverridableCppXamlProperty;"
+exists -src $blankPageOutput -line "overridable Root.A.SameViewModel OverridableWilProp{get;};"
+exists -src $blankPageOutput -line "overridable Root.A.SameViewModel OverridableWilRwProp;"
 # Stuff that should be hidden
 absent -src $blankPageOutput -line "include\winrt\Root.idl"
 absent -src $blankPageOutput -line "BlankPage(BlankPage that);"
