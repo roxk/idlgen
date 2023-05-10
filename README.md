@@ -133,8 +133,11 @@ Below is a table for all attributes and their usage.
 |What to achieve in IDL|What to do in header|
 |--|--|
 |Hide public event handler in XAML|Make the handler private, then add `friend struct ClassT<Class>`|
-|Hide public event handler for any other runtime class|Make the handler private, then add `friend ClassT<Class>`|
-|Hide public overriden methods|Use `[[clang::annotate("hide")]]` on the method|
+|Hide public event handler for any other runtime class (See note)|Make the handler private, then add `friend ClassT<Class>`|
+|Hide public overriden methods|Use `[[clang::annotate("idlgen::hide")]]` on the method|
+|Make a class' applicable methods properties by default|Use `[[clang::annotate("idlgen::property]]` on the class|
+|Make methods protected|Declare them in `protected:` block|
+|Make `wil::single_threaded_rw_property<bool> Prop` overridable|Use `[[clang::annotate("idlgen::overridable")]]` on the property|
 
 Note: The friend syntax is different because for XAML `ClassT` is a struct, for any other runtime class it is an alias template.
 
