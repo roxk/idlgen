@@ -334,7 +334,7 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
 }
 
 idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
-    std::map<std::string, MethodHolder>& methodGroups,
+    std::map<std::string, MethodHolder>& methodHolders,
     clang::CXXMethodDecl* method,
     idlgen::MethodKind kind,
     std::string methodName,
@@ -375,7 +375,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
         return name;
     };
     auto key{paramStrGetter(methodName)};
-    if (auto result{methodGroups.find(key)}; result != methodGroups.end() && result->second.groupOpt.has_value())
+    if (auto result{methodHolders.find(key)}; result != methodHolders.end() && result->second.groupOpt.has_value())
     {
         return result->second.groupOpt.value();
     }
@@ -383,7 +383,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
         std::move(methodName), nullptr, nullptr, nullptr, isStatic, isProtected, isVirtual
     )};
     auto& groupRef{*group};
-    auto entry{methodGroups.insert({std::move(key), MethodHolder{std::move(group), groupRef}})};
+    auto entry{methodHolders.insert({std::move(key), MethodHolder{std::move(group), groupRef}})};
     auto& groupOpt = entry.first->second.groupOpt;
     assert(groupOpt.has_value());
     return *groupOpt;

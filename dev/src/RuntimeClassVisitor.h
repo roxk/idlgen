@@ -244,7 +244,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
   private:
     std::optional<IdlGenAttr> GetIdlGenAttr(clang::Attr* attr);
     MethodGroup& GetOrCreateMethodGroup(
-        std::map<std::string, MethodHolder>& methodGroups,
+        std::map<std::string, MethodHolder>& methodHolders,
         clang::CXXMethodDecl* method,
         idlgen::MethodKind kind,
         std::string methodName,
