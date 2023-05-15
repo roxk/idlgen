@@ -125,6 +125,11 @@ exists -src $blankPageOutput -line "BlankPage(UInt64 a, UInt64 b)"
 # Enum
 exists -src $blankPageOutput -line "Root.A.Category Enum{get;};"
 # Methods
+exists -src $blankPageOutput -line "Int32[] Array();"
+exists -src $blankPageOutput -line "void Array(Int32[] a);"
+exists -src $blankPageOutput -line "void ArrayRef(ref Int32[] a);"
+exists -src $blankPageOutput -line "void ArrayOut(out Int32[] a);"
+exists -src $blankPageOutput -line "Int32[] ArrayProp;"
 exists -src $blankPageOutput -line "Root.SomeEnum AuthoredEnum();"
 exists -src $blankPageOutput -line "Root.SomeStruct AuthoredStruct();"
 exists -src $blankPageOutput -line "Root.SomeInterface AuthoredInterface();"

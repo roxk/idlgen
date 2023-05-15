@@ -776,6 +776,19 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
         debugPrint([&]() { std::cout << qualifiedName << " is not a built-in type nor a name decl" << std::endl; });
         return "error-type";
     }
+    auto arrayOpt{GetArrayKind(decl)};
+    if (arrayOpt)
+    {
+        if (auto templateSpec = clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(decl))
+        {
+            auto firstParam{GetFirstTemplateTypeParam(templateSpec)};
+            if (!firstParam.isNull())
+            {
+                return TranslateCxxTypeToWinRtType(firstParam) + "[]";
+            }
+        }
+        return "error-type";
+    }
     auto name{decl->getNameAsString()};
     const auto namespaces{GetWinRtNamespaces(decl)};
     std::string qualifiedWinRtName;
@@ -907,8 +920,13 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
     {
         return true;
     }
-    auto kindOpt = GetRuntimeClassKind(record);
+    auto kindOpt{GetRuntimeClassKind(record)};
     if (kindOpt && (!projectedOnly || *kindOpt == idlgen::RuntimeClassKind::Projected))
+    {
+        return true;
+    }
+    auto arrayKindOpt{GetArrayKind(record)};
+    if (arrayKindOpt)
     {
         return true;
     }
@@ -1236,7 +1254,7 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
             auto params{spec->getTemplateArgs().asArray()};
             for (auto&& param : params)
             {
-                auto paramKind = param.getKind();
+                auto paramKind{param.getKind()};
                 if (paramKind != clang::TemplateArgument::ArgKind::Type)
                 {
                     debugPrint(
@@ -1331,7 +1349,7 @@ std::optional<std::vector<clang::QualType>> idlgen::RuntimeClassVisitor::GetExte
         };
         for (auto&& templateParam : templateParams)
         {
-            auto paramKind = templateParam.getKind();
+            auto paramKind{templateParam.getKind()};
             if (paramKind == clang::TemplateArgument::ArgKind::Type)
             {
                 auto paramType{templateParam.getAsType()};
@@ -1401,10 +1419,9 @@ clang::QualType idlgen::RuntimeClassVisitor::GetFirstTemplateTypeParam(
 )
 {
     auto params{templateSpecDecl->getTemplateArgs().asArray()};
-    std::optional<clang::QualType> propertyTypeOpt;
     for (auto&& param : params)
     {
-        auto paramKind = param.getKind();
+        auto paramKind{param.getKind()};
         if (paramKind != clang::TemplateArgument::ArgKind::Type)
         {
             debugPrint(
@@ -1485,6 +1502,18 @@ void idlgen::RuntimeClassVisitor::PrintMethodParams(clang::CXXMethodDecl* method
     for (size_t i = 0; i < paramCount; ++i)
     {
         auto param{params[i]};
+        auto arrayKindOpt{GetArrayKind(param->getType())};
+        if (arrayKindOpt)
+        {
+            if (*arrayKindOpt == ArrayKind::Ref)
+            {
+                out << "ref ";
+            }
+            else if (*arrayKindOpt == ArrayKind::Out)
+            {
+                out << "out ";
+            }
+        }
         out << TranslateCxxTypeToWinRtType(param->getType()) << " " << param->getNameAsString();
         if (i + 1 < paramCount)
         {
@@ -1500,6 +1529,39 @@ void idlgen::RuntimeClassVisitor::PrintEvent(std::string_view name, clang::CXXMe
     auto handler{TranslateCxxTypeToWinRtType(method->parameters().front()->getType())};
     out << "event " << handler << " " << name << ";"
         << "\n";
+}
+
+std::optional<idlgen::ArrayKind> idlgen::RuntimeClassVisitor::GetArrayKind(clang::NamedDecl* record)
+{
+    auto templateDecl{clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(record)};
+    if (templateDecl == nullptr)
+    {
+        return std::nullopt;
+    }
+    auto templateFullName{templateDecl->getQualifiedNameAsString()};
+    if (templateFullName == "winrt::array_view")
+    {
+        auto firstParam{GetFirstTemplateTypeParam(templateDecl)};
+        if (!firstParam.isNull())
+        {
+            return firstParam.isConstQualified() ? ArrayKind::In : ArrayKind::Ref;
+        }
+    }
+    else if (templateFullName == "winrt::com_array")
+    {
+        return ArrayKind::Out;
+    }
+    return std::nullopt;
+}
+
+std::optional<idlgen::ArrayKind> idlgen::RuntimeClassVisitor::GetArrayKind(clang::QualType type)
+{
+    auto record{type->getAsCXXRecordDecl()};
+    if (record == nullptr)
+    {
+        return std::nullopt;
+    }
+    return GetArrayKind(record);
 }
 
 std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsClass(

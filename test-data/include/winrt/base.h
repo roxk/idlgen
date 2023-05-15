@@ -33,6 +33,10 @@ namespace winrt
 {
 	struct hstring {};
 	struct event_token {};
+	template <typename T>
+	struct array_view {};
+	template <typename T>
+	struct com_array {};
 	template<typename T>
 	struct event {};
 	namespace Windows::Foundation
