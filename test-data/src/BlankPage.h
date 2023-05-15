@@ -139,6 +139,14 @@ namespace winrt::Root::A::implementation
 		virtual void OverridableProp(bool a);
 		[[clang::annotate("idlgen::property")]]
 		virtual bool OverridableProp();
+		winrt::com_array<int32_t> Array();
+		void Array(winrt::array_view<int32_t const> a);
+		void ArrayRef(winrt::array_view<int32_t> a);
+		void ArrayOut(winrt::com_array<int32_t> a);
+		[[clang::annotate("idlgen::property")]]
+		void ArrayProp(winrt::array_view<int32_t> a);
+		[[clang::annotate("idlgen::property")]]
+		winrt::com_array<int32_t> ArrayProp();
 		[[clang::annotate("idlgen::property")]]
 		cppxaml::XamlProperty<bool> CppXamlProperty;
 		// Don't need property attribute here or at class level
