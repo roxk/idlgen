@@ -1,11 +1,11 @@
 #pragma once
 
 #include "pch.h"
-// Test inconsistent file name case
 #include "SomeEnum.h"
 #include "SomeDelegate.h"
 #include "SomeStruct.h"
 #include "SomeInterface.h"
+// Test inconsistent file name case
 #include "blankpage.g.h"
 #include "SameViewModel.h"
 #include "TestIncludeImpl.h"
@@ -38,11 +38,11 @@ namespace winrt::Root::A::implementation
 	};
 
 	struct
-		[[clang::annotate("idlgen::import=SameViewModel.idl,ShallowerViewModel.idl,"
+		[[idlgen::import("SameViewModel.idl", "ShallowerViewModel.idl",
 			"SiblingViewModel.idl")]]
-	[[clang::annotate("idlgen::attribute=bindable")]]
-	[[clang::annotate("idlgen::attribute=default_interface")]]
-	[[clang::annotate("idlgen::attribute=Windows.UI.Xaml.Markup.ContentProperty(\"Property\")")]]
+	[[idlgen::attribute("bindable")]]
+	[[idlgen::attribute("default_interface")]]
+	[[idlgen::attribute("Windows.UI.Xaml.Markup.ContentProperty(\"Property\")")]]
 	BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>, Interface
 	{
 		BlankPage();
@@ -54,13 +54,13 @@ namespace winrt::Root::A::implementation
 		BlankPage& operator=(BlankPage const& that) = default;
 		BlankPage& operator=(BlankPage&& that) = default;
 		~BlankPage();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		hstring UnqualifiedType();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		winrt::hstring Property();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		void Property(winrt::hstring const& a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		void VoidGetterIsMethod();
 		event_token Event(winrt::Windows::Foundation::EventHandler<int32_t> const& handler);
 		void Event(winrt::event_token token);
@@ -71,13 +71,13 @@ namespace winrt::Root::A::implementation
 		winrt::event_token TestIncludeDelegate(Root::SomeEventHandler const& handler);
 		void TypedEvent(winrt::event_token token);
 		void NoSetterOnlyProperty(bool a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		Category Enum();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		Windows::Foundation::Numerics::Vector2 Struct();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		bool Getter();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		bool const& ConstRefGetter();
 		Root::SomeEnum AuthoredEnum();
 		Root::SomeStruct AuthoredStruct();
@@ -111,72 +111,72 @@ namespace winrt::Root::A::implementation
 		void NamespaceShallower(Root::ShallowerViewModel const& a);
 		void NamespaceSibling(Root::B::SiblingViewModel const& a);
 		void DifferentPath(Root::SomeNamespace::DifferentPathViewModel const& a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		static Windows::UI::Xaml::DependencyProperty DependencyProperty();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		SameViewModel ReturnAllowImpl();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		SameViewModel ImplPropertyOnlyExposeGetter();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		void ImplPropertyOnlyExposeGetter(SameViewModel const& a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		TestIncludeImpl TestIncludeImplWithOnlyImplUse();
 		ImplStruct InternalMethod();
 		void InternalMethod(ImplStruct const& s);
 		void ParamDisallowImpl(SameViewModel const& a);
 		SameViewModel ParamDisallowImplEvenReturnAllow(SameViewModel const& a);
 		void MethodMixingImplAndProjected(Root::A::SameViewModel const& a, Root::A::implementation::SameViewModel const& b);
-		[[clang::annotate("idlgen::hide")]]
+		[[idlgen::hide]]
 		void HideMethod();
-		[[clang::annotate("idlgen::protected")]]
+		[[idlgen::protected]]
 		void AttrProtectedMethod();
-		[[clang::annotate("idlgen::overridable")]]
+		[[idlgen::overridable]]
 		void AttrOverridableMethod();
 		virtual void OverridableMethod();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		virtual bool OverridableGetter();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		virtual void OverridableProp(bool a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		virtual bool OverridableProp();
 		winrt::com_array<int32_t> Array();
 		void Array(winrt::array_view<int32_t const> a);
 		void ArrayRef(winrt::array_view<int32_t> a);
 		void ArrayOut(winrt::com_array<int32_t> a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		void ArrayProp(winrt::array_view<int32_t> a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		winrt::com_array<int32_t> ArrayProp();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		cppxaml::XamlProperty<bool> CppXamlProperty;
 		// Don't need property attribute here or at class level
 		wil::single_threaded_property<Root::A::SameViewModel> WilProp;
 		wil::single_threaded_rw_property<Root::A::SameViewModel> WilRwProp;
-		[[clang::annotate("idlgen::property")]]
-		[[clang::annotate("idlgen::overridable")]]
+		[[idlgen::property]]
+		[[idlgen::overridable]]
 		cppxaml::XamlProperty<bool> OverridableCppXamlProperty;
-		[[clang::annotate("idlgen::overridable")]]
+		[[idlgen::overridable]]
 		wil::single_threaded_property<Root::A::SameViewModel> OverridableWilProp;
-		[[clang::annotate("idlgen::overridable")]]
+		[[idlgen::overridable]]
 		wil::single_threaded_rw_property<Root::A::SameViewModel> OverridableWilRwProp;
 		wil::simple_event<int32_t> WilEvent;
 		wil::typed_event<int32_t, int32_t> WilTypedEvent;
 	protected:
-		[[clang::annotate("idlgen::hide")]]
+		[[idlgen::hide]]
 		void HideProtectedMethod();
 		void ProtecedMethod();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		bool ProtecedGetter();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		uint32_t ProtecedProp();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		void ProtecedProp(uint32_t a);
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		cppxaml::XamlProperty<bool> ProtectedCppXamlProperty;
 		wil::single_threaded_property<Root::A::SameViewModel> ProtectedWilProp;
 		wil::single_threaded_rw_property<Root::A::SameViewModel> ProtectedWilRwProp;
 		static void ProtecedStaticMethod();
-		[[clang::annotate("idlgen::property")]]
+		[[idlgen::property]]
 		static cppxaml::XamlProperty<bool> ProtectedStaticCppXamlProperty;
 		static wil::single_threaded_property<Root::A::SameViewModel> ProtectedStaticWilProp;
 		static wil::single_threaded_rw_property<Root::A::SameViewModel> ProtectedStaticWilRwProp;

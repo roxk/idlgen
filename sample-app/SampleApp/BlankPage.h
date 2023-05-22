@@ -38,10 +38,10 @@ namespace winrt::SampleApp::implementation
             // See https://github.com/microsoft/cppwinrt/tree/master/nuget#initializecomponent
         }
 
-        [[clang::annotate("idlgen::property")]]
+        [[idlgen::property]]
         SampleApp::Category Category() { return SampleApp::Category::Literature; }
 
-        [[clang::annotate("idlgen::property")]]
+        [[idlgen::property]]
         SampleApp::Permission Permission() { return SampleApp::Permission::Camera | SampleApp::Permission::Microphone; }
 
         SampleApp::Point GetPoint() { return SampleApp::Point{}; }

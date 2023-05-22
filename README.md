@@ -105,25 +105,20 @@ By default, all generated methods/properties are not overridable. To generate ov
 
 ### Idlgen Custom Attributes
 
-The syntax for idlgen's custom attributes is
-```
-[[clang::annotate("idlgen::$attribute=$args")]]
-```
-
-The library currently utilize clang's annotate attribute to specify an inner attribute, following C++'s `namespace::attribute(args)` convention. `=` is used instead of `()` to simplify parsing.
+The syntax for idlgen's custom attributes is ordinary C++ attributes, with `idlgen` being the namespace.
 
 Below is a table for all attributes and their usage.
 
 |Attribute|Args|Description|Applicable On|Example Declaration|Resultant idl|
 |--|--|--|--|--|--|
-|`import`|`value,value,...`|Add import statement(s)|class|`[[clang::annotate("idlgen::import=A.idl,B.idl"]]`|`import "A.idl";import "B.idl";`|
-|`attribute`|`value`|Add an attribute|class|`[[clang::annotate("idlgen::attribute=default_interface")]]`|`[default_interface]`|
-|`property`|N/A|The method is a property/All applicable methods in a class are properties|class/method|`[[clang::annotate("idlgen::property")]]`||
-|`method`|N/A|The method is a method/All methods in a class are methods|class/method|`[[clang::annotate("idlgen::method")]]`||
-|`hide`|N/A|Hide class or methods or data member|class/method/data member|`[[clang::annotate("idlgen::hide")]]`||
-|`overridable`|N/A|Make a method/property overridable|method|`[[clang::annotate("idlgen::overridable]]`||
-|`protected`|N/A|Make a method protected|method|`[[clang::annotate("idlgen::protected]]`||
-|`sealed`|N/A|Make a runtimeclass sealed|class|`[[clang::annotate("idlgen::sealed"]]`||
+|`import`|`"value",...`|Add import statement(s)|class|`[[idlgen::import("A.idl","B.idl")]]`|`import "A.idl";import "B.idl";`|
+|`attribute`|`"value",...`|Add an attribute|class|`[[idlgen::attribute("webhosthidden", "bindable")]]`|`[default_interface][webhosthidden]`|
+|`property`|N/A|The method is a property/All applicable methods in a class are properties|class/method|`[[idlgen::property]]`||
+|`method`|N/A|The method is a method/All methods in a class are methods|class/method|`[[idlgen::method]]`||
+|`hide`|N/A|Hide class or methods or data member|class/method/data member|`[[idlgen::hide]]`||
+|`overridable`|N/A|Make a method/property overridable|method|`[[idlgen::overridable]]`||
+|`protected`|N/A|Make a method protected|method|`[[idlgen::protected]]`||
+|`sealed`|N/A|Make a runtimeclass sealed|class|`[[idlgen::sealed]]`||
 
 *Note*: By default, the tool would generate `[default_interface]` attribute for an empty class (a class that doesn't have any methods other than constructor) so you don't need to add it.
 
@@ -135,10 +130,10 @@ Below is a table for all attributes and their usage.
 |--|--|
 |Hide public event handler in XAML|Make the handler private, then add `friend struct ClassT<Class>`|
 |Hide public event handler for any other runtime class (See note)|Make the handler private, then add `friend ClassT<Class>`|
-|Hide public overriden methods|Use `[[clang::annotate("idlgen::hide")]]` on the method|
-|Make a class' applicable methods properties by default|Use `[[clang::annotate("idlgen::property]]` on the class|
+|Hide public overriden methods|Use `[[idlgen::hide]]` on the method|
+|Make a class' applicable methods properties by default|Use `[[idlgen::property]]` on the class|
 |Make methods protected|Declare them in `protected:` block|
-|Make `wil::single_threaded_rw_property<bool> Prop` overridable|Use `[[clang::annotate("idlgen::overridable")]]` on the property|
+|Make `wil::single_threaded_rw_property<bool> Prop` overridable|Use `[[idlgen::overridable]]` on the property|
 
 Note: The friend syntax is different because for XAML `ClassT` is a struct, for any other runtime class it is an alias template.
 
