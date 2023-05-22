@@ -6,12 +6,12 @@
 
 namespace winrt::Root::A::implementation
 {
-	struct [[clang::annotate("idlgen::property")]] PropertyBag : PropertyBagT<PropertyBag>
+	struct [[idlgen::property]] PropertyBag : PropertyBagT<PropertyBag>
 	{
 		uint32_t UInt32Prop();
 		void UInt32Prop(uint32_t a);
 		Root::A::SameViewModel ClassProp();
-		[[clang::annotate("idlgen::method")]]
+		[[idlgen::method]]
 		Windows::Foundation::IAsyncAction MethodAsync();
 		void MethodPure();
 		void MethodBool(bool a);

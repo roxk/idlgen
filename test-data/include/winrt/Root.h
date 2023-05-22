@@ -9,6 +9,8 @@ namespace winrt::Root
 
 	struct IncompleteViewModel;
 
+	struct IdlgenAttributes : Base {};
+
 	namespace A
 	{
 		struct BlankPage : Base {};

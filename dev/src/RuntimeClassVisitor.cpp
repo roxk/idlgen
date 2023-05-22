@@ -229,104 +229,51 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     {
         return std::nullopt;
     }
-    if (scopeName->getName() != "clang" || attrName->getName() != "annotate")
+    debugPrint([&]()
+               { std::cout << "Getting IdlGenAttr scopeName=" << scopeName->getName().data() << " attrName=" << attrName->getName().data() << std::endl; });
+    if (scopeName->getName() != "idlgen")
     {
         return std::nullopt;
     }
-    auto annotationGetter = [&]() -> std::optional<std::string>
+    if (auto idlgenImport = clang::dyn_cast<clang::IdlgenImportAttr>(attr))
     {
-        std::string pretty;
-        llvm::raw_string_ostream prettyStream(pretty);
-        attr->printPretty(prettyStream, clang::PrintingPolicy(clang::LangOptions()));
-        llvm::SmallVector<llvm::StringRef> splitted;
-        const auto firstQuoteIndex{pretty.find("\"")};
-        const auto lastQuoteIndex{pretty.rfind("\"")};
-        const std::string_view prettyView{pretty};
-        if (firstQuoteIndex > 0)
+        std::vector<std::string> args;
+        for (auto&& other : idlgenImport->imports())
         {
-            splitted.emplace_back(prettyView.substr(0, firstQuoteIndex));
+            args.emplace_back(other.str());
         }
-        if (lastQuoteIndex >= firstQuoteIndex + 1)
-        {
-            const auto start{firstQuoteIndex + 1};
-            splitted.emplace_back(prettyView.substr(start, lastQuoteIndex - start));
-            if (lastQuoteIndex + 1 < prettyView.size())
-            {
-                splitted.emplace_back(prettyView.substr(lastQuoteIndex + 1));
-            }
-        }
-        constexpr auto rawAttrContentIndex = 1;
-        constexpr auto expectedRawAttrSize = 3;
-        if (splitted.size() != expectedRawAttrSize)
-        {
-            return std::nullopt;
-        }
-        return splitted[rawAttrContentIndex].str();
-    };
-    auto annotationOpt{annotationGetter()};
-    if (!annotationOpt)
-    {
-        return std::nullopt;
+        return IdlGenAttr{IdlGenAttrType::Import, {std::move(args)}};
     }
-    auto& annotation{*annotationOpt};
-    if (annotation.find("idlgen::") != 0)
+    else if (auto idlgenAttribute = clang::dyn_cast<clang::IdlgenAttributeAttr>(attr))
     {
-        return std::nullopt;
-    }
-    auto equalIndex = annotation.find("=");
-    if (equalIndex == std::string::npos)
-    {
-        equalIndex = annotation.size();
-    }
-    auto idlGenAttr{std::string_view(annotation)};
-    constexpr auto idlgenAttrHeaderCount = 8;
-    idlGenAttr = idlGenAttr.substr(idlgenAttrHeaderCount, equalIndex - idlgenAttrHeaderCount);
-    std::string args{equalIndex >= annotation.size() ? "" : annotation.substr(equalIndex + 1)};
-    if (idlGenAttr == "attribute")
-    {
-        if (args.empty())
+        std::vector<std::string> args;
+        for (auto&& other : idlgenAttribute->attributes())
         {
-            return std::nullopt;
+            args.emplace_back(other.str());
         }
         return IdlGenAttr{IdlGenAttrType::Attribute, {std::move(args)}};
     }
-    else if (idlGenAttr == "import")
-    {
-        llvm::SmallVector<llvm::StringRef> splitted;
-        llvm::SplitString(args, splitted, ",");
-        if (splitted.empty())
-        {
-            std::nullopt;
-        }
-        std::vector<std::string> result;
-        result.reserve(splitted.size());
-        for (auto&& importFile : splitted)
-        {
-            result.emplace_back(importFile.str());
-        }
-        return IdlGenAttr{IdlGenAttrType::Import, result};
-    }
-    else if (idlGenAttr == "hide")
+    else if (auto idlgenHide = clang::dyn_cast<clang::IdlgenHideAttr>(attr))
     {
         return IdlGenAttr{IdlGenAttrType::Hide, {}};
     }
-    else if (idlGenAttr == "property")
+    else if (auto idlgenHide = clang::dyn_cast<clang::IdlgenPropertyAttr>(attr))
     {
         return IdlGenAttr{IdlGenAttrType::Property, {}};
     }
-    else if (idlGenAttr == "method")
+    else if (auto idlgenHide = clang::dyn_cast<clang::IdlgenMethodAttr>(attr))
     {
         return IdlGenAttr{IdlGenAttrType::Method, {}};
     }
-    else if (idlGenAttr == "overridable")
+    else if (auto idlgenHide = clang::dyn_cast<clang::IdlgenOverridableAttr>(attr))
     {
         return IdlGenAttr{IdlGenAttrType::Overridable, {}};
     }
-    else if (idlGenAttr == "protected")
+    else if (auto idlgenHide = clang::dyn_cast<clang::IdlgenProtectedAttr>(attr))
     {
         return IdlGenAttr{IdlGenAttrType::Protected, {}};
     }
-    else if (idlGenAttr == "sealed")
+    else if (auto idlgenHide = clang::dyn_cast<clang::IdlgenSealedAttr>(attr))
     {
         return IdlGenAttr{IdlGenAttrType::Sealed, {}};
     }

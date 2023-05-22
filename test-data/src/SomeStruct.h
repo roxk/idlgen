@@ -6,18 +6,18 @@
 namespace winrt::Root::implementation
 {
 	struct
-		[[clang::annotate("idlgen::hide")]]
+		[[idlgen::hide]]
 		HiddenStruct : idlgen::author_struct
 	{
 		int64_t X;
 		int64_t Y;
 	};
 	struct
-		[[clang::annotate("idlgen::import=SomeFlag.idl")]]
-		[[clang::annotate("idlgen::attribute=webhosthidden")]]
+		[[idlgen::import("SomeFlag.idl")]]
+		[[idlgen::attribute("webhosthidden")]]
 		SomeStruct : idlgen::author_struct
 	{
-		[[clang::annotate("idlgen::hide")]]
+		[[idlgen::hide]]
 		int64_t HiddenProp;
 		int64_t X;
 		int64_t Y;
