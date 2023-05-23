@@ -1,10 +1,10 @@
 import "Status.idl";
 namespace SampleApp
 {
-runtimeclass MainPage : Windows.UI.Xaml.Controls.Page
+unsealed runtimeclass MainPage : Windows.UI.Xaml.Controls.Page
 {
 MainPage();
-void MyProperty(Int32 value);
+Int32 MyProperty;
 SampleApp.Status Status();
 }
 }

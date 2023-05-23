@@ -29,7 +29,7 @@ delegate void BlankPageEventHandler(SampleApp.BlankPage sender, UInt64 e);
 }
 namespace SampleApp
 {
-runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
+unsealed runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 {
 BlankPage();
 SampleApp.Category Category{get;};
