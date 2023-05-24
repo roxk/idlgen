@@ -164,9 +164,13 @@ bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
 {
     auto location{decl->getLocation()};
     auto isMain{astContext.getSourceManager().isInMainFile(location)};
-    auto kind{GetEnumKind(decl)};
     if (!isMain)
     {
+        if (ShouldSkipGenerating(decl))
+        {
+            return true;
+        }
+        auto kind{GetEnumKind(decl)};
         if (kind)
         {
             importSourceTypes.insert({decl->getNameAsString(), decl});
@@ -174,6 +178,7 @@ bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
         return true;
     }
     debugPrint([]() { std::cout << "is main file" << std::endl; });
+    auto kind{GetEnumKind(decl)};
     if (!kind)
     {
         return true;
@@ -927,17 +932,21 @@ bool idlgen::RuntimeClassVisitor::IsDestructor(clang::CXXMethodDecl* method)
 
 bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
 {
+    namespace lsp = llvm::sys::path;
+    static auto winrtKeyword = std::string("winrt") + lsp::get_separator().data();
     // We skip checking whether the file contains impl class for built-in headers.
-    // TODO: Outright skip parsing them?
     auto fileNameOpt{GetLocFilePath(decl)};
     if (!fileNameOpt)
     {
         return true;
     }
     auto& fileName{*fileNameOpt};
-    if (fileName.find("winrt/") != std::string::npos || fileName.find("Microsoft Visual Studio") != std::string::npos ||
-        fileName.find("Windows Kits") != std::string::npos)
-    {
+    auto shouldSkip = fileName.find(winrtKeyword) != std::string::npos ||
+                      fileName.find("idlgen.h") != std::string::npos ||
+        fileName.find("Microsoft Visual Studio") != std::string::npos ||
+        fileName.find("Windows Kits") != std::string::npos;
+    if (shouldSkip)
+    {    
         return true;
     }
     return false;
