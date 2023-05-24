@@ -39,7 +39,10 @@
 			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
-	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" Inputs="@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="CheckPchCount">
+		<Error Text="More than 1 pch specified. Idlgen only supports 1 pch at a time." Condition="@(IdlGenCppPch->Count()) > 1"/>
+	</Target>
+	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="CheckPchCount" Inputs="@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
 		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=&quot;%(IdlGenCppPch.Identity)&quot; -pch-out-dir=&quot;$(OutDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
