@@ -234,8 +234,13 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     {
         return std::nullopt;
     }
-    debugPrint([&]()
-               { std::cout << "Getting IdlGenAttr scopeName=" << scopeName->getName().data() << " attrName=" << attrName->getName().data() << std::endl; });
+    debugPrint(
+        [&]()
+        {
+            std::cout << "Getting IdlGenAttr scopeName=" << scopeName->getName().data()
+                      << " attrName=" << attrName->getName().data() << std::endl;
+        }
+    );
     if (scopeName->getName() != "idlgen")
     {
         return std::nullopt;
@@ -943,10 +948,10 @@ bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
     auto& fileName{*fileNameOpt};
     auto shouldSkip = fileName.find(winrtKeyword) != std::string::npos ||
                       fileName.find("idlgen.h") != std::string::npos ||
-        fileName.find("Microsoft Visual Studio") != std::string::npos ||
-        fileName.find("Windows Kits") != std::string::npos;
+                      fileName.find("Microsoft Visual Studio") != std::string::npos ||
+                      fileName.find("Windows Kits") != std::string::npos;
     if (shouldSkip)
-    {    
+    {
         return true;
     }
     return false;
