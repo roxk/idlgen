@@ -1,5 +1,3 @@
-param([string]$config)
-
 $srcDir = "$PSScriptRoot"
 . "$srcDir\populate-build-ninja" -config Release
 $outRootDir = "$srcDir\..\build-ninja\Release"
