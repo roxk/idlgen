@@ -4,9 +4,13 @@
 [![VS2022](https://img.shields.io/visual-studio-marketplace/v/Roxk.Idlgencpp.svg?label=Visual%20Studio%202022%20(Preview))](https://marketplace.visualstudio.com/items?itemName=Roxk.idlgencpp)
 [![CI](https://github.com/roxk/idlgen/actions/workflows/ci.yaml/badge.svg)](https://github.com/roxk/idlgen/actions/workflows/ci.yaml)
 
-A library for generating idl files when implementing WinRT components. Currently, only C++ is supported.
+_idl-free_ C++/WinRT is here.
 
 ![Generate idl from C++ header](banner.png)
+
+Idlgen is a library for generating idl files when implementing WinRT components. With this library, you never have to write a single line of MIDL3 again.
+
+Currently, only C++ is supported.
 
 ## Installation
 
@@ -28,7 +32,7 @@ On top of the nuget package, you can also install IDE extension to streamline th
 
 1. Make sure your project can compile and build.
 2. Add `pch.h` and `idlgen.h`, and other necessary includes in the header of your implementation type.
-3. Edit a header file of your implementation type.
+3. Edit the header file.
 4. Build the project. A custom build step would run before compilation.
 5. Viola! The idl file of the implementation type has been generated.
 
