@@ -33,22 +33,144 @@
 			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)..\..\include\idlgen</AdditionalIncludeDirectories>
 		</ClCompile>
 		<IdlGenCppPch>
-			<PchOutput>$(OutDir)idlgen\%(Filename)%(Extension).gch</PchOutput>
+			<PchOutput>$(IntDir)idlgen\%(Filename)%(Extension).gch</PchOutput>
 		</IdlGenCppPch>
 		<IdlGenCppInclude>
 			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
-	<Target Name="CheckPchCount">
+	<Target Name="IdlgenCppMidl" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
+		<MultiToolTask
+		  Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' == 'true'"
+		  TaskName                            ="Microsoft.Build.CPPTasks.MIDL"
+		  Sources                             ="@(Midl)"
+		  TrackerLogDirectory                 ="$(TLogLocation)"
+		  ToolArchitecture                    ="$(MidlToolArchitecture)"
+		  TrackerFrameworkPath                ="$(MidlTrackerFrameworkPath)"
+		  TrackerSdkPath                      ="$(MidlTrackerSdkPath)"
+		  TLogReadFiles                       ="@(MIDLTLogReadFiles)"
+		  TLogWriteFiles                      ="@(MIDLTLogWriteFiles)"
+		  ToolExe                             ="$(MIDLToolExe)"
+		  ToolPath                            ="$(MIDLToolPath)"
+		  TrackFileAccess                     ="$(TrackFileAccess)"
+		  TrackedInputFilesToIgnore           ="@(MidlNoDependencies)"
+		  TrackedOutputFilesToIgnore          ="@(MidlTrackedOutputFilesToIgnore)"
+		  YieldDuringToolExecution            ="$(MidlYieldDuringToolExecution)"
+		  MaxProcessCount                     ="$(MultiProcMaxCount)"
+		  EnforceProcessCountAcrossBuilds     ="$(EnforceProcessCountAcrossBuilds)"
+		  SchedulerName                       ="$(MultiProcSchedulerName)">
+		</MultiToolTask>
+		<MIDL
+		  Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' != 'true'"
+		  Source                              ="%(Midl.Identity)"
+		  AdditionalIncludeDirectories        ="%(Midl.AdditionalIncludeDirectories)"
+		  AdditionalMetadataDirectories       ="%(Midl.AdditionalMetadataDirectories)"
+		  AdditionalOptions                   ="%(Midl.AdditionalOptions)"
+		  ApplicationConfigurationMode        ="%(Midl.ApplicationConfigurationMode)"
+		  ClientStubFile                      ="%(Midl.ClientStubFile)"
+		  CPreprocessOptions                  ="%(Midl.CPreprocessOptions)"
+		  DefaultCharType                     ="%(Midl.DefaultCharType)"
+		  DllDataFileName                     ="%(Midl.DllDataFileName)"
+		  EnableErrorChecks                   ="%(Midl.EnableErrorChecks)"
+		  EnableWindowsRuntime                ="%(Midl.EnableWindowsRuntime)"
+		  Enumclass                           ="%(Midl.Enumclass)"
+		  ErrorCheckAllocations               ="%(Midl.ErrorCheckAllocations)"
+		  ErrorCheckBounds                    ="%(Midl.ErrorCheckBounds)"
+		  ErrorCheckEnumRange                 ="%(Midl.ErrorCheckEnumRange)"
+		  ErrorCheckRefPointers               ="%(Midl.ErrorCheckRefPointers)"
+		  ErrorCheckStubData                  ="%(Midl.ErrorCheckStubData)"
+		  GenerateClientFiles                 ="%(Midl.GenerateClientFiles)"
+		  GenerateServerFiles                 ="%(Midl.GenerateServerFiles)"
+		  GenerateStublessProxies             ="%(Midl.GenerateStublessProxies)"
+		  GenerateTypeLibrary                 ="%(Midl.GenerateTypeLibrary)"
+		  HeaderFileName                      ="%(Midl.HeaderFileName)"
+		  IgnoreStandardIncludePath           ="%(Midl.IgnoreStandardIncludePath)"
+		  InterfaceIdentifierFileName         ="%(Midl.InterfaceIdentifierFileName)"
+		  LocaleID                            ="%(Midl.LocaleID)"
+		  MkTypLibCompatible                  ="%(Midl.MkTypLibCompatible)"
+		  MetadataFileName                    ="%(Midl.MetadataFileName)"
+		  MinimumTargetSystem                 ="%(Midl.MinimumTargetSystem)"
+		  OutputDirectory                     ="$(IntDir)"
+		  PrependWithABINamepsace             ="%(Midl.PrependWithABINamepsace)"
+		  PreprocessorDefinitions             ="%(Midl.PreprocessorDefinitions)"
+		  ProxyFileName                       ="%(Midl.ProxyFileName)"
+		  RedirectOutputAndErrors             ="%(Midl.RedirectOutputAndErrors)"
+		  ServerStubFile                      ="%(Midl.ServerStubFile)"
+		  StructMemberAlignment               ="%(Midl.StructMemberAlignment)"
+		  SuppressCompilerWarnings            ="%(Midl.SuppressCompilerWarnings)"
+		  SuppressStartupBanner               ="%(Midl.SuppressStartupBanner)"
+		  TargetEnvironment                   ="%(Midl.TargetEnvironment)"
+		  TypeLibFormat                       ="%(Midl.TypeLibFormat)"
+		  TypeLibraryName                     ="%(Midl.TypeLibraryName)"
+		  UndefinePreprocessorDefinitions     ="%(Midl.UndefinePreprocessorDefinitions)"
+		  UseResponseFile                     ="%(Midl.UseResponseFile)"
+		  ValidateAllParameters               ="%(Midl.ValidateAllParameters)"
+		  WarnAsError                         ="%(Midl.WarnAsError)"
+		  WarningLevel                        ="%(Midl.WarningLevel)"
+		  TrackerLogDirectory                 ="%(Midl.TrackerLogDirectory)"
+		  MinimalRebuildFromTracking          ="%(Midl.MinimalRebuildFromTracking)"
+		  ToolArchitecture                    ="$(MidlToolArchitecture)"
+		  TrackerFrameworkPath                ="$(MidlTrackerFrameworkPath)"
+		  TrackerSdkPath                      ="$(MidlTrackerSdkPath)"
+		  TrackedInputFilesToIgnore           ="@(MidlNoDependencies)"
+		  TrackedOutputFilesToIgnore          ="@(MidlTrackedOutputFilesToIgnore)"
+		  ExcludedInputPaths                  ="%(Midl.ExcludedInputPaths)"
+		  TLogReadFiles                       ="@(MIDLTLogReadFiles)"
+		  TLogWriteFiles                      ="@(MIDLTLogWriteFiles)"
+		  ToolExe                             ="$(MIDLToolExe)"
+		  ToolPath                            ="$(MIDLToolPath)"
+		  TrackFileAccess                     ="$(TrackFileAccess)"
+		  AcceptableNonZeroExitCodes          ="%(Midl.AcceptableNonZeroExitCodes)"
+		  YieldDuringToolExecution            ="$(MidlYieldDuringToolExecution)">
+		</MIDL>
+	</Target>
+	<!--Merge project-generated WinMDs and project-referenced static library WinMDs into project WinMD-->
+	<!-- Copy and pasted from cppwint.targets, changing Midl dependency to IdlgenCppMidl and ignore cache -->
+	<Target Name="IdlgenCppMergeProjectWinMDInputs"
+            DependsOnTargets="IdlgenCppMidl;GetCppWinRTMdMergeInputs"
+            Inputs="$(MSBuildAllProjects);@(CppWinRTMdMergeInputs);@(CustomAdditionalMdMergeInputs)"
+            Outputs="@(_MdMergedOutput);$(CppWinRTMdMergeResponseFile)">
+		<PropertyGroup>
+			<_MdMergeDepth Condition="'$(CppWinRTNamespaceMergeDepth)' != ''">-n:$(CppWinRTNamespaceMergeDepth)</_MdMergeDepth>
+			<_MdMergeDepth Condition="'$(_MdMergeDepth)' == ''">$(CppWinRTMergeDepth)</_MdMergeDepth>
+			<_MdMergeDepth Condition="'$(_MdMergeDepth)' == '' And '$(CppWinRTRootNamespaceAutoMerge)' == 'true'">-n:$(RootNamespace.Split('.').length)</_MdMergeDepth>
+			<_MdMergeDepth Condition="'$(_MdMergeDepth)' == '' And ('@(Page)' != '' Or '@(ApplicationDefinition)' != '')">-n:1</_MdMergeDepth>
+			<_MdMergeCommand>$(MdMergePath)mdmerge %40"$(CppWinRTMdMergeResponseFile)"</_MdMergeCommand>
+		</PropertyGroup>
+		<PropertyGroup>
+			<_MdMergeParameters Condition="'$(CppWinRTMergeNoValidate)'!='true'">-v</_MdMergeParameters>
+			<_MdMergeParameters>$(_MdMergeParameters) @(CppWinRTMdMergeMetadataDirectories->'-metadata_dir &quot;%(RelativeDir).&quot;', '&#x0d;&#x0a;')</_MdMergeParameters>
+			<_MdMergeParameters>$(_MdMergeParameters) @(CppWinRTMdMergeInputs->'-i &quot;%(Identity)&quot;', '&#x0d;&#x0a;')</_MdMergeParameters>
+			<_MdMergeParameters>$(_MdMergeParameters) -o &quot;$(CppWinRTMergedDir.TrimEnd('\'))&quot; -partial $(_MdMergeDepth)</_MdMergeParameters>
+		</PropertyGroup>
+		<WriteLinesToFile
+            File="$(CppWinRTMdMergeResponseFile)" Lines="$(_MdMergeParameters)"
+            Overwrite="true" />
+		<MakeDir Directories="$(CppWinRTUnmergedDir);$(CppWinRTMergedDir)" />
+		<Message Text="$(_MdMergeCommand)" Importance="$(CppWinRTVerbosity)" Condition="'@(CppWinRTMdMergeInputs)' != ''" />
+		<Exec Command="$(_MdMergeCommand)" Condition="'@(CppWinRTMdMergeInputs)' != ''" />
+		<ItemGroup>
+			<_MdMergedOutput Remove="@(_MdMergedOutput)"/>
+			<_MdMergedOutput Include="$(CppWinRTMergedDir)*.winmd"/>
+		</ItemGroup>
+		<Message Text="CppWinRTMdMerge output: @(MdMergeOutput)" Importance="$(CppWinRTVerbosity)"/>
+		<OnError ExecuteTargets="_CppWinRTCleanMdMergeOutputs" />
+	</Target>
+	<Target Name="IdlgenCppMakeProjections" DependsOnTargets="CppWinRTResolveReferences;CppWinRTMakePlatformProjection;CppWinRTMakeReferenceProjection;CppWinRTMakeComponentProjection;$(CppWinRTMakeProjectionsDependsOn)" />
+	<Target Name="IdlgenCppBootstrapIdlGen" BeforeTargets="IdlgenCppCheckPchCount">
+		<CallTarget Targets="IdlgenCppMergeProjectWinMDInputs"/>
+		<MSBuild Projects="$(MSBuildProjectFile)" Targets="IdlgenCppMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
+	</Target>
+	<Target Name="IdlgenCppCheckPchCount">
 		<Error Text="More than 1 pch specified. Idlgen only supports 1 pch at a time." Condition="@(IdlGenCppPch->Count()) > 1"/>
 	</Target>
-	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="CheckPchCount" Inputs="@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="IdlgenCppCheckPchCount" Inputs="@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=&quot;%(IdlGenCppPch.Identity)&quot; -pch-out-dir=&quot;$(OutDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=&quot;%(IdlGenCppPch.Identity)&quot; -pch-out-dir=&quot;$(IntDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
-	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="ClCompile" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="Midl" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(OutDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(IntDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
 	<Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateIDL" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="Running idlgen on C++ header" Importance="high" />
