@@ -36,7 +36,7 @@
 			<PchOutput>$(IntDir)idlgen\%(Filename)%(Extension).gch</PchOutput>
 		</IdlGenCppPch>
 		<IdlGenCppInclude>
-			<IdlOutput>%(RelativeDir)%(Filename).idl</IdlOutput>
+			<IdlgenOutput>$(IntDir)idlgen\$(RelativeDir)%(Filename).timestamp</IdlgenOutput>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
 	<Target Name="IdlgenCppMidl" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
@@ -168,9 +168,18 @@
 		<Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
 		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=&quot;%(IdlGenCppPch.Identity)&quot; -pch-out-dir=&quot;$(IntDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
-	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="Midl" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="Midl" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlgenOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<PropertyGroup>
+			<TimestampFile>%(IdlGenCppInclude.IdlgenOutput)</TimestampFile>
+		</PropertyGroup>
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
 		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(IntDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<WriteLinesToFile
+            File="$(TimestampFile)" Lines=""
+            Overwrite="true" />
+		<ItemGroup>
+			<FileWrites Include="$(TimestampFile)" />
+		</ItemGroup>
 	</Target>
 	<Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateIDL" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="Running idlgen on C++ header" Importance="high" />
