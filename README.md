@@ -204,6 +204,16 @@ Just follow the advice in [Incremental Adoption in Existing Codebase](#Increment
 
 \**Conceptual dependence* (or logical dependence) means depending on the API or even implementation details of a library when implementing the logic of genrating idl. For example, this library depends on the existence `winrt::event_token` (i.e. the type is hard coded) in C++/WinRT to generate event, but does not depend on `wil` to generate property. `wil::*` are expected to be configured as getter/property templates in project properties instead. The implementation of this library, however, is free to take a dependency on wil (e.g. installing the nuget). 
 
+## "Bootstrapping" idlgen
+
+Idl generation from C++ actually involves the classic chicken and egg problem. To generate idl, a header file needs to be compiled. To compile the header file, C++/WinRT projection need to exist. To generate C++/WinRT projection, winmd and thus idl files are required.
+
+Idlgen solves this problem by inserting a "bootstrap" build step before generating idl. During bootstrapping, idlgen would compile existing idl files and forces C++/WinRT to generate projection. Said projection would thus allow idlgen to compile all headers and generate idl(s) without issues.
+
+Bootstrapping is only needed when there is no projection generated yet. To prevent doing redundant work, idlgen re-uses as much of existing C++/WinRT targets as possible. With C++/WinRT's built-in incremental build support, bootstrapping would be skipped automatically when necessary.
+
+(The actual details can be tricky, see #53)
+
 ## Contribution
 
 Contributions are welcome! If you found a bug, please file a bug report.
