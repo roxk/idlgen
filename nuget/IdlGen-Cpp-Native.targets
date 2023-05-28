@@ -124,8 +124,8 @@
 		  YieldDuringToolExecution            ="$(MidlYieldDuringToolExecution)">
 		</MIDL>
 	</Target>
-	<!--Merge project-generated WinMDs and project-referenced static library WinMDs into project WinMD-->
-	<!-- Copy and pasted from cppwint.targets, changing Midl dependency to IdlgenCppMidl and ignore cache -->
+	<!-- Copy and pasted from cppwint.targets, changing Midl dependency to IdlgenCppMidl and ignore cache (which depends on MIDL) -->
+	<!-- We need this to avoid circular dependency -->
 	<Target Name="IdlgenCppMergeProjectWinMDInputs"
             DependsOnTargets="IdlgenCppMidl;GetCppWinRTMdMergeInputs"
             Inputs="$(MSBuildAllProjects);@(CppWinRTMdMergeInputs);@(CustomAdditionalMdMergeInputs)"
@@ -156,10 +156,10 @@
 		<Message Text="CppWinRTMdMerge output: @(MdMergeOutput)" Importance="$(CppWinRTVerbosity)"/>
 		<OnError ExecuteTargets="_CppWinRTCleanMdMergeOutputs" />
 	</Target>
-	<Target Name="IdlgenCppMakeProjections" DependsOnTargets="CppWinRTResolveReferences;CppWinRTMakePlatformProjection;CppWinRTMakeReferenceProjection;CppWinRTMakeComponentProjection;$(CppWinRTMakeProjectionsDependsOn)" />
 	<Target Name="IdlgenCppBootstrapIdlGen" BeforeTargets="IdlgenCppCheckPchCount">
 		<CallTarget Targets="IdlgenCppMergeProjectWinMDInputs"/>
-		<MSBuild Projects="$(MSBuildProjectFile)" Targets="IdlgenCppMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
+		<!-- CppWinRTComputeXamlGeneratedMidlInputs must be called before CppWinRTMakeProjections to add xaml provider idl -->
+		<MSBuild Projects="$(MSBuildProjectFile)" Targets="CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
 	</Target>
 	<Target Name="IdlgenCppCheckPchCount">
 		<Error Text="More than 1 pch specified. Idlgen only supports 1 pch at a time." Condition="@(IdlGenCppPch->Count()) > 1"/>
