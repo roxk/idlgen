@@ -1,5 +1,4 @@
 #include "GenIdlAstConsumer.h"
-#include "RuntimeClassVisitor.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
@@ -8,10 +7,13 @@
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Tooling.h"
+#include "clang/Tooling/Core/Replacement.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include <regex>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -107,6 +109,62 @@ static lc::opt<bool> GeneratePch("gen-pch", lc::desc("Generate pch"));
 static void PrintVersion(llvm::raw_ostream& OS)
 {
     OS << "idlgen 0.0.1" << '\n';
+}
+
+std::string StripImplementationProjectionFromHeader(clang::StringRef file, clang::StringRef buffer)
+{
+    clang::FileSystemOptions fsOpt;
+    clang::FileManager fileManager(fsOpt);
+    clang::DiagnosticsEngine diag(nullptr, nullptr);
+    clang::SourceManager sources(diag, fileManager);
+    clang::FileEntry const* entry{};
+    if (auto fileEntry = fileManager.getFile(file))
+    {
+        entry = *fileEntry;
+    }
+    auto fileId = sources.getOrCreateFileID(entry, clang::SrcMgr::C_User);
+    std::string code{sources.getBufferData(fileId)};
+    clang::LangOptions defaultLangOpt;
+    clang::Rewriter rewriter(sources, defaultLangOpt);
+    constexpr auto regexStr = "^#\\s*include\\s*\"\\w*\\.g\\.h\"";
+    std::regex regex(regexStr);
+    auto matchStart = std::sregex_iterator(code.begin(), code.end(), regex);
+    std::sregex_iterator matchEnd;
+    if (matchStart != matchEnd)
+    {
+        // must be a copy...
+        auto firstMatch{matchStart->str()};
+        auto position{code.find(firstMatch)};
+        auto start{sources.getLocForStartOfFile(fileId).getLocWithOffset(position)};
+        if (position != std::string::npos)
+        {
+            // Use removed file name to determine the runtime class base template name.
+            // TODO: Need to walk through the removed file to find implementation class base. For now, simply assume 1 file = 1 class.
+            auto removedFileName{firstMatch};
+            if (auto firstQuoteIndex = removedFileName.find("\""))
+            {
+                removedFileName.erase(0, firstQuoteIndex + 1);
+            }
+            if (auto endToTrimIndex = removedFileName.find(".g.h\""))
+            {
+                removedFileName.erase(endToTrimIndex, removedFileName.size() - endToTrimIndex);
+            }
+            rewriter.ReplaceText(start, firstMatch.size(), std::string("#include <winrt/Root.h> \n template<typename T, typename... I> struct ") + removedFileName + "T {};");
+        }
+    }
+    std::string result;
+    auto rewriteBuffer{rewriter.getRewriteBufferFor(fileId)};
+    if (rewriteBuffer == nullptr)
+    {
+        return buffer.data();
+    }
+    result.reserve(rewriteBuffer->size());
+    for (auto&& piece : *rewriteBuffer)
+    {
+        result += piece;
+    }
+    std::cout << result << std::endl;
+    return result;
 }
 
 int main(int argc, const char** argv)
@@ -222,7 +280,7 @@ int main(int argc, const char** argv)
         {
             continue;
         }
-        auto buffer{code->getBuffer()};
+        auto buffer{StripImplementationProjectionFromHeader(filePath, code->getBuffer())};
         auto fileName{llvm::sys::path::filename(filePath).str()};
         std::optional<std::string> fileBackup;
         std::optional<std::string> genFile;
