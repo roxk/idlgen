@@ -98,7 +98,7 @@ static lc::opt<bool> Verbose(
     "verbose", lc::desc("Enable verbose printing for debug. Note this breaks printing into stdout")
 );
 
-static lc::list<std::string> Pchs("pch", lc::desc("Pch files"));
+static lc::opt<std::string> Pch("pch", lc::desc("Pch files"));
 
 static lc::opt<std::string> PchOutDir("pch-out-dir", lc::desc("Directory for pch output"));
 
@@ -118,7 +118,7 @@ int main(int argc, const char** argv)
         lc::PrintHelpMessage();
         return 0;
     }
-    if (Pchs.empty() && FileNames.empty())
+    if ((GeneratePch && Pch.empty()) || (!GeneratePch && FileNames.empty()))
     {
         std::cerr << "No files specified" << std::endl;
         return 1;
@@ -177,34 +177,34 @@ int main(int argc, const char** argv)
                 return 1;
             }
         }
-        for (auto&& pch : Pchs)
+        auto pch{Pch.getValue()};
+        auto outFile{pchOutGetter(pch)};
+        auto codeOrErr{llvm::MemoryBuffer::getFileAsStream(pch)};
+        if (std::error_code ec = codeOrErr.getError())
         {
-            auto outFile{pchOutGetter(pch)};
-            auto codeOrErr{llvm::MemoryBuffer::getFileAsStream(pch)};
-            if (std::error_code ec = codeOrErr.getError())
-            {
-                std::cerr << ec.message() << std::endl;
-                return 1;
-            }
-            auto code(std::move(codeOrErr.get()));
-            if (code->getBufferSize() == 0)
-            {
-                continue;
-            }
-            auto buffer{code->getBuffer()};
-            auto fileName{llvm::sys::path::filename(pch).str()};
-            auto result{ct::runToolOnCodeWithArgs(
-                std::make_unique<GeneratePchActionWrapper>(std::move(outFile)), buffer, clangArgs, pch
-            )};
-            if (!result)
-            {
-                std::cerr << "fatal: Failed to generate pch" << std::endl;
-                return 1;
-            }
+            std::cerr << ec.message() << std::endl;
+            return 1;
+        }
+        auto code(std::move(codeOrErr.get()));
+        if (code->getBufferSize() == 0)
+        {
+            std::cerr << "Failed to get pch buffer" << std::endl;
+            return 1;
+        }
+        auto buffer{code->getBuffer()};
+        auto fileName{llvm::sys::path::filename(pch).str()};
+        auto result{ct::runToolOnCodeWithArgs(
+            std::make_unique<GeneratePchActionWrapper>(std::move(outFile)), buffer, clangArgs, pch
+        )};
+        if (!result)
+        {
+            std::cerr << "fatal: Failed to generate pch" << std::endl;
+            return 1;
         }
     }
-    for (auto&& pch : Pchs)
+    if (!Pch.empty())
     {
+        auto pch{Pch.getValue()};
         auto outFile{pchOutGetter(pch)};
         clangArgs.emplace_back("-include-pch");
         clangArgs.emplace_back(outFile);
