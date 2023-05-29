@@ -1,4 +1,4 @@
-#include "RuntimeClassVisitor.h"
+#include "IdlgenVisitor.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -15,7 +15,7 @@ constexpr auto nameAuthorStruct = "idlgen::author_struct";
 constexpr auto nameAuthorDelegate = "idlgen::author_delegate";
 constexpr auto nameAuthorInterface = "idlgen::author_interface";
 
-idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
+idlgen::IdlgenVisitor::IdlgenVisitor(
     clang::CompilerInstance& ci,
     llvm::raw_ostream& out,
     bool verbose,
@@ -37,17 +37,17 @@ idlgen::RuntimeClassVisitor::RuntimeClassVisitor(
     }
 }
 
-void idlgen::RuntimeClassVisitor::Reset()
+void idlgen::IdlgenVisitor::Reset()
 {
     importSourceTypes.clear();
     includes.clear();
 }
 
-std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::cxxTypeToWinRtTypeMap{
-    idlgen::RuntimeClassVisitor::initCxxTypeToWinRtTypeMap(),
+std::unordered_map<std::string, std::string> idlgen::IdlgenVisitor::cxxTypeToWinRtTypeMap{
+    idlgen::IdlgenVisitor::initCxxTypeToWinRtTypeMap(),
 };
 
-bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* record)
+bool idlgen::IdlgenVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* record)
 {
     auto location{record->getLocation()};
     auto isMain{astContext.getSourceManager().isInMainFile(location)};
@@ -160,7 +160,7 @@ bool idlgen::RuntimeClassVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* recor
     return true;
 }
 
-bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
+bool idlgen::IdlgenVisitor::VisitEnumDecl(clang::EnumDecl* decl)
 {
     auto location{decl->getLocation()};
     auto isMain{astContext.getSourceManager().isInMainFile(location)};
@@ -222,7 +222,7 @@ bool idlgen::RuntimeClassVisitor::VisitEnumDecl(clang::EnumDecl* decl)
     return true;
 }
 
-std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(clang::Attr* attr)
+std::optional<idlgen::IdlGenAttr> idlgen::IdlgenVisitor::GetIdlGenAttr(clang::Attr* attr)
 {
     auto scopeName{attr->getScopeName()};
     if (scopeName == nullptr)
@@ -290,7 +290,7 @@ std::optional<idlgen::IdlGenAttr> idlgen::RuntimeClassVisitor::GetIdlGenAttr(cla
     return std::nullopt;
 }
 
-idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
+idlgen::MethodGroup& idlgen::IdlgenVisitor::GetOrCreateMethodGroup(
     std::map<std::string, MethodHolder>& methodHolders,
     clang::CXXMethodDecl* method,
     idlgen::MethodKind kind,
@@ -346,7 +346,7 @@ idlgen::MethodGroup& idlgen::RuntimeClassVisitor::GetOrCreateMethodGroup(
     return *groupOpt;
 }
 
-std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::GetMethodPrinter(
+std::unique_ptr<idlgen::Printer> idlgen::IdlgenVisitor::GetMethodPrinter(
     clang::NamedDecl* field, clang::QualType type, bool isStatic, bool isProtected, bool isVirtual
 )
 {
@@ -386,7 +386,7 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::GetMethodPrinter(
     return nullptr;
 }
 
-void idlgen::RuntimeClassVisitor::FindFileToInclude(clang::QualType type)
+void idlgen::IdlgenVisitor::FindFileToInclude(clang::QualType type)
 {
     auto namedDecl{StripReferenceAndGetNamedDecl(type)};
     if (namedDecl == nullptr)
@@ -514,7 +514,7 @@ void idlgen::RuntimeClassVisitor::FindFileToInclude(clang::QualType type)
     }
 }
 
-std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCxxTypeToWinRtTypeMap()
+std::unordered_map<std::string, std::string> idlgen::IdlgenVisitor::initCxxTypeToWinRtTypeMap()
 {
     // See https://learn.microsoft.com/en-us/uwp/midl-3/intro#types
     return {
@@ -541,7 +541,7 @@ std::unordered_map<std::string, std::string> idlgen::RuntimeClassVisitor::initCx
     };
 }
 
-idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault)
+idlgen::GetMethodResponse idlgen::IdlgenVisitor::GetMethods(clang::CXXRecordDecl* record, bool isPropertyDefault)
 {
     std::map<std::string, MethodHolder> methodHolders;
     std::map<std::string, clang::CXXMethodDecl*> events;
@@ -675,7 +675,7 @@ idlgen::GetMethodResponse idlgen::RuntimeClassVisitor::GetMethods(clang::CXXReco
     return {std::move(methodHolders), std::move(events), std::move(ctors)};
 }
 
-std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::QualType type)
+std::string idlgen::IdlgenVisitor::TranslateCxxTypeToWinRtType(clang::QualType type)
 {
     auto nonRefType{StripReference(type)};
     if (type->isVoidType())
@@ -791,13 +791,13 @@ std::string idlgen::RuntimeClassVisitor::TranslateCxxTypeToWinRtType(clang::Qual
     return qualifiedWinRtName;
 }
 
-bool idlgen::RuntimeClassVisitor::IsCppWinRtPrimitive(std::string const& type)
+bool idlgen::IdlgenVisitor::IsCppWinRtPrimitive(std::string const& type)
 {
     return type == "winrt::hstring" || type == "winrt::event_token" || type == "winrt::Windows::Foundation::DateTime" ||
            type == "winrt::Windows::Foundation::TimeSpan" || type == "winrt::Windows::Foundation::IInspectable";
 }
 
-bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly)
+bool idlgen::IdlgenVisitor::IsRuntimeClassMethodType(clang::QualType type, bool projectedOnly)
 {
     auto nonRefType{StripReference(type)};
     if (nonRefType->isVoidType())
@@ -900,7 +900,7 @@ bool idlgen::RuntimeClassVisitor::IsRuntimeClassMethodType(clang::QualType type,
     return IsCppWinRtPrimitive(qualifiedName);
 }
 
-bool idlgen::RuntimeClassVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
+bool idlgen::IdlgenVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
 {
     auto params{method->parameters()};
     if (params.size() != 1)
@@ -915,7 +915,7 @@ bool idlgen::RuntimeClassVisitor::IsEventRevoker(clang::CXXMethodDecl* method)
     return GetQualifiedName(record) == "winrt::event_token";
 }
 
-bool idlgen::RuntimeClassVisitor::IsEventRegistrar(clang::CXXMethodDecl* method)
+bool idlgen::IdlgenVisitor::IsEventRegistrar(clang::CXXMethodDecl* method)
 {
     auto returnRecord = method->getReturnType()->getAsCXXRecordDecl();
     if (returnRecord == nullptr)
@@ -925,17 +925,17 @@ bool idlgen::RuntimeClassVisitor::IsEventRegistrar(clang::CXXMethodDecl* method)
     return GetQualifiedName(returnRecord) == "winrt::event_token";
 }
 
-bool idlgen::RuntimeClassVisitor::IsConstructor(clang::CXXMethodDecl* method)
+bool idlgen::IdlgenVisitor::IsConstructor(clang::CXXMethodDecl* method)
 {
     return method->getDeclKind() == clang::Decl::Kind::CXXConstructor;
 }
 
-bool idlgen::RuntimeClassVisitor::IsDestructor(clang::CXXMethodDecl* method)
+bool idlgen::IdlgenVisitor::IsDestructor(clang::CXXMethodDecl* method)
 {
     return method->getDeclKind() == clang::Decl::Kind::CXXDestructor;
 }
 
-bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
+bool idlgen::IdlgenVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
 {
     namespace lsp = llvm::sys::path;
     static auto winrtKeyword = std::string("winrt") + lsp::get_separator().data();
@@ -957,7 +957,7 @@ bool idlgen::RuntimeClassVisitor::ShouldSkipGenerating(clang::NamedDecl* decl)
     return false;
 }
 
-std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMethodKind(
+std::optional<idlgen::MethodKind> idlgen::IdlgenVisitor::GetRuntimeClassMethodKind(
     bool isPropertyDefault, clang::CXXMethodDecl* method
 )
 {
@@ -1033,7 +1033,7 @@ std::optional<idlgen::MethodKind> idlgen::RuntimeClassVisitor::GetRuntimeClassMe
     return result;
 }
 
-std::optional<idlgen::FieldKind> idlgen::RuntimeClassVisitor::GetRuntimeClassFieldKind(
+std::optional<idlgen::FieldKind> idlgen::IdlgenVisitor::GetRuntimeClassFieldKind(
     bool isPropertyDefault, clang::ValueDecl* value
 )
 {
@@ -1076,7 +1076,7 @@ std::optional<idlgen::FieldKind> idlgen::RuntimeClassVisitor::GetRuntimeClassFie
     return result;
 }
 
-clang::QualType idlgen::RuntimeClassVisitor::StripReference(clang::QualType type)
+clang::QualType idlgen::IdlgenVisitor::StripReference(clang::QualType type)
 {
     auto nonRef{type->isReferenceType() ? type.getNonReferenceType() : type};
     if (nonRef.isLocalConstQualified())
@@ -1086,12 +1086,12 @@ clang::QualType idlgen::RuntimeClassVisitor::StripReference(clang::QualType type
     return nonRef;
 }
 
-clang::CXXRecordDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetClassDecl(clang::QualType type)
+clang::CXXRecordDecl* idlgen::IdlgenVisitor::StripReferenceAndGetClassDecl(clang::QualType type)
 {
     return type->isReferenceType() ? type.getNonReferenceType()->getAsCXXRecordDecl() : type->getAsCXXRecordDecl();
 }
 
-const clang::NamedDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetNamedDecl(clang::QualType type)
+const clang::NamedDecl* idlgen::IdlgenVisitor::StripReferenceAndGetNamedDecl(clang::QualType type)
 {
     const clang::Type* typePtr;
     if (type->isReferenceType())
@@ -1114,7 +1114,7 @@ const clang::NamedDecl* idlgen::RuntimeClassVisitor::StripReferenceAndGetNamedDe
     return typePtr->getAsTagDecl();
 }
 
-std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(clang::QualType type)
+std::optional<idlgen::RuntimeClassKind> idlgen::IdlgenVisitor::GetRuntimeClassKind(clang::QualType type)
 {
     auto record{StripReferenceAndGetClassDecl(type)};
     if (record == nullptr)
@@ -1124,7 +1124,7 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
     return GetRuntimeClassKind(record);
 }
 
-std::optional<idlgen::EnumKind> idlgen::RuntimeClassVisitor::GetEnumKind(clang::EnumDecl* decl)
+std::optional<idlgen::EnumKind> idlgen::IdlgenVisitor::GetEnumKind(clang::EnumDecl* decl)
 {
     if (!decl->isComplete())
     {
@@ -1157,7 +1157,7 @@ std::optional<idlgen::EnumKind> idlgen::RuntimeClassVisitor::GetEnumKind(clang::
     return std::optional<EnumKind>();
 }
 
-std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeClassKind(
+std::optional<idlgen::RuntimeClassKind> idlgen::IdlgenVisitor::GetRuntimeClassKind(
     clang::CXXRecordDecl* record, bool implementationOnly
 )
 {
@@ -1260,7 +1260,7 @@ std::optional<idlgen::RuntimeClassKind> idlgen::RuntimeClassVisitor::GetRuntimeC
     return std::nullopt;
 }
 
-std::optional<std::vector<clang::QualType>> idlgen::RuntimeClassVisitor::GetExtend(clang::CXXRecordDecl* record)
+std::optional<std::vector<clang::QualType>> idlgen::IdlgenVisitor::GetExtend(clang::CXXRecordDecl* record)
 {
     debugPrint([&]() { std::cout << "Getting extend for " << record->getNameAsString() << std::endl; });
     if (!record->isCompleteDefinition())
@@ -1345,7 +1345,7 @@ std::optional<std::vector<clang::QualType>> idlgen::RuntimeClassVisitor::GetExte
     return result;
 }
 
-std::vector<std::string> idlgen::RuntimeClassVisitor::GetWinRtNamespaces(clang::NamedDecl* record)
+std::vector<std::string> idlgen::IdlgenVisitor::GetWinRtNamespaces(clang::NamedDecl* record)
 {
     std::vector<std::string> namespaces;
     auto parentContext = record->getDeclContext();
@@ -1367,7 +1367,7 @@ std::vector<std::string> idlgen::RuntimeClassVisitor::GetWinRtNamespaces(clang::
     return namespaces;
 }
 
-std::string idlgen::RuntimeClassVisitor::GetQualifiedName(clang::CXXRecordDecl* record)
+std::string idlgen::IdlgenVisitor::GetQualifiedName(clang::CXXRecordDecl* record)
 {
     std::string qualifiedName;
     llvm::raw_string_ostream typeOs{qualifiedName};
@@ -1375,7 +1375,7 @@ std::string idlgen::RuntimeClassVisitor::GetQualifiedName(clang::CXXRecordDecl* 
     return qualifiedName;
 }
 
-clang::QualType idlgen::RuntimeClassVisitor::GetFirstTemplateTypeParam(
+clang::QualType idlgen::IdlgenVisitor::GetFirstTemplateTypeParam(
     clang::ClassTemplateSpecializationDecl const* templateSpecDecl
 )
 {
@@ -1400,7 +1400,7 @@ clang::QualType idlgen::RuntimeClassVisitor::GetFirstTemplateTypeParam(
     return clang::QualType();
 }
 
-std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::NamedDecl* decl)
+std::optional<std::string> idlgen::IdlgenVisitor::GetLocFilePath(clang::NamedDecl* decl)
 {
     auto& srcManager{astContext.getSourceManager()};
     auto file{srcManager.getFileEntryForID(srcManager.getFileID(decl->getLocation()))};
@@ -1411,7 +1411,7 @@ std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFilePath(clang::Na
     return file->tryGetRealPathName().str();
 }
 
-std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFileName(clang::CXXRecordDecl* record)
+std::optional<std::string> idlgen::IdlgenVisitor::GetLocFileName(clang::CXXRecordDecl* record)
 {
     auto& srcManager{astContext.getSourceManager()};
     auto file{srcManager.getFileEntryForID(srcManager.getFileID(record->getLocation()))};
@@ -1422,12 +1422,12 @@ std::optional<std::string> idlgen::RuntimeClassVisitor::GetLocFileName(clang::CX
     return llvm::sys::path::filename(file->getName()).str();
 }
 
-bool idlgen::RuntimeClassVisitor::IsProtected(clang::Decl* decl)
+bool idlgen::IdlgenVisitor::IsProtected(clang::Decl* decl)
 {
     return decl->getAccess() == clang::AccessSpecifier::AS_protected || HasAttribute(decl, IdlGenAttrType::Protected);
 }
 
-bool idlgen::RuntimeClassVisitor::HasAttribute(clang::Decl* decl, idlgen::IdlGenAttrType type)
+bool idlgen::IdlgenVisitor::HasAttribute(clang::Decl* decl, idlgen::IdlGenAttrType type)
 {
     auto attrs{decl->attrs()};
     for (auto&& attr : attrs)
@@ -1441,7 +1441,7 @@ bool idlgen::RuntimeClassVisitor::HasAttribute(clang::Decl* decl, idlgen::IdlGen
     return false;
 }
 
-void idlgen::RuntimeClassVisitor::PrintNameSpaces(std::vector<std::string> namespaces)
+void idlgen::IdlgenVisitor::PrintNameSpaces(std::vector<std::string> namespaces)
 {
     out << "namespace ";
     const auto namespaceCount = namespaces.size();
@@ -1455,7 +1455,7 @@ void idlgen::RuntimeClassVisitor::PrintNameSpaces(std::vector<std::string> names
     }
 }
 
-void idlgen::RuntimeClassVisitor::PrintMethodParams(clang::CXXMethodDecl* method)
+void idlgen::IdlgenVisitor::PrintMethodParams(clang::CXXMethodDecl* method)
 {
     out << "(";
     auto params{method->parameters()};
@@ -1484,7 +1484,7 @@ void idlgen::RuntimeClassVisitor::PrintMethodParams(clang::CXXMethodDecl* method
     out << ");";
 }
 
-void idlgen::RuntimeClassVisitor::PrintEvent(std::string_view name, clang::CXXMethodDecl* method)
+void idlgen::IdlgenVisitor::PrintEvent(std::string_view name, clang::CXXMethodDecl* method)
 {
     assert(method->parameters().size() > 0);
     auto handler{TranslateCxxTypeToWinRtType(method->parameters().front()->getType())};
@@ -1492,7 +1492,7 @@ void idlgen::RuntimeClassVisitor::PrintEvent(std::string_view name, clang::CXXMe
         << "\n";
 }
 
-std::optional<idlgen::ArrayKind> idlgen::RuntimeClassVisitor::GetArrayKind(clang::NamedDecl* record)
+std::optional<idlgen::ArrayKind> idlgen::IdlgenVisitor::GetArrayKind(clang::NamedDecl* record)
 {
     auto templateDecl{clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(record)};
     if (templateDecl == nullptr)
@@ -1515,7 +1515,7 @@ std::optional<idlgen::ArrayKind> idlgen::RuntimeClassVisitor::GetArrayKind(clang
     return std::nullopt;
 }
 
-std::optional<idlgen::ArrayKind> idlgen::RuntimeClassVisitor::GetArrayKind(clang::QualType type)
+std::optional<idlgen::ArrayKind> idlgen::IdlgenVisitor::GetArrayKind(clang::QualType type)
 {
     auto record{type->getAsCXXRecordDecl()};
     if (record == nullptr)
@@ -1525,7 +1525,7 @@ std::optional<idlgen::ArrayKind> idlgen::RuntimeClassVisitor::GetArrayKind(clang
     return GetArrayKind(record);
 }
 
-std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsClass(
+std::unique_ptr<idlgen::Printer> idlgen::IdlgenVisitor::TryHandleAsClass(
     clang::CXXRecordDecl* decl, bool isPropertyDefault, std::vector<idlgen::IdlGenAttr>& attrs
 )
 {
@@ -1549,7 +1549,7 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsClass(
     return std::make_unique<idlgen::ClassPrinter>(decl, std::move(response), std::move(extend), isSealed);
 }
 
-std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterface(
+std::unique_ptr<idlgen::Printer> idlgen::IdlgenVisitor::TryHandleAsInterface(
     clang::CXXRecordDecl* decl, bool isPropertyDefault
 )
 {
@@ -1562,7 +1562,7 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsInterfa
     return std::make_unique<InterfacePrinter>(decl, std::move(methodResponse), std::move(extend));
 }
 
-std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
+std::unique_ptr<idlgen::DelegatePrinter> idlgen::IdlgenVisitor::TryHandleAsDelegate(clang::CXXRecordDecl* decl)
 {
     if (!IsSingleBaseOfType(decl, nameAuthorDelegate))
     {
@@ -1600,7 +1600,7 @@ std::unique_ptr<idlgen::DelegatePrinter> idlgen::RuntimeClassVisitor::TryHandleA
     return std::make_unique<idlgen::DelegatePrinter>(decl, method);
 }
 
-std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
+std::unique_ptr<idlgen::Printer> idlgen::IdlgenVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
 {
     if (!IsSingleBaseOfType(decl, nameAuthorStruct))
     {
@@ -1625,7 +1625,7 @@ std::unique_ptr<idlgen::Printer> idlgen::RuntimeClassVisitor::TryHandleAsStruct(
     return std::make_unique<idlgen::StructPrinter>(decl, validFields);
 }
 
-bool idlgen::RuntimeClassVisitor::IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
+bool idlgen::IdlgenVisitor::IsSingleBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
 {
     if (!decl->isCompleteDefinition())
     {
@@ -1651,7 +1651,7 @@ bool idlgen::RuntimeClassVisitor::IsSingleBaseOfType(clang::CXXRecordDecl* decl,
     return baseQualifiedName == name;
 }
 
-bool idlgen::RuntimeClassVisitor::IsBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
+bool idlgen::IdlgenVisitor::IsBaseOfType(clang::CXXRecordDecl* decl, std::string_view name)
 {
     if (!decl->isCompleteDefinition())
     {
@@ -1698,7 +1698,7 @@ idlgen::MethodGroup::MethodGroup(
 {
 }
 
-void idlgen::MethodGroup::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+void idlgen::MethodGroup::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
     if (isProtected)
     {
@@ -1740,7 +1740,7 @@ idlgen::PropertyMethodPrinter::PropertyMethodPrinter(
 {
 }
 
-void idlgen::PropertyMethodPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+void idlgen::PropertyMethodPrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
     if (isProtected)
     {
@@ -1772,7 +1772,7 @@ idlgen::DelegatePrinter::DelegatePrinter(clang::CXXRecordDecl* record, clang::CX
 {
 }
 
-void idlgen::DelegatePrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+void idlgen::DelegatePrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
     out << "delegate ";
     out << visitor.TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
@@ -1787,7 +1787,7 @@ idlgen::StructPrinter::StructPrinter(clang::CXXRecordDecl* record, std::vector<c
 {
 }
 
-void idlgen::StructPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+void idlgen::StructPrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
     out << "struct " << record->getNameAsString() << "\n";
     out << "{\n";
@@ -1814,7 +1814,7 @@ idlgen::ClassPrinter::ClassPrinter(
 {
 }
 
-void idlgen::ClassPrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+void idlgen::ClassPrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
     if (!isSealed)
     {
@@ -1877,7 +1877,7 @@ idlgen::InterfacePrinter::InterfacePrinter(
 {
 }
 
-void idlgen::InterfacePrinter::Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out)
+void idlgen::InterfacePrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
     auto& holders{response.holders};
     auto& events{response.events};

@@ -1,4 +1,5 @@
-#include "GenIdlAstConsumer.h"
+#include "IdlgenAstConsumer.h"
+#include "StripProjectionDeclarationBodyAstConsumer.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
@@ -17,6 +18,7 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <string>
 
 namespace llvm
 {
@@ -53,7 +55,28 @@ class GenIdlFrontendAction : public clang::ASTFrontendAction
     }
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
     {
-        return std::make_unique<GenIdlAstConsumer>(ci, out, verbose, getterTemplates, propertyTemplates);
+        return std::make_unique<IdlgenAstConsumer>(ci, out, verbose, getterTemplates, propertyTemplates);
+    }
+};
+
+class StripProjectionDeclarationBodyFrontendAction : public clang::ASTFrontendAction
+{
+  private:
+    llvm::raw_ostream& out;
+    bool verbose;
+
+  public:
+    StripProjectionDeclarationBodyFrontendAction(
+        llvm::raw_ostream& out,
+        bool verbose
+    ) :
+        out(out),
+        verbose(verbose)
+    {
+    }
+    std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
+    {
+        return std::make_unique<StripProjectionDeclarationBodyAstConsumer>(ci, out, verbose);
     }
 };
 } // namespace idlgen
@@ -111,7 +134,9 @@ static void PrintVersion(llvm::raw_ostream& OS)
     OS << "idlgen 0.0.1" << '\n';
 }
 
-std::string StripImplementationProjectionFromHeader(clang::StringRef file, clang::StringRef buffer)
+std::string StripImplementationProjectionFromHeader(
+    bool verbose, std::vector<std::string> const& clangArgs, clang::StringRef file, clang::StringRef buffer
+)
 {
     clang::FileSystemOptions fsOpt;
     clang::FileManager fileManager(fsOpt);
@@ -130,27 +155,42 @@ std::string StripImplementationProjectionFromHeader(clang::StringRef file, clang
     std::regex regex(regexStr);
     auto matchStart = std::sregex_iterator(code.begin(), code.end(), regex);
     std::sregex_iterator matchEnd;
-    if (matchStart != matchEnd)
+    if (matchStart == matchEnd)
     {
-        // must be a copy...
-        auto firstMatch{matchStart->str()};
-        auto position{code.find(firstMatch)};
-        auto start{sources.getLocForStartOfFile(fileId).getLocWithOffset(position)};
-        if (position != std::string::npos)
-        {
-            // Use removed file name to determine the runtime class base template name.
-            // TODO: Need to walk through the removed file to find implementation class base. For now, simply assume 1 file = 1 class.
-            auto removedFileName{firstMatch};
-            if (auto firstQuoteIndex = removedFileName.find("\""))
-            {
-                removedFileName.erase(0, firstQuoteIndex + 1);
-            }
-            if (auto endToTrimIndex = removedFileName.find(".g.h\""))
-            {
-                removedFileName.erase(endToTrimIndex, removedFileName.size() - endToTrimIndex);
-            }
-            rewriter.ReplaceText(start, firstMatch.size(), std::string("#include <winrt/Root.h> \n template<typename T, typename... I> struct ") + removedFileName + "T {};");
-        }
+        return buffer.data();
+    }
+    // Must be a copy...
+    auto firstMatch{matchStart->str()};
+    auto position{code.find(firstMatch)};
+    auto start{sources.getLocForStartOfFile(fileId).getLocWithOffset(position)};
+    if (position != std::string::npos)
+    {
+        return buffer.data();
+    }
+    using namespace std::string_view_literals;
+    namespace lsp = llvm::sys::path;
+    auto newIncludePath{firstMatch};
+    constexpr auto expectedndOfInclude = ".g.h\""sv;
+    constexpr auto newEndOfInclude = ".idlgen.h\""sv;
+    if (auto endToTrimIndex = newIncludePath.find(expectedndOfInclude))
+    {
+        newIncludePath.erase(endToTrimIndex, expectedndOfInclude.size());
+        newIncludePath.insert(endToTrimIndex, newEndOfInclude);
+        rewriter.ReplaceText(start, firstMatch.size(), newIncludePath);
+        // Generate .idlgen.h
+        auto idlgenProjectionHeaderPath{std::filesystem::current_path()};
+        idlgenProjectionHeaderPath.append(newIncludePath);
+        std::error_code ec;
+        llvm::raw_fd_ostream out(
+            idlgenProjectionHeaderPath.string(),
+            ec,
+            lfs::CreationDisposition::CD_CreateAlways,
+            lfs::FileAccess::FA_Write,
+            lfs::OpenFlags::OF_None
+        );
+        auto result{clang::tooling::runToolOnCodeWithArgs(
+            std::make_unique<idlgen::StripProjectionDeclarationBodyFrontendAction>(out, verbose), code, clangArgs, file
+        )};
     }
     std::string result;
     auto rewriteBuffer{rewriter.getRewriteBufferFor(fileId)};
@@ -280,7 +320,6 @@ int main(int argc, const char** argv)
         {
             continue;
         }
-        auto buffer{StripImplementationProjectionFromHeader(filePath, code->getBuffer())};
         auto fileName{llvm::sys::path::filename(filePath).str()};
         std::optional<std::string> fileBackup;
         std::optional<std::string> genFile;
@@ -325,6 +364,7 @@ int main(int argc, const char** argv)
         {
             return 1;
         }
+        auto buffer{StripImplementationProjectionFromHeader(Verbose, clangArgs, filePath, code->getBuffer())};
         const auto result = ct::runToolOnCodeWithArgs(
             std::make_unique<idlgen::GenIdlFrontendAction>(
                 out.value().get(), Verbose, getterTemplates, propertyTemplates

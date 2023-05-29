@@ -40,14 +40,14 @@ struct IdlGenAttr
     IdlGenAttrType type;
     std::vector<std::string> args;
 };
-class RuntimeClassVisitor;
+class IdlgenVisitor;
 class Printer
 {
   public:
     virtual ~Printer()
     {
     }
-    virtual void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) = 0;
+    virtual void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) = 0;
 };
 class MethodGroup : public Printer
 {
@@ -90,7 +90,7 @@ class MethodGroup : public Printer
     {
         return method != nullptr ? method : setter != nullptr ? setter : getter;
     }
-    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+    void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) override;
 };
 enum class PropertyKind
 {
@@ -111,7 +111,7 @@ class PropertyMethodPrinter : public Printer
     PropertyMethodPrinter(
         std::string methodName, clang::QualType type, PropertyKind kind, bool isStatic, bool isProtected, bool isVirtual
     );
-    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+    void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) override;
 };
 struct MethodHolder
 {
@@ -159,7 +159,7 @@ class DelegatePrinter : public Printer
 
   public:
     DelegatePrinter(clang::CXXRecordDecl* record, clang::CXXMethodDecl* method);
-    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+    void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) override;
 };
 class StructPrinter : public Printer
 {
@@ -169,7 +169,7 @@ class StructPrinter : public Printer
 
   public:
     StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields);
-    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+    void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) override;
 };
 class ClassPrinter : public Printer
 {
@@ -186,7 +186,7 @@ class ClassPrinter : public Printer
         std::optional<std::vector<clang::QualType>> extend,
         bool isSealed
     );
-    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+    void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) override;
 };
 class InterfacePrinter : public Printer
 {
@@ -199,10 +199,10 @@ class InterfacePrinter : public Printer
     InterfacePrinter(
         clang::CXXRecordDecl* record, GetMethodResponse response, std::optional<std::vector<clang::QualType>> extend
     );
-    void Print(RuntimeClassVisitor& visitor, llvm::raw_ostream& out) override;
+    void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) override;
 };
 
-class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisitor>
+class IdlgenVisitor : public clang::RecursiveASTVisitor<IdlgenVisitor>
 {
   private:
     clang::CompilerInstance& ci;
@@ -217,7 +217,7 @@ class RuntimeClassVisitor : public clang::RecursiveASTVisitor<RuntimeClassVisito
     bool verbose;
 
   public:
-    explicit RuntimeClassVisitor(
+    explicit IdlgenVisitor(
         clang::CompilerInstance& ci,
         llvm::raw_ostream& out,
         bool verbose,
