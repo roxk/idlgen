@@ -2,6 +2,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/Frontend/CompilerInstance.h"
+#include "clang/Lex/Preprocessor.h"
 #include <cassert>
 #include <filesystem>
 #include <iomanip>

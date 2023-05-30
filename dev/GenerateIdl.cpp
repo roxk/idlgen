@@ -1,5 +1,8 @@
 #include "IdlgenAstConsumer.h"
+#include "GetHeaderAstConsumer.h"
 #include "StripProjectionDeclarationBodyAstConsumer.h"
+#include "clang/Lex/HeaderSearchOptions.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
@@ -10,6 +13,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Serialization/InMemoryModuleCache.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -79,6 +83,23 @@ class StripProjectionDeclarationBodyFrontendAction : public clang::ASTFrontendAc
         return std::make_unique<StripProjectionDeclarationBodyAstConsumer>(ci, out, verbose);
     }
 };
+
+class GetHeaderAction : public clang::ASTFrontendAction
+{
+  private:
+    std::vector<std::string>& headerFullPaths;
+  public:
+    GetHeaderAction(
+        std::vector<std::string>& headerFullPaths
+    ) :
+        headerFullPaths(headerFullPaths)
+    {
+    }
+    std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
+    {
+        return std::make_unique<GetHeaderAstConsumer>(ci, headerFullPaths);
+    }
+};
 } // namespace idlgen
 
 class GeneratePchActionWrapper : public clang::GeneratePCHAction
@@ -134,20 +155,44 @@ static void PrintVersion(llvm::raw_ostream& OS)
     OS << "idlgen 0.0.1" << '\n';
 }
 
+void TrimIncludeStatementForFileName(std::string& includeStatement)
+{
+    if (auto lastQuoteIndex = includeStatement.rfind("\""))
+    {
+        includeStatement.erase(lastQuoteIndex, 1);
+    }
+    if (auto firstQuoteIndex = includeStatement.find("\""))
+    {
+        includeStatement.erase(0, firstQuoteIndex + 1);
+    }
+}
+
+clang::FileID GetFileId(clang::SourceManager& sourceManager, std::string_view filePath)
+{
+    auto& fileManager{sourceManager.getFileManager()};
+    clang::FileEntry const* entry{};
+    if (auto fileEntry = fileManager.getFile(filePath))
+    {
+        entry = *fileEntry;
+    }
+    return sourceManager.getOrCreateFileID(entry, clang::SrcMgr::C_User);
+}
+
+llvm::StringRef GetCode(clang::SourceManager& sourceManager, std::string_view filePath)
+{
+    return sourceManager.getBufferData(GetFileId(sourceManager, filePath));
+}
+
 std::string StripImplementationProjectionFromHeader(
     bool verbose, std::vector<std::string> const& clangArgs, clang::StringRef file, clang::StringRef buffer
 )
 {
+    // TODO: We don't need this dance involving SM and FM anymore if we return modified code buffer directly.
     clang::FileSystemOptions fsOpt;
     clang::FileManager fileManager(fsOpt);
     clang::DiagnosticsEngine diag(nullptr, nullptr);
     clang::SourceManager sources(diag, fileManager);
-    clang::FileEntry const* entry{};
-    if (auto fileEntry = fileManager.getFile(file))
-    {
-        entry = *fileEntry;
-    }
-    auto fileId = sources.getOrCreateFileID(entry, clang::SrcMgr::C_User);
+    const auto fileId{GetFileId(sources, file)};
     std::string code{sources.getBufferData(fileId)};
     clang::LangOptions defaultLangOpt;
     clang::Rewriter rewriter(sources, defaultLangOpt);
@@ -162,24 +207,52 @@ std::string StripImplementationProjectionFromHeader(
     // Must be a copy...
     auto firstMatch{matchStart->str()};
     auto position{code.find(firstMatch)};
-    auto start{sources.getLocForStartOfFile(fileId).getLocWithOffset(position)};
-    if (position != std::string::npos)
+    if (position == std::string::npos)
     {
         return buffer.data();
     }
+    auto start{sources.getLocForStartOfFile(fileId).getLocWithOffset(position)};
     using namespace std::string_view_literals;
     namespace lsp = llvm::sys::path;
-    auto newIncludePath{firstMatch};
+    auto newInclude{firstMatch};
     constexpr auto expectedndOfInclude = ".g.h\""sv;
     constexpr auto newEndOfInclude = ".idlgen.h\""sv;
-    if (auto endToTrimIndex = newIncludePath.find(expectedndOfInclude))
+    if (auto endToTrimIndex = newInclude.find(expectedndOfInclude))
     {
-        newIncludePath.erase(endToTrimIndex, expectedndOfInclude.size());
-        newIncludePath.insert(endToTrimIndex, newEndOfInclude);
-        rewriter.ReplaceText(start, firstMatch.size(), newIncludePath);
+        newInclude.erase(endToTrimIndex, expectedndOfInclude.size());
+        newInclude.insert(endToTrimIndex, newEndOfInclude);
+        rewriter.ReplaceText(start, firstMatch.size(), newInclude);
+        // Get projection header code
+        auto projectionInclude{firstMatch};
+        TrimIncludeStatementForFileName(projectionInclude);
+        std::vector<std::string> includedFileFullPaths;
+        auto getHeaderResult{clang::tooling::runToolOnCodeWithArgs(
+            std::make_unique<idlgen::GetHeaderAction>(includedFileFullPaths), code, clangArgs, file
+        )};
+        if (!getHeaderResult)
+        {
+            return buffer.data();
+        }
+        std::optional<std::reference_wrapper<std::string>> projectionFileOpt;
+        for (auto&& path : includedFileFullPaths)
+        {
+            // TODO: This might not handle relative path. Fix it.
+            if (path.find(projectionInclude) != std::string::npos)
+            {
+                projectionFileOpt.emplace(path);
+                break;
+            }
+        }
+        if (!projectionFileOpt)
+        {
+            return buffer.data();
+        }
+        auto& projectionFilePath{projectionFileOpt->get()};
+        std::string projectionCode{GetCode(sources, projectionFilePath)};
         // Generate .idlgen.h
         auto idlgenProjectionHeaderPath{std::filesystem::current_path()};
-        idlgenProjectionHeaderPath.append(newIncludePath);
+        TrimIncludeStatementForFileName(newInclude);
+        idlgenProjectionHeaderPath.append(newInclude);
         std::error_code ec;
         llvm::raw_fd_ostream out(
             idlgenProjectionHeaderPath.string(),
@@ -188,9 +261,19 @@ std::string StripImplementationProjectionFromHeader(
             lfs::FileAccess::FA_Write,
             lfs::OpenFlags::OF_None
         );
+        if (ec)
+        {
+            std::cerr << "fatal: Failed to generate .idlgen.h for " << file.data() << std::endl;
+            std::cerr << ec.message() << std::endl;
+            return buffer.data();
+        }
         auto result{clang::tooling::runToolOnCodeWithArgs(
-            std::make_unique<idlgen::StripProjectionDeclarationBodyFrontendAction>(out, verbose), code, clangArgs, file
+            std::make_unique<idlgen::StripProjectionDeclarationBodyFrontendAction>(out, verbose), projectionCode, clangArgs, file
         )};
+        if (!result)
+        {
+            return buffer.data();
+        }
     }
     std::string result;
     auto rewriteBuffer{rewriter.getRewriteBufferFor(fileId)};
@@ -203,7 +286,6 @@ std::string StripImplementationProjectionFromHeader(
     {
         result += piece;
     }
-    std::cout << result << std::endl;
     return result;
 }
 

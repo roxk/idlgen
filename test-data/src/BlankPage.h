@@ -5,9 +5,9 @@
 #include "SomeDelegate.h"
 #include "SomeStruct.h"
 #include "SomeInterface.h"
+#include "BlankPage.g.h"
 // Test inconsistent file name case
-#include "blankpage.g.h"
-#include "SameViewModel.h"
+#include "sameviewmodel.h"
 #include "TestIncludeImpl.h"
 #include "TestIncludeInTemplate.h"
 #include "SomeNamespace/DifferentPathViewModel.h"
