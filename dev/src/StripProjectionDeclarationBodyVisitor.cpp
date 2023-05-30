@@ -21,7 +21,7 @@ void idlgen::StripProjectionDeclarationBodyVisitor::Reset()
     for (auto&& include : includes)
     {
         auto includedName{ci.getPreprocessor().getHeaderSearchInfo().getIncludeNameForHeader(include)};
-        if (includedName.find("winrt/") != std::string::npos)
+        if (includedName.find("winrt/") != std::string::npos && includedName.find("winrt/impl") == std::string::npos)
         {
             out << "#include <" << includedName << ">\n";
         }
