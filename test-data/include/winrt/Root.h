@@ -11,6 +11,10 @@ namespace winrt::Root
 
 	struct IdlgenAttributes : Base {};
 
+	struct IOutdatedProjection : IUnknown {};
+
+	struct OutdatedProjection : Base {};
+
 	namespace A
 	{
 		struct BlankPage : Base {};

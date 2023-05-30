@@ -308,6 +308,9 @@ absent -src $someInterfaceOutput -line "PrivateMethod"
 absent -src $someInterfaceOutput -line "HiddenInterface"
 absent -src $someInterfaceOutput -line "HiddenMethod"
 
+$outdatedProjectionOutput = get-gen-output "$testCodeDir\OutdatedProjection.h"
+exists -src $outdatedProjectionOutput -line "unsealed runtimeclass OutdatedProjection"
+
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
 $nonWinRtHeaderIdlPath = "$testCodeDir\NonWinRtHeader.idl"
 if (test-path $nonWinRtHeaderIdlPath) {
