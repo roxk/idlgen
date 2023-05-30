@@ -17,6 +17,15 @@ idlgen::StripProjectionDeclarationBodyVisitor::StripProjectionDeclarationBodyVis
 void idlgen::StripProjectionDeclarationBodyVisitor::Reset()
 {
     out << "#pragma once\n\n";
+    auto& includes{ci.getPreprocessor().getIncludedFiles()};
+    for (auto&& include : includes)
+    {
+        auto includedName{ci.getPreprocessor().getHeaderSearchInfo().getIncludeNameForHeader(include)};
+        if (includedName.find("winrt/") != std::string::npos)
+        {
+            out << "#include <" << includedName << ">\n";
+        }
+    }
 }
 
 void idlgen::StripProjectionDeclarationBodyVisitor::Finish()
