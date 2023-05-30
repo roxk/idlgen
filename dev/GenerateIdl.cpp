@@ -1,5 +1,4 @@
 #include "IdlgenAstConsumer.h"
-#include "GetHeaderAstConsumer.h"
 #include "StripProjectionDeclarationBodyAstConsumer.h"
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/PreprocessorOptions.h"
@@ -81,23 +80,6 @@ class StripProjectionDeclarationBodyFrontendAction : public clang::ASTFrontendAc
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
     {
         return std::make_unique<StripProjectionDeclarationBodyAstConsumer>(ci, out, verbose);
-    }
-};
-
-class GetHeaderAction : public clang::ASTFrontendAction
-{
-  private:
-    std::vector<std::string>& headerFullPaths;
-  public:
-    GetHeaderAction(
-        std::vector<std::string>& headerFullPaths
-    ) :
-        headerFullPaths(headerFullPaths)
-    {
-    }
-    std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
-    {
-        return std::make_unique<GetHeaderAstConsumer>(ci, headerFullPaths);
     }
 };
 } // namespace idlgen
@@ -227,30 +209,9 @@ std::string StripImplementationProjectionFromHeader(
         // Get projection header code
         auto projectionInclude{firstMatch};
         TrimIncludeStatementForFileName(projectionInclude);
-        std::vector<std::string> includedFileFullPaths;
-        auto getHeaderResult{clang::tooling::runToolOnCodeWithArgs(
-            std::make_unique<idlgen::GetHeaderAction>(includedFileFullPaths), code, clangArgs, file
-        )};
-        if (!getHeaderResult)
-        {
-            return buffer.data();
-        }
-        std::optional<std::reference_wrapper<std::string>> projectionFileOpt;
-        for (auto&& path : includedFileFullPaths)
-        {
-            // TODO: This might not handle relative path. Fix it.
-            if (path.find(projectionInclude) != std::string::npos)
-            {
-                projectionFileOpt.emplace(path);
-                break;
-            }
-        }
-        if (!projectionFileOpt)
-        {
-            return buffer.data();
-        }
-        auto& projectionFilePath{projectionFileOpt->get()};
-        std::string projectionCode{GetCode(sources, projectionFilePath)};
+        std::filesystem::path projectionHeaderPath{GenerateFilesDir.getValue()};
+        projectionHeaderPath.append(projectionInclude);
+        std::string projectionCode{GetCode(sources, projectionHeaderPath.string())};
         // Generate .idlgen.h
         std::filesystem::path idlgenProjectionHeaderPath{GenerateFilesDir.getValue()};
         TrimIncludeStatementForFileName(newInclude);
