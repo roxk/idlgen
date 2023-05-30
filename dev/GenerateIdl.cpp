@@ -171,85 +171,67 @@ std::string StripImplementationProjectionFromHeader(
     bool verbose, std::vector<std::string> const& clangArgs, clang::StringRef file, clang::StringRef buffer
 )
 {
-    // TODO: We don't need this dance involving SM and FM anymore if we return modified code buffer directly.
+    std::string code{buffer.str()};
+    clang::LangOptions defaultLangOpt;
+    constexpr auto regexStr = "^#\\s*include\\s*\"\\w*\\.g\\.h\"";
+    std::regex includeRegex(regexStr);
+    auto matchStart = std::sregex_iterator(code.begin(), code.end(), includeRegex);
+    if (matchStart == std::sregex_iterator())
+    {
+        return buffer.str();
+    }
+    // Must be a copy...
+    auto firstMatch{matchStart->str()};
+    using namespace std::string_view_literals;
+    namespace lsp = llvm::sys::path;
+    constexpr auto idlgenHeaderEnd = ".idlgen.h";
+    constexpr auto projectionHeaderEndRegexStr = ".g.h";
+    std::regex projectionHeaderEndRegex(projectionHeaderEndRegexStr);
+    auto newInclude{std::regex_replace(firstMatch, projectionHeaderEndRegex, idlgenHeaderEnd)};
+    if (newInclude.size() == firstMatch.size())
+    {
+        return buffer.str();
+    }
     clang::FileSystemOptions fsOpt;
     clang::FileManager fileManager(fsOpt);
     clang::DiagnosticsEngine diag(nullptr, nullptr);
     clang::SourceManager sources(diag, fileManager);
-    const auto fileId{GetFileId(sources, file)};
-    std::string code{sources.getBufferData(fileId)};
-    clang::LangOptions defaultLangOpt;
-    clang::Rewriter rewriter(sources, defaultLangOpt);
-    constexpr auto regexStr = "^#\\s*include\\s*\"\\w*\\.g\\.h\"";
-    std::regex regex(regexStr);
-    auto matchStart = std::sregex_iterator(code.begin(), code.end(), regex);
-    std::sregex_iterator matchEnd;
-    if (matchStart == matchEnd)
+    // Get projection header code
+    auto projectionInclude{firstMatch};
+    TrimIncludeStatementForFileName(projectionInclude);
+    std::filesystem::path projectionHeaderPath{GenerateFilesDir.getValue()};
+    projectionHeaderPath.append(projectionInclude);
+    std::string projectionCode{GetCode(sources, projectionHeaderPath.string())};
+    // Generate .idlgen.h
+    std::filesystem::path idlgenProjectionHeaderPath{GenerateFilesDir.getValue()};
+    auto newIncludeSegment{newInclude};
+    TrimIncludeStatementForFileName(newIncludeSegment);
+    idlgenProjectionHeaderPath.append(newIncludeSegment);
+    std::error_code ec;
+    llvm::raw_fd_ostream out(
+        idlgenProjectionHeaderPath.string(),
+        ec,
+        lfs::CreationDisposition::CD_CreateAlways,
+        lfs::FileAccess::FA_Write,
+        lfs::OpenFlags::OF_None
+    );
+    if (ec)
+    {
+        std::cerr << "fatal: Failed to generate .idlgen.h for " << file.data() << std::endl;
+        std::cerr << ec.message() << std::endl;
+        return buffer.data();
+    }
+    auto result{clang::tooling::runToolOnCodeWithArgs(
+        std::make_unique<idlgen::StripProjectionDeclarationBodyFrontendAction>(out, verbose),
+        projectionCode,
+        clangArgs,
+        file
+    )};
+    if (!result)
     {
         return buffer.data();
     }
-    // Must be a copy...
-    auto firstMatch{matchStart->str()};
-    auto position{code.find(firstMatch)};
-    if (position == std::string::npos)
-    {
-        return buffer.data();
-    }
-    auto start{sources.getLocForStartOfFile(fileId).getLocWithOffset(position)};
-    using namespace std::string_view_literals;
-    namespace lsp = llvm::sys::path;
-    auto newInclude{firstMatch};
-    constexpr auto expectedndOfInclude = ".g.h\""sv;
-    constexpr auto newEndOfInclude = ".idlgen.h\""sv;
-    if (auto endToTrimIndex = newInclude.find(expectedndOfInclude))
-    {
-        newInclude.erase(endToTrimIndex, expectedndOfInclude.size());
-        newInclude.insert(endToTrimIndex, newEndOfInclude);
-        rewriter.ReplaceText(start, firstMatch.size(), newInclude);
-        // Get projection header code
-        auto projectionInclude{firstMatch};
-        TrimIncludeStatementForFileName(projectionInclude);
-        std::filesystem::path projectionHeaderPath{GenerateFilesDir.getValue()};
-        projectionHeaderPath.append(projectionInclude);
-        std::string projectionCode{GetCode(sources, projectionHeaderPath.string())};
-        // Generate .idlgen.h
-        std::filesystem::path idlgenProjectionHeaderPath{GenerateFilesDir.getValue()};
-        TrimIncludeStatementForFileName(newInclude);
-        idlgenProjectionHeaderPath.append(newInclude);
-        std::error_code ec;
-        llvm::raw_fd_ostream out(
-            idlgenProjectionHeaderPath.string(),
-            ec,
-            lfs::CreationDisposition::CD_CreateAlways,
-            lfs::FileAccess::FA_Write,
-            lfs::OpenFlags::OF_None
-        );
-        if (ec)
-        {
-            std::cerr << "fatal: Failed to generate .idlgen.h for " << file.data() << std::endl;
-            std::cerr << ec.message() << std::endl;
-            return buffer.data();
-        }
-        auto result{clang::tooling::runToolOnCodeWithArgs(
-            std::make_unique<idlgen::StripProjectionDeclarationBodyFrontendAction>(out, verbose), projectionCode, clangArgs, file
-        )};
-        if (!result)
-        {
-            return buffer.data();
-        }
-    }
-    std::string result;
-    auto rewriteBuffer{rewriter.getRewriteBufferFor(fileId)};
-    if (rewriteBuffer == nullptr)
-    {
-        return buffer.data();
-    }
-    result.reserve(rewriteBuffer->size());
-    for (auto&& piece : *rewriteBuffer)
-    {
-        result += piece;
-    }
-    return result;
+    return std::regex_replace(code, std::regex(firstMatch), newInclude);
 }
 
 int main(int argc, const char** argv)
