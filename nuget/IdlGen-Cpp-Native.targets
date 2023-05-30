@@ -9,6 +9,9 @@
 	</PropertyGroup>
 	<PropertyGroup>
 		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\include\idlgen</IdlGenCppIncludeDirs>
+		<CleanDependsOn>
+			$(CleanDependsOn);IdlgenCppClean
+		</CleanDependsOn>
 	</PropertyGroup>
 	<ItemGroup Condition="'$(IdlGenCppInclude)' == ''">
 		<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenCppExclude)" />
@@ -39,6 +42,13 @@
 			<IdlgenOutput>$(IntDir)idlgen\$(RelativeDir)%(Filename).timestamp</IdlgenOutput>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
+	<Target Name="IdlgenCppClean">
+		<ItemGroup>
+			<_FilesToDelete Remove="@(_FilesToDelete)"/>
+			<_FilesToDelete Include="$(IntDir)idlgen\**"/>
+		</ItemGroup>
+		<Delete Files="@(_FilesToDelete)"/>
+	</Target>
 	<Target Name="IdlgenCppMidl" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
 		<MultiToolTask
 		  Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' == 'true'"
