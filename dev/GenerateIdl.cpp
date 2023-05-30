@@ -128,6 +128,8 @@ static lc::opt<std::string> GenerateOutputPath(
 
 static lc::list<std::string> Includes("include", lc::desc("Include folder(s)"));
 
+static lc::opt<std::string> GenerateFilesDir("generate-files-dir", lc::desc("Generate Files Dir"));
+
 static lc::list<std::string> Defines("define", lc::desc("Preprocessor definition(s)"));
 
 static lc::list<std::string> GetterTemplates(
@@ -250,7 +252,7 @@ std::string StripImplementationProjectionFromHeader(
         auto& projectionFilePath{projectionFileOpt->get()};
         std::string projectionCode{GetCode(sources, projectionFilePath)};
         // Generate .idlgen.h
-        auto idlgenProjectionHeaderPath{std::filesystem::current_path()};
+        std::filesystem::path idlgenProjectionHeaderPath{GenerateFilesDir.getValue()};
         TrimIncludeStatementForFileName(newInclude);
         idlgenProjectionHeaderPath.append(newInclude);
         std::error_code ec;
@@ -301,6 +303,11 @@ int main(int argc, const char** argv)
     if ((GeneratePch && Pch.empty()) || (!GeneratePch && FileNames.empty()))
     {
         std::cerr << "No files specified" << std::endl;
+        return 1;
+    }
+    if (!GeneratePch && GenerateFilesDir.empty())
+    {
+        std::cerr << "generated-files-dir is required when not generating PCH" << std::endl;
         return 1;
     }
     std::vector<std::string> clangArgs{
