@@ -23,7 +23,7 @@ $pch = "pch.h"
 $pchOutDir = "$testDataDir\out"
 $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
-$generatedFilesDirFlag = "--generate-files-dir=`"$generatedFilesDir`""
+$generatedFilesDirFlag = "--generated-files-dir=`"$generatedFilesDir`""
 $getterTemplatesFlags = $getterTemplates | ForEach-Object { "--getter-template=`"$_`"" }
 $propertyTemplatesFlags = $propertyTemplates | ForEach-Object { "--property-template=`"$_`"" }
 $pchFlags = "--pch=`"$pch`""

@@ -110,7 +110,7 @@ static lc::opt<std::string> GenerateOutputPath(
 
 static lc::list<std::string> Includes("include", lc::desc("Include folder(s)"));
 
-static lc::opt<std::string> GenerateFilesDir("generate-files-dir", lc::desc("Generate Files Dir"));
+static lc::opt<std::string> GenerateFilesDir("generated-files-dir", lc::desc("Generate Files Dir"));
 
 static lc::list<std::string> Defines("define", lc::desc("Preprocessor definition(s)"));
 
