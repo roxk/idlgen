@@ -17,6 +17,7 @@ class StripProjectionDeclarationBodyVisitor : public clang::RecursiveASTVisitor<
     clang::CompilerInstance& ci;
     llvm::raw_ostream& out;
     bool verbose{};
+
   public:
     StripProjectionDeclarationBodyVisitor(clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose);
     void Reset();

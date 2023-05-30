@@ -1,9 +1,9 @@
 #include "StripProjectionDeclarationBodyVisitor.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/AST/DeclCXX.h"
-#include <string>
 #include <iostream>
+#include <string>
 
 idlgen::StripProjectionDeclarationBodyVisitor::StripProjectionDeclarationBodyVisitor(
     clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose
@@ -75,7 +75,8 @@ bool idlgen::StripProjectionDeclarationBodyVisitor::VisitCXXRecordDecl(clang::CX
         }
         out << recordName << "\n"
             << "{\n"
-            << "using base_type = " << recordName << ";\n"
+            << "using base_type = " << recordName
+            << ";\n"
             // Below is wrong but it is enough to satisfy the compiler
             << "using class_type = " << recordName << ";\n"
             << "};\n"
