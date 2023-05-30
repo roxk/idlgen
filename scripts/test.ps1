@@ -96,6 +96,12 @@ if (test-path $pchOutDir) {
 }
 gen -filePath "" -genPch
 
+# Remove all existing .idlgen.h
+$existingIdlgenHeader = get-childitem "$testDataDir\include" -recurse *.idlgen.h
+foreach ($header in $existingIdlgenHeader) {
+	remove-item $header
+}
+
 # Test BlankPage
 # TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })
 $blankPageOutput = get-gen-output "$testCodeDir\BlankPage.h"
