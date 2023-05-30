@@ -73,8 +73,13 @@ bool idlgen::StripProjectionDeclarationBodyVisitor::VisitCXXRecordDecl(clang::CX
         {
             out << "class ";
         }
-        out << recordName << "{};\n";
-        out << "};\n";
+        out << recordName << "\n"
+            << "{\n"
+            << "using base_type = " << recordName << ";\n"
+            // Below is wrong but it is enough to satisfy the compiler
+            << "using class_type = " << recordName << ";\n"
+            << "};\n"
+            << "}\n";
     }
     return true;
 }
@@ -136,7 +141,7 @@ bool idlgen::StripProjectionDeclarationBodyVisitor::VisitTypeAliasTemplateDecl(c
     }
     paramStr += ">";
     out << paramStr << ";\n";
-    out << "};\n";
+    out << "}\n";
     return true;
 }
 
