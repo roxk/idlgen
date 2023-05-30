@@ -1,7 +1,5 @@
 #include "IdlgenAstConsumer.h"
 #include "StripProjectionDeclarationBodyAstConsumer.h"
-#include "clang/Lex/HeaderSearchOptions.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
@@ -9,18 +7,20 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
-#include "clang/Tooling/Tooling.h"
-#include "clang/Tooling/Core/Replacement.h"
+#include "clang/Lex/HeaderSearchOptions.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Serialization/InMemoryModuleCache.h"
+#include "clang/Tooling/Core/Replacement.h"
+#include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include <regex>
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <string>
 
 namespace llvm
@@ -69,12 +69,7 @@ class StripProjectionDeclarationBodyFrontendAction : public clang::ASTFrontendAc
     bool verbose;
 
   public:
-    StripProjectionDeclarationBodyFrontendAction(
-        llvm::raw_ostream& out,
-        bool verbose
-    ) :
-        out(out),
-        verbose(verbose)
+    StripProjectionDeclarationBodyFrontendAction(llvm::raw_ostream& out, bool verbose) : out(out), verbose(verbose)
     {
     }
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override

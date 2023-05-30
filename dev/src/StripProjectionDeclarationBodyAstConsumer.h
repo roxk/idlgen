@@ -18,9 +18,7 @@ class StripProjectionDeclarationBodyAstConsumer : public clang::ASTConsumer
 
   public:
     explicit StripProjectionDeclarationBodyAstConsumer(
-        clang::CompilerInstance& ci,
-        llvm::raw_ostream& out,
-        bool verbose
+        clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose
     );
 
     virtual void HandleTranslationUnit(clang::ASTContext& context) override;
