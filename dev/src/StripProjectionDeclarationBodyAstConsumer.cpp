@@ -4,10 +4,12 @@
 idlgen::StripProjectionDeclarationBodyAstConsumer::StripProjectionDeclarationBodyAstConsumer(
     clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose
 ) :
-    visitor(nullptr)
+    visitor(std::make_unique<StripProjectionDeclarationBodyVisitor>(out, verbose))
 {
 }
 
 void idlgen::StripProjectionDeclarationBodyAstConsumer::HandleTranslationUnit(clang::ASTContext& context)
 {
+    visitor->Reset();
+    visitor->TraverseDecl(context.getTranslationUnitDecl());
 }

@@ -14,9 +14,15 @@ class StripProjectionDeclarationBodyVisitor : public clang::RecursiveASTVisitor<
 {
   private:
     llvm::raw_ostream& out;
+    bool verbose{};
   public:
-    StripProjectionDeclarationBodyVisitor(llvm::raw_ostream& out);
+    StripProjectionDeclarationBodyVisitor(llvm::raw_ostream& out, bool verbose);
+    void Reset();
     bool VisitCXXRecordDecl(clang::CXXRecordDecl* record);
+    bool VisitTypeAliasTemplateDecl(clang::TypeAliasTemplateDecl* d);
+    std::string PrintTemplateParam(llvm::ArrayRef<clang::NamedDecl*> params);
+    std::vector<std::string> GetNameSpaces(clang::NamedDecl* decl);
+    void PrintNamespaces(clang::NamedDecl* decl);
 };
 
 } // namespace idlgen

@@ -5,13 +5,13 @@
 
 namespace winrt::Root::A
 {
-	template<typename T>
+	template<typename T, typename... I>
 	struct BlankPageT_base
 	{
 	};
 
-	template <typename T>
-	using BlankPageT = BlankPageT_base<T>;
+	template <typename T, typename... I>
+	using BlankPageT = BlankPageT_base<T, I...>;
 }
 
 namespace winrt::Root::A::factory_implementation
