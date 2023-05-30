@@ -1,12 +1,14 @@
 #include "StripProjectionDeclarationBodyVisitor.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/AST/DeclCXX.h"
 #include <string>
 #include <iostream>
 
 idlgen::StripProjectionDeclarationBodyVisitor::StripProjectionDeclarationBodyVisitor(
-    llvm::raw_ostream& out, bool verbose
+    clang::CompilerInstance& ci, llvm::raw_ostream& out, bool verbose
 ) :
+    ci(ci),
     out(out),
     verbose(verbose)
 {
@@ -15,6 +17,19 @@ idlgen::StripProjectionDeclarationBodyVisitor::StripProjectionDeclarationBodyVis
 void idlgen::StripProjectionDeclarationBodyVisitor::Reset()
 {
     out << "#pragma once\n\n";
+}
+
+void idlgen::StripProjectionDeclarationBodyVisitor::Finish()
+{
+    auto& includes{ci.getPreprocessor().getIncludedFiles()};
+    for (auto&& include : includes)
+    {
+        auto filePath{include->tryGetRealPathName()};
+        if (filePath.find(".xaml.g.h") != std::string::npos)
+        {
+            out << "#include \"" << filePath << "\"\n";
+        }
+    }
 }
 
 bool idlgen::StripProjectionDeclarationBodyVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* record)
