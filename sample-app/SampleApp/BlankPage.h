@@ -5,25 +5,25 @@
 
 namespace winrt::SampleApp::implementation
 {
-    enum class Category : idlgen::author_enum
+    enum class _Category : idlgen::author_enum
     {
         Literature,
         Science
     };
 
-    enum class Permission : idlgen::author_enum_flags
+    enum class _Permission : idlgen::author_enum_flags
     {
         Camera = 0x00000001,
         Microphone = 0x00000002
     };
 
-    struct Point : idlgen::author_struct
+    struct _Point : idlgen::author_struct
     {
         int64_t X;
         int64_t Y;
     };
 
-    struct BlankPageEventHandler : idlgen::author_delegate
+    struct _BlankPageEventHandler : idlgen::author_delegate
     {
         void operator()(SampleApp::BlankPage const& sender, uint64_t e) {}
     };
@@ -38,14 +38,14 @@ namespace winrt::SampleApp::implementation
         }
 
         [[idlgen::property]]
-        SampleApp::Category Category() { return SampleApp::Category::Literature; }
+        Category Category() { return Category::Literature; }
 
         [[idlgen::property]]
-        SampleApp::Permission Permission() { return SampleApp::Permission::Camera | SampleApp::Permission::Microphone; }
+        Permission Permission() { return Permission::Camera | Permission::Microphone; }
 
-        SampleApp::Point GetPoint() { return SampleApp::Point{}; }
+        Point GetPoint() { return Point{}; }
 
-        void AssignHandler(SampleApp::BlankPageEventHandler const& handler) {}
+        void AssignHandler(BlankPageEventHandler const& handler) {}
 
         int32_t MyProperty();
         void MyProperty(int32_t value);
