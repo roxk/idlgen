@@ -10,11 +10,6 @@ namespace winrt::Root::A
 	};
 
 	template<typename T>
-	struct SealedSameViewModelT : winrt::ProduceBase
-	{
-	};
-
-	template<typename T>
 	struct SameViewModelHideT : winrt::ProduceBase
 	{
 	};

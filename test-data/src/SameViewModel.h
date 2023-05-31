@@ -1,9 +1,10 @@
 #pragma once
 
 #include "SameViewModel.g.h"
+#include "SealedSameViewModel.g.h"
 
 namespace winrt::Root::A::implementation
-{ 
+{
 	class SameViewModel : public SameViewModelT<SameViewModel>
 	{
 	};

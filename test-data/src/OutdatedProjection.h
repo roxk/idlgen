@@ -1,6 +1,7 @@
 #pragma once
 
 #include "OutdatedProjection.g.h"
+#include "OutdatedProjectionB.g.h"
 
 namespace winrt::Root::implementation
 {
@@ -9,6 +10,10 @@ namespace winrt::Root::implementation
 	private:
 		// Test including projected types work
 		Root::SomeEnum _enum{};
+	};
+
+	struct OutdatedProjectionB : OutdatedProjectionBT<OutdatedProjectionB>
+	{
 	};
 
 	void InstantiateOutdatedProjection()
