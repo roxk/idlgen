@@ -77,17 +77,17 @@ Template types that overloads `operator()` with return type and parameters match
 
 To generate these structures, define the structure in C++ and inherit the correct tag type according to the following table.
 
-Make sure they are defined in `implementation` namespace to avoid name collision with the generated projected types.
+To prevent name collision between projected type and its authored types, you can prefix type name with `_` to prevent name collision. Idlgen would trim `_` out of type names in idl. 
 
 Types which inherit the following tag types are called authored types (similar to how implementation of runtime class are called implemenation types).
 
 |Structure|Tag type|Note|Example|Result|
 |--|--|--|--|--|
-|struct|`idlgen::author_struct`|N/A|`struct Point : idlgen::author_struct { int32_t X; int32_t Y; }`|`struct Pointer { Int32 X; Int32 Y;}`|
-|delegate|`idlgen::author_delegate`|Overload `operator()`|`struct Handler : idlgen::author_delegate { void operator()(int32_t a, int32_t b);}`|`delegate void Handler(Int32 a, Int32 b)`|
-|enum|`idlgen::author_enum`|Must be scoped enum|`enum class State : idlgen::author_enum {A, B}`|`enum State {A, B}`|
-|enum flags|`idlgen::author_enum_flags`|Must be scoped enum|`enum class State : idlgen::author_enum_flags {A = 0x1, B = 0x2}`|`[flags] enum State {A = 0x1, B = 0x2}`|
-|interface|`idlgen::author_interface`|N/A|`struct Interface : idlgen::author_interface { void Method(); }`|`interface Interface { void Method(); }`|
+|struct|`idlgen::author_struct`|N/A|`struct _Point : idlgen::author_struct { int32_t X; int32_t Y; }`|`struct Pointer { Int32 X; Int32 Y;}`|
+|delegate|`idlgen::author_delegate`|Overload `operator()`|`struct _Handler : idlgen::author_delegate { void operator()(int32_t a, int32_t b);}`|`delegate void Handler(Int32 a, Int32 b)`|
+|enum|`idlgen::author_enum`|Must be scoped enum|`enum class _State : idlgen::author_enum {A, B}`|`enum State {A, B}`|
+|enum flags|`idlgen::author_enum_flags`|Must be scoped enum|`enum class _State : idlgen::author_enum_flags {A = 0x1, B = 0x2}`|`[flags] enum State {A = 0x1, B = 0x2}`|
+|interface|`idlgen::author_interface`|N/A|`struct _Interface : idlgen::author_interface { void Method(); }`|`interface Interface { void Method(); }`|
 
 ### Structures Requiring Special Author Help
 
