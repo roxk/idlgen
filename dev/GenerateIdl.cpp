@@ -165,7 +165,8 @@ std::string StripImplementationProjectionFromHeader(
         return buffer.data();
     }
     // Find struct Class : ClassT<Class>
-    constexpr auto baseRegexStr = "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3>";
+    constexpr auto baseRegexStr =
+        "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3>";
     std::regex baseRegex(baseRegexStr);
     constexpr auto captureGroupCount = 5;
     constexpr auto expectedMatchCount = captureGroupCount + 1;
@@ -173,7 +174,7 @@ std::string StripImplementationProjectionFromHeader(
     std::string projectionReplacement{"#include <winrt/"};
     projectionReplacement += RootNamespace;
     projectionReplacement += ".h>\n";
-    for (auto it = code.begin(); it != code.end(); )
+    for (auto it = code.begin(); it != code.end();)
     {
         std::smatch results;
         if (!std::regex_search(it, code.end(), results, baseRegex) || results.size() < expectedMatchCount)
