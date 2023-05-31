@@ -210,6 +210,8 @@ class IdlgenVisitor : public clang::RecursiveASTVisitor<IdlgenVisitor>
     llvm::raw_ostream& out;
     static std::unordered_map<std::string, std::string> cxxTypeToWinRtTypeMap;
     // Import source types = implementation types or authored types
+    // Key uses WinRT type names, i.e. name as shown in idl. Therefore, prefix
+    // _ would be trimmed
     std::unordered_map<std::string, clang::NamedDecl*> importSourceTypes;
     std::set<std::string> includes;
     std::unordered_set<std::string> getterTemplates;
