@@ -38,10 +38,10 @@ namespace winrt::SampleApp::implementation
         }
 
         [[idlgen::property]]
-        Category Category() { return Category::Literature; }
+        enum Category Category() { return Category::Literature; }
 
         [[idlgen::property]]
-        Permission Permission() { return Permission::Camera | Permission::Microphone; }
+        enum Permission Permission() { return Permission::Camera | Permission::Microphone; }
 
         Point GetPoint() { return Point{}; }
 
