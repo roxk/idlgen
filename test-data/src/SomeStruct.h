@@ -7,7 +7,7 @@ namespace winrt::Root::implementation
 {
 	struct
 		[[idlgen::hide]]
-		HiddenStruct : idlgen::author_struct
+		_HiddenStruct : idlgen::author_struct
 	{
 		int64_t X;
 		int64_t Y;
@@ -15,7 +15,7 @@ namespace winrt::Root::implementation
 	struct
 		[[idlgen::import("SomeFlag.idl")]]
 		[[idlgen::attribute("webhosthidden")]]
-		SomeStruct : idlgen::author_struct
+		_SomeStruct : idlgen::author_struct
 	{
 		[[idlgen::hide]]
 		int64_t HiddenProp;

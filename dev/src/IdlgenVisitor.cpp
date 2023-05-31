@@ -65,7 +65,7 @@ bool idlgen::IdlgenVisitor::VisitCXXRecordDecl(clang::CXXRecordDecl* record)
         }
         else if (IsBaseOfType(record, nameAuthorStruct) || IsBaseOfType(record, nameAuthorDelegate) || IsBaseOfType(record, nameAuthorInterface))
         {
-            importSourceTypes.insert({record->getNameAsString(), record});
+            importSourceTypes.insert({record->getName().ltrim("_").str(), record});
         }
         return true;
     }
@@ -174,7 +174,7 @@ bool idlgen::IdlgenVisitor::VisitEnumDecl(clang::EnumDecl* decl)
         auto kind{GetEnumKind(decl)};
         if (kind)
         {
-            importSourceTypes.insert({decl->getNameAsString(), decl});
+            importSourceTypes.insert({decl->getName().ltrim("_").str(), decl});
         }
         return true;
     }
@@ -195,7 +195,8 @@ bool idlgen::IdlgenVisitor::VisitEnumDecl(clang::EnumDecl* decl)
         out << "[flags]"
             << "\n";
     }
-    out << "enum " << decl->getNameAsString() << "\n";
+    auto name{decl->getName()};
+    out << "enum " << name.ltrim("_") << "\n";
     out << "{"
         << "\n";
     auto values{decl->enumerators()};
@@ -1775,9 +1776,10 @@ idlgen::DelegatePrinter::DelegatePrinter(clang::CXXRecordDecl* record, clang::CX
 
 void idlgen::DelegatePrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
+    auto name{record->getName()};
     out << "delegate ";
     out << visitor.TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
-    out << record->getNameAsString();
+    out << name.ltrim("_");
     visitor.PrintMethodParams(method);
     out << "\n";
 }
@@ -1790,7 +1792,8 @@ idlgen::StructPrinter::StructPrinter(clang::CXXRecordDecl* record, std::vector<c
 
 void idlgen::StructPrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
-    out << "struct " << record->getNameAsString() << "\n";
+    auto name{record->getName()};
+    out << "struct " << name.ltrim("_") << "\n";
     out << "{\n";
     for (auto&& field : fields)
     {
@@ -1882,7 +1885,8 @@ void idlgen::InterfacePrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& 
 {
     auto& holders{response.holders};
     auto& events{response.events};
-    out << "interface " << record->getNameAsString();
+    auto name{record->getName()};
+    out << "interface " << name.ltrim("_");
     if (extend)
     {
         visitor.debugPrint([&]() { std::cout << "require size is " << extend->size() << std::endl; });

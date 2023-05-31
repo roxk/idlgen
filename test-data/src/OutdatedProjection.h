@@ -5,6 +5,7 @@ namespace winrt::Root::implementation
 	struct OutdatedProjection : OutdatedProjectionT<OutdatedProjection>
 	{
 	private:
+		// Test including projected types work
 		Root::SomeEnum _enum{};
 	};
 

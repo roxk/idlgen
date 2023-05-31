@@ -8,18 +8,18 @@ namespace winrt::Root::implementation
 {
 	struct
 		[[idlgen::hide]]
-		HiddenInterface : idlgen::author_interface
+		_HiddenInterface : idlgen::author_interface
 	{
 		void Method();
 	};
-	struct BaseInterface : idlgen::author_interface
+	struct _BaseInterface : idlgen::author_interface
 	{
 		void BaseMethod();
 	};
 	struct
 		[[idlgen::import("SomeFlag.idl")]]
 		[[idlgen::attribute("webhosthidden")]]
-		SomeInterface : idlgen::author_interface, idlgen::base<Root::BaseInterface>
+		_SomeInterface : idlgen::author_interface, idlgen::base<BaseInterface>
 	{
 		[[idlgen::hide]]
 		void HiddenMethod();
