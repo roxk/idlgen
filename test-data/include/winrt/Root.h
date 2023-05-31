@@ -15,6 +15,8 @@ namespace winrt::Root
 
 	struct OutdatedProjection : Base {};
 
+	struct OutdatedProjectionB : Base {};
+
 	namespace A
 	{
 		struct BlankPage : Base {};

@@ -156,7 +156,13 @@ std::string StripImplementationProjectionFromHeader(
     auto includeDirectiveMatch{std::sregex_iterator(code.begin(), code.end(), includeRegex)};
     if (includeDirectiveMatch == std::sregex_iterator())
     {
-        return buffer.str();
+        return buffer.data();
+    }
+    auto firstMatchPosition{(*includeDirectiveMatch)[0].first - code.begin()};
+    auto newCode{std::regex_replace(code, includeRegex, "")};
+    if (newCode.size() == code.size())
+    {
+        return buffer.data();
     }
     // Find struct Class : ClassT<Class>
     constexpr auto baseRegexStr = "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3>";
@@ -183,7 +189,8 @@ std::string StripImplementationProjectionFromHeader(
     {
         return buffer.data();
     }
-    return std::regex_replace(code, std::regex(includeDirectiveMatch->str()), projectionReplacement);
+    newCode.insert(firstMatchPosition, projectionReplacement);
+    return newCode;
 }
 
 int main(int argc, const char** argv)
