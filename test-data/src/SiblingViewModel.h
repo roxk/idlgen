@@ -1,3 +1,5 @@
+#pragma once
+
 #include "SiblingViewModel.g.h"
 
 namespace winrt::Root::B::implementation

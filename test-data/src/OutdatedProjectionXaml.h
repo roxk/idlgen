@@ -1,3 +1,5 @@
+#pragma once
+
 #include "OutdatedProjectionXaml.g.h"
 
 namespace winrt::Root::implementation

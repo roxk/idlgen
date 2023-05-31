@@ -1,3 +1,5 @@
+#pragma once
+
 #include "OutdatedProjection.g.h"
 
 namespace winrt::Root::implementation

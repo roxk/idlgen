@@ -1,3 +1,5 @@
+#pragma once
+
 #include "TestIncludeInTemplate.g.h"
 
 namespace winrt::Root::A::implementation
