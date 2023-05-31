@@ -183,7 +183,7 @@
 			<TimestampFile>%(IdlGenCppInclude.IdlgenOutput)</TimestampFile>
 		</PropertyGroup>
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(IntDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen --root-namespace=&quot;$(RootNamespace)&quot; @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(IntDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 		<WriteLinesToFile
             File="$(TimestampFile)" Lines=""
             Overwrite="true" />

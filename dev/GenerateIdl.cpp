@@ -86,6 +86,8 @@ static lc::opt<std::string> GenerateOutputPath(
     "gen-out", lc::desc("If specified and --gen is applied, control the output path of the generated IDL")
 );
 
+static lc::opt<std::string> RootNamespace("root-namespace", lc::desc("Root namespace"));
+
 static lc::list<std::string> Includes("include", lc::desc("Include folder(s)"));
 
 static lc::list<std::string> Defines("define", lc::desc("Preprocessor definition(s)"));
@@ -162,7 +164,9 @@ std::string StripImplementationProjectionFromHeader(
     constexpr auto captureGroupCount = 5;
     constexpr auto expectedMatchCount = captureGroupCount + 1;
     constexpr auto classNameIndex = 3;
-    std::string templateDefinition;
+    std::string projectionReplacement{"#include <winrt/"};
+    projectionReplacement += RootNamespace;
+    projectionReplacement += ".h>\n";
     for (auto it = code.begin(); it != code.end(); )
     {
         std::smatch results;
@@ -171,15 +175,15 @@ std::string StripImplementationProjectionFromHeader(
             break;
         }
         it = results[0].second;
-        templateDefinition += "template <typename T, typename... I> struct ";
-        templateDefinition += results[classNameIndex];
-        templateDefinition += "T {};\n";
+        projectionReplacement += "template <typename T, typename... I> struct ";
+        projectionReplacement += results[classNameIndex];
+        projectionReplacement += "T {};\n";
     }
-    if (templateDefinition.empty())
+    if (projectionReplacement.empty())
     {
         return buffer.data();
     }
-    return std::regex_replace(code, std::regex(includeDirectiveMatch->str()), templateDefinition);
+    return std::regex_replace(code, std::regex(includeDirectiveMatch->str()), projectionReplacement);
 }
 
 int main(int argc, const char** argv)
@@ -194,6 +198,11 @@ int main(int argc, const char** argv)
     if ((GeneratePch && Pch.empty()) || (!GeneratePch && FileNames.empty()))
     {
         std::cerr << "No files specified" << std::endl;
+        return 1;
+    }
+    if (!GeneratePch && RootNamespace.empty())
+    {
+        std::cerr << "Root namespace must be provided when not generating PCH" << std::endl;
         return 1;
     }
     std::vector<std::string> clangArgs{

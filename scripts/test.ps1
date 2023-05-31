@@ -15,7 +15,7 @@ $srcDir = $PSScriptRoot
 $testDataDir = "$srcDir\..\test-data"
 $testCodeDir = "$testDataDir\src"
 $testIncludeDirs = "$testCodeDir", "$testDataDir\include\", "$testDataDir\include B\", "$srcDir\..\nuget\include\idlgen"
-$generatedFilesDir = "$testDataDir\include"
+$rootNamespace = "Root"
 $idlgen = "$srcDir/../dev/out/build/x64-$config/idlgen.exe"
 $getterTemplates = @("wil::single_threaded_property")
 $propertyTemplates = @("wil::single_threaded_rw_property")
@@ -23,7 +23,7 @@ $pch = "pch.h"
 $pchOutDir = "$testDataDir\out"
 $testIncludeDirs = $testIncludeDirs.Replace("\", "/")
 $includes = $testIncludeDirs | ForEach-Object { "--include=`"$_`"" }
-$generatedFilesDirFlag = "--generated-files-dir=`"$generatedFilesDir`""
+$rootNamespaceFlag = "--root-namespace=`"$rootNamespace`""
 $getterTemplatesFlags = $getterTemplates | ForEach-Object { "--getter-template=`"$_`"" }
 $propertyTemplatesFlags = $propertyTemplates | ForEach-Object { "--property-template=`"$_`"" }
 $pchFlags = "--pch=`"$pch`""
@@ -36,7 +36,7 @@ function gen {
 	if ($genPch.IsPresent) {
 		$genPchFlags = "--gen-pch"
 	}
-	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags $pchFlags $pchOutDirFlags $genPchFlags $generatedFilesDirFlag | out-host
+	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags $pchFlags $pchOutDirFlags $genPchFlags $rootNamespaceFlag | out-host
 	pop-location
 	if ($LASTEXITCODE -ne 0) {
 		echo "idlgen returned $LASTEXITCODE"
