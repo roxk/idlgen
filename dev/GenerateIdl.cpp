@@ -1,5 +1,4 @@
 #include "IdlgenAstConsumer.h"
-#include "StripProjectionDeclarationBodyAstConsumer.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
@@ -59,22 +58,6 @@ class GenIdlFrontendAction : public clang::ASTFrontendAction
     std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
     {
         return std::make_unique<IdlgenAstConsumer>(ci, out, verbose, getterTemplates, propertyTemplates);
-    }
-};
-
-class StripProjectionDeclarationBodyFrontendAction : public clang::ASTFrontendAction
-{
-  private:
-    llvm::raw_ostream& out;
-    bool verbose;
-
-  public:
-    StripProjectionDeclarationBodyFrontendAction(llvm::raw_ostream& out, bool verbose) : out(out), verbose(verbose)
-    {
-    }
-    std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, clang::StringRef file) override
-    {
-        return std::make_unique<StripProjectionDeclarationBodyAstConsumer>(ci, out, verbose);
     }
 };
 } // namespace idlgen
@@ -166,67 +149,39 @@ std::string StripImplementationProjectionFromHeader(
     bool verbose, std::vector<std::string> const& clangArgs, clang::StringRef file, clang::StringRef buffer
 )
 {
-    std::string code{buffer.str()};
+    const std::string code{buffer.str()};
     clang::LangOptions defaultLangOpt;
     constexpr auto regexStr = "^#\\s*include\\s*\"\\w*\\.g\\.h\"";
     std::regex includeRegex(regexStr);
-    auto matchStart = std::sregex_iterator(code.begin(), code.end(), includeRegex);
-    if (matchStart == std::sregex_iterator())
+    auto includeDirectiveMatch{std::sregex_iterator(code.begin(), code.end(), includeRegex)};
+    if (includeDirectiveMatch == std::sregex_iterator())
     {
         return buffer.str();
     }
-    // Must be a copy...
-    auto firstMatch{matchStart->str()};
-    using namespace std::string_view_literals;
-    namespace lsp = llvm::sys::path;
-    constexpr auto idlgenHeaderEnd = ".idlgen.h";
-    constexpr auto projectionHeaderEndRegexStr = ".g.h";
-    std::regex projectionHeaderEndRegex(projectionHeaderEndRegexStr);
-    auto newInclude{std::regex_replace(firstMatch, projectionHeaderEndRegex, idlgenHeaderEnd)};
-    if (newInclude.size() == firstMatch.size())
+    // Find struct Class : ClassT<Class>
+    constexpr auto baseRegexStr = "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3>";
+    std::regex baseRegex(baseRegexStr);
+    constexpr auto captureGroupCount = 5;
+    constexpr auto expectedMatchCount = captureGroupCount + 1;
+    constexpr auto classNameIndex = 3;
+    std::string templateDefinition;
+    for (auto it = code.begin(); it != code.end(); )
     {
-        return buffer.str();
+        std::smatch results;
+        if (!std::regex_search(it, code.end(), results, baseRegex) || results.size() < expectedMatchCount)
+        {
+            break;
+        }
+        it = results[0].second;
+        templateDefinition += "template <typename T, typename... I> struct ";
+        templateDefinition += results[classNameIndex];
+        templateDefinition += "T {};\n";
     }
-    clang::FileSystemOptions fsOpt;
-    clang::FileManager fileManager(fsOpt);
-    clang::DiagnosticsEngine diag(nullptr, nullptr);
-    clang::SourceManager sources(diag, fileManager);
-    // Get projection header code
-    auto projectionInclude{firstMatch};
-    TrimIncludeStatementForFileName(projectionInclude);
-    std::filesystem::path projectionHeaderPath{GenerateFilesDir.getValue()};
-    projectionHeaderPath.append(projectionInclude);
-    std::string projectionCode{GetCode(sources, projectionHeaderPath.string())};
-    // Generate .idlgen.h
-    std::filesystem::path idlgenProjectionHeaderPath{GenerateFilesDir.getValue()};
-    auto newIncludeSegment{newInclude};
-    TrimIncludeStatementForFileName(newIncludeSegment);
-    idlgenProjectionHeaderPath.append(newIncludeSegment);
-    std::error_code ec;
-    llvm::raw_fd_ostream out(
-        idlgenProjectionHeaderPath.string(),
-        ec,
-        lfs::CreationDisposition::CD_CreateAlways,
-        lfs::FileAccess::FA_Write,
-        lfs::OpenFlags::OF_None
-    );
-    if (ec)
-    {
-        std::cerr << "fatal: Failed to generate .idlgen.h for " << file.data() << std::endl;
-        std::cerr << ec.message() << std::endl;
-        return buffer.data();
-    }
-    auto result{clang::tooling::runToolOnCodeWithArgs(
-        std::make_unique<idlgen::StripProjectionDeclarationBodyFrontendAction>(out, verbose),
-        projectionCode,
-        clangArgs,
-        file
-    )};
-    if (!result)
+    if (templateDefinition.empty())
     {
         return buffer.data();
     }
-    return std::regex_replace(code, std::regex(firstMatch), newInclude);
+    return std::regex_replace(code, std::regex(includeDirectiveMatch->str()), templateDefinition);
 }
 
 int main(int argc, const char** argv)

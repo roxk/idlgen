@@ -1,3 +1,5 @@
+#pragma once
+
 #include "DifferentPathViewModel.h"
 #include "SomeNamespace/DifferentPathConsumerViewModel.g.h"
 

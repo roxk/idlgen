@@ -1,21 +1,21 @@
+#pragma once
+
 #include "SameViewModel.g.h"
 
 namespace winrt::Root::A::implementation
-{
-	class SameViewModel : SameViewModelT<SameViewModel>
+{ 
+	class SameViewModel : public SameViewModelT<SameViewModel>
 	{
-
 	};
-
 	
 	class [[idlgen::sealed]] 
-		SealedSameViewModel : SealedSameViewModelT<SealedSameViewModel>
+		SealedSameViewModel : public SealedSameViewModelT<SealedSameViewModel>
 	{
 
 	};
 
 	class [[idlgen::hide]]
-		SameViewModelHide : SameViewModelHideT<SameViewModelHide>
+		SameViewModelHide : public SameViewModelHideT<SameViewModelHide>
 	{
 
 	};

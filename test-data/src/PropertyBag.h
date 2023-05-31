@@ -1,3 +1,5 @@
+#pragma once
+
 #include "PropertyBag.g.h"
 #include "SameViewModel.h"
 #include "wil/cppwinrt_authoring.h"
