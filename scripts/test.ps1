@@ -99,7 +99,7 @@ gen -filePath "" -genPch
 # Remove all existing .idlgen.h
 $existingIdlgenHeader = get-childitem "$testDataDir\include" -recurse *.idlgen.h
 foreach ($header in $existingIdlgenHeader) {
-	remove-item $header
+	remove-item $header.FullName
 }
 
 # Test BlankPage
