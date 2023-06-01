@@ -46,12 +46,11 @@ function gen {
 
 function get-gen-output {
 	param([string]$filePath)
-	$idlPath = $filePath.Replace(".h", ".idl")
+	$idlPath = $filePath.Replace(".xaml", "").Replace(".h", ".idl")
 	if (test-path $idlPath) {
 		remove-item $idlPath
 	}
 	gen -filePath $filePath
-	$idlPath = $filePath.Replace(".h", ".idl")
 	return get-content $idlPath
 }
 
@@ -317,7 +316,7 @@ absent -src $someInterfaceOutput -line "HiddenMethod"
 $outdatedProjectionOutput = get-gen-output "$testCodeDir\OutdatedProjection.h"
 exists -src $outdatedProjectionOutput -line "unsealed runtimeclass OutdatedProjection"
 
-$outdatedProjectionXamlOutput = get-gen-output "$testCodeDir\OutdatedProjectionXaml.h"
+$outdatedProjectionXamlOutput = get-gen-output "$testCodeDir\OutdatedProjectionXaml.xaml.h"
 exists -src $outdatedProjectionXamlOutput -line "unsealed runtimeclass OutdatedProjectionXaml"
 
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
