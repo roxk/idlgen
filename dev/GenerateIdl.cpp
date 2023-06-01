@@ -325,15 +325,22 @@ int main(int argc, const char** argv)
             }
             if (!outputFile)
             {
-                outputFile = filePath;
+                idlFile.emplace(filePath);
+                // Trim all extension to handle cases like .xaml.h -> .idl
+                auto extension = llvm::sys::path::extension(*idlFile);
+                auto extensionIndex = idlFile->rfind(extension);
+                while (extensionIndex != std::string::npos && extensionIndex < idlFile->size())
+                {
+                    idlFile->erase(extensionIndex);
+                    extension = llvm::sys::path::extension(*idlFile);
+                    extensionIndex = idlFile->rfind(extension);
+                }
+                *idlFile += ".idl";
             }
-            auto extension = llvm::sys::path::extension(filePath);
-            idlFile.emplace(outputFile->get());
-            if (auto extensionIndex = outputFile->get().find(extension); extensionIndex != std::string::npos)
+            else
             {
-                idlFile->erase(extensionIndex);
+                idlFile.emplace(outputFile->get());
             }
-            *idlFile += ".idl";
             fileBackup = *idlFile + ".bak";
             genFile = *idlFile + ".gen";
             std::error_code ec;
