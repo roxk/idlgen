@@ -214,14 +214,6 @@ Bootstrapping is only needed when there is no projection generated yet. To preve
 
 (The actual details can be tricky, see #53)
 
-## "Fake" Projection aka *.idlgen.h
-
-Another problem idlgen faces is removing definition from C++ header. Since generating IDL requires compiling the whole C++ header, idlgen has to parse projection as well. At the time of definition removal, existing generated C++/WinRT projection still contains code that expects the removed definition, which produces compile error.
-
-There are many ways to solve this, but the solution idlgen currently adopts is to generate a fake projection header which strip everything out, leaving only bare struct definitions, and include the fake projection header at generation time. These fake projection header has the suffix `.idlgen.h`. For each `.g.h` in generated files, you'd see a corresponding `*.idlgen.h` if idlgen had ever touched the belonging `.h` file.
-
-This is an area where future contributions might speed up idlgen by ~20%. Current solution requires parsing `.g.h` (and all its includes! Including `WUX.h` etc in pch is a must), and that contributes to ~20% of generation time. If we can skip parsing `.g.h`, we could speed up generation by ~20%. One solution worth exploring is a custom `winrt/base.h`, whose `implements` doesn't extend `producer` and friends.
-
 ## Contribution
 
 Contributions are welcome! If you found a bug, please file a bug report.
