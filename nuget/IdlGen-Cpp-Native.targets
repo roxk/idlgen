@@ -49,7 +49,7 @@
 		</ItemGroup>
 		<Delete Files="@(_FilesToDelete)"/>
 	</Target>
-	<Target Name="IdlgenCppMidl" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
+	<Target Name="IdlgenCppMidl" DependsOnTargets="CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTSetMidlReferences" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
 		<MultiToolTask
 		  Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' == 'true'"
 		  TaskName                            ="Microsoft.Build.CPPTasks.MIDL"
@@ -169,7 +169,7 @@
 	<Target Name="IdlgenCppBootstrapIdlGen" BeforeTargets="IdlgenCppCheckPchCount">
 		<CallTarget Targets="IdlgenCppMergeProjectWinMDInputs"/>
 		<!-- CppWinRTComputeXamlGeneratedMidlInputs must be called before CppWinRTMakeProjections to add xaml provider idl -->
-		<MSBuild Projects="$(MSBuildProjectFile)" Targets="CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
+		<MSBuild Projects="$(MSBuildProjectFile)" Targets="CppWinRTMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
 	</Target>
 	<Target Name="IdlgenCppCheckPchCount">
 		<Error Text="More than 1 pch specified. Idlgen only supports 1 pch at a time." Condition="@(IdlGenCppPch->Count()) > 1"/>
