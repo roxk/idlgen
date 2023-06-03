@@ -45,9 +45,9 @@ function gen {
 }
 
 function get-gen-output {
-	param([string]$filePath)
+	param([string]$filePath, [switch]$keepExisting)
 	$idlPath = $filePath.Replace(".xaml", "").Replace(".h", ".idl")
-	if (test-path $idlPath) {
+	if ((test-path $idlPath) -and !$keepExisting.IsPresent) {
 		remove-item $idlPath
 	}
 	gen -filePath $filePath
@@ -318,6 +318,14 @@ exists -src $outdatedProjectionOutput -line "unsealed runtimeclass OutdatedProje
 
 $outdatedProjectionXamlOutput = get-gen-output "$testCodeDir\OutdatedProjectionXaml.xaml.h"
 exists -src $outdatedProjectionXamlOutput -line "unsealed runtimeclass OutdatedProjectionXaml"
+
+# Test re-generate wouldn't overwrite
+$outdatedProjectionXamlIdl = get-childitem "$testCodeDir" "OutdatedProjectionXaml.idl"
+$outdatedProjectionXamlIdlLastModifiedTime = $outdatedProjectionXamlIdl.LastWriteTime
+$outdatedProjectionXamlOutput = get-gen-output "$testCodeDir\OutdatedProjectionXaml.xaml.h" -keepExisting
+$outdatedProjectionXamlIdl = get-childitem "$testCodeDir" "OutdatedProjectionXaml.idl"
+$outdatedProjectionXamlIdlNewModifiedTime = $outdatedProjectionXamlIdl.LastWriteTime
+assert -desc "Regenerating does not overwrite if content is the same" -actual ($outdatedProjectionXamlIdlLastModifiedTime -eq $outdatedProjectionXamlIdlNewModifiedTime)
 
 $nonWinRtHeaderSrc = "$testCodeDir\NonWinRtHeader.h"
 $nonWinRtHeaderIdlPath = "$testCodeDir\NonWinRtHeader.idl"
