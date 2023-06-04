@@ -25,8 +25,8 @@
 						Category="General"/>
 
 	<StringListProperty Name="IdlGenCppPch"
-						DisplayName="Pch files"
-						Description="C++ PCH files"
+						DisplayName="PCH file"
+						Description="C++ PCH file. Only 1 PCH is supported."
 						Category="General"/>
 
 	<StringListProperty Name="IdlGenCppGetterTemplate"
@@ -46,7 +46,7 @@
 
 	<BoolProperty Name="IdlGenCppDisableUnknownAttributeWarning"
 				  DisplayName="Disable unknown attribute warning"
-				  Description="Disable unknown attribute warning caused by [[clang::annotate]]. Default is true."
+				  Description="Disable unknown attribute warning caused by [[idlgen:*]]. Default is true."
 				  Category="General"/>
 
 </Rule>
