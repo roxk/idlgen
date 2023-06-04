@@ -61,7 +61,7 @@
             File="$(TimestampFile)" Lines=""
             Overwrite="true" />
 		<WriteLinesToFile
-            File="$(IdlFile)" Lines=""
+            File="$(IdlFile)" Lines="namespace $(RootNamespace) {}"
             Overwrite="true"
 			Condition="Exists('$(IdlFile)')"/>
 		<ItemGroup>
