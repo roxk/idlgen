@@ -5,7 +5,6 @@
 		<Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
 		<IdlGenCppDisableUnknownAttributeWarning Condition="'$(IdlGenCppDisableUnknownAttributeWarning)' == ''">true</IdlGenCppDisableUnknownAttributeWarning>
 		<IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
-		<IdlGenCppExclude Condition="'$(IdlGenCppExclude)' == ''">App.h;pch.h</IdlGenCppExclude>
 	</PropertyGroup>
 	<PropertyGroup>
 		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\include\idlgen</IdlGenCppIncludeDirs>
