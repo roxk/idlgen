@@ -17,7 +17,7 @@ namespace winrt::SampleApp::implementation
         [[idlgen::property]]
         void MyProperty(int32_t value);
 
-        Status Status() { return mStatus; }
+        enum Status Status() { return mStatus; }
     private:
         friend struct MainPageT<MainPage>;
         uint32_t MinMaxWorks(uint32_t a) { return std::max(a, 42u); }
