@@ -1,4 +1,4 @@
-# idlgen, an IDL Generator for WinRT
+﻿# idlgen, an IDL Generator for WinRT
 
 [![nuget](https://img.shields.io/nuget/v/IdlGen.IdlGen.Cpp)](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/)
 [![VS2022](https://img.shields.io/visual-studio-marketplace/v/Roxk.Idlgencpp.svg?label=Visual%20Studio%202022%20(Preview))](https://marketplace.visualstudio.com/items?itemName=Roxk.idlgencpp)
@@ -35,6 +35,7 @@ On top of the nuget package, you can also install IDE extension to streamline th
 3. Edit the header file. E.g. add a method.
 4. Build the project. A custom build step that generates idl files would run before `Midl`.
 5. Viola! The idl file of the implementation type has been updated. `Midl` would then update/generate a `winmd` with the modification, and C++/WinRT would pick it up when generating projection.
+6. Made a mistake in header, e.g. forgot to add an import? No worries! Just edit your header and rebuild. Idlgen would pick up your changes and proceed to generate an updated idl. It just works™️.
 
 The library would generate the whole runtimm class definition for you. There should be literally zero edit you need to make on the resultant idl file.
 
@@ -172,11 +173,9 @@ Idlgen needs to parse WinRT projection header files (except a header's own proje
 
 #### I made a mistake in the header file, and idlgen generated an idl file that cannot be compiled!
 
-Just empty the affected idl file, fix the header and regenerates.
+Fix your header and rebuild, and idlgen would re-generate the idl. It should just work™️. If it doesn't, please file a bug.
 
-#### I made a mistake in the header file, and idlgen generated an idl file that caused C++/WinRT to generate a projection that breaks compilation!
-
-This shouldn't happen anymore. Please file a bug if you encounter this issue. Meanwhile, empty the idl file and fix the header and regenerates.
+*How it works*: Idlgen clear (i.e. empty) idl before bootsrapping so malformed idl doesn't cause problems. If for some reason automatical clearing doesn't work, you can workaround by manually clearing idl file.
 
 ## Incremental Adoption in Existing Codebase
 
@@ -206,11 +205,11 @@ Just follow the advice in [Incremental Adoption in Existing Codebase](#Increment
 
 Idl generation from C++ actually involves the classic chicken and egg problem. To generate idl, a header file needs to be compiled. To compile the header file, C++/WinRT projection need to exist. To generate C++/WinRT projection, winmd and thus idl files are required.
 
-Idlgen solves this problem by inserting a "bootstrap" build step before generating idl. During bootstrapping, idlgen would compile existing idl files and forces C++/WinRT to generate projection. Said projection would thus allow idlgen to compile headers and generate idl(s) without issues.
+Idlgen solves this problem by inserting a "bootstrap" build step before generating idl. During bootstrapping, idlgen would compile existing idl files and forces C++/WinRT to generate projection. Said projection would thus allow idlgen to compile headers and generate idls without issues.
 
 Bootstrapping is only needed when there is no projection generated yet. To prevent doing redundant work, idlgen re-uses as much of existing C++/WinRT targets as possible. With C++/WinRT's built-in incremental build support, bootstrapping would be skipped automatically when necessary. (The actual details can be tricky, see #53)
 
-Note that while idlgen actually skips parsing a header's projection (i.e. `Class.g.h` for `Class.h`) to allow seamless IDL generation from outdated or non-existent projection, bootstrapping is still needed to generate projection for SDK or other libraries's winmd.
+Note that while idlgen actually skips parsing a header's projection (i.e. `Class.g.h` for `Class.h`) to allow seamless IDL generation from outdated or non-existent projection, bootstrapping is still needed to generate projection for windows SDK or other libraries's winmd.
 
 ## Contribution
 
