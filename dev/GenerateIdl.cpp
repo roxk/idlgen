@@ -130,7 +130,7 @@ bool GenerateFakeProjectionFromHeader(
 )
 {
     const std::string code{buffer.str()};
-    constexpr auto regexStr = "^#\\s*include\\s*\"\\w*\\.g\\.h\"";
+    constexpr auto regexStr = "^#\\s*include\\s*\"((\\\\|\\/|\\.)*\\w+)+\\.g\\.h\"";
     std::regex includeRegex(regexStr);
     auto includeDirectiveMatch{std::sregex_iterator(code.begin(), code.end(), includeRegex)};
     if (includeDirectiveMatch == std::sregex_iterator())
