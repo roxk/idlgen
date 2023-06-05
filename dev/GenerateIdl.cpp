@@ -130,14 +130,18 @@ bool GenerateFakeProjectionFromHeader(
 )
 {
     const std::string code{buffer.str()};
-    constexpr auto regexStr = "^#\\s*include\\s*\"((\\\\|\\/|\\.)*\\w+)+\\.g\\.h\"";
+    constexpr auto regexStr = "^#\\s*include\\s*\"(((\\\\|\\/|\\.)*\\w+)+)\\.g\\.h\"";
+    constexpr auto includeCaptureGroupCount = 2;
+    constexpr auto includeExpectedMatchCount = includeCaptureGroupCount + 1;
+    constexpr auto includePathIndex = 1;
+    constexpr auto includeClassNameIndex = 2;
     std::regex includeRegex(regexStr);
     auto includeDirectiveMatch{std::sregex_iterator(code.begin(), code.end(), includeRegex)};
     if (includeDirectiveMatch == std::sregex_iterator())
     {
         return true;
     }
-    auto firstMatchPosition{(*includeDirectiveMatch)[0].first - code.begin()};
+    auto firstMatch{*includeDirectiveMatch};
     // Find namespace
     constexpr auto namespaceStr = "namespace\\s+(\\w|::|)+\\s*\\{";
     std::regex namespaceRegex(namespaceStr);
@@ -205,13 +209,15 @@ bool GenerateFakeProjectionFromHeader(
         std::cout << projectionReplacement << std::endl;
         std::error_code ec;
         stdfs::path outPath{GeneratedFilesDir.getValue()};
-        outPath.append("");
+        auto includePath{
+            std::regex_replace(firstMatch[includePathIndex].str(), std::regex(firstMatch[classNameIndex].str()), name)};
+        outPath.append(includePath);
         llvm::raw_fd_ostream out(
             outPath.string(), ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None
         );
         if (ec)
         {
-            std::cerr << "Failed to open .idlgen.h output" << std::endl;
+            std::cerr << "Failed to open output for " << outPath << std::endl;
             std::cerr << ec.message() << std::endl;
             return false;
         }
