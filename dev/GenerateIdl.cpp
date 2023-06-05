@@ -94,7 +94,7 @@ static lc::opt<std::string> GenerateOutputPath(
 
 static lc::opt<std::string> RootNamespace("root-namespace", lc::desc("Root namespace"));
 
-static lc::opt<std::string> GeneratedFilesDir("--generated-files-dir", lc::desc("Path of Generated Files"));
+static lc::opt<std::string> GeneratedFilesDir("generated-files-dir", lc::desc("Path of Generated Files"));
 
 static lc::list<std::string> Includes("include", lc::desc("Include folder(s)"));
 
