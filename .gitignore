@@ -3,7 +3,8 @@
 .vs
 test-data/src/**/*.idl
 test-data/src/**/*.testidl
-test-data/include/*.idlgen.h
+test-data/include/**/*.idlgen.h
+test-data/include/**/*.g.h.bak
 *.nupkg
 .nuspec
 *.idl.bak

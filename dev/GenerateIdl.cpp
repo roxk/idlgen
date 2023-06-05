@@ -130,11 +130,11 @@ bool GenerateFakeProjectionFromHeader(
 )
 {
     const std::string code{buffer.str()};
-    constexpr auto regexStr = "^#\\s*include\\s*\"(((\\\\|\\/|\\.)*\\w+)+)\\.g\\.h\"";
-    constexpr auto includeCaptureGroupCount = 2;
+    constexpr auto regexStr = "^#\\s*include\\s*\"(((\\\\|\\/|\\.)*(\\w+))+)\\.g\\.h\"";
+    constexpr auto includeCaptureGroupCount = 4;
     constexpr auto includeExpectedMatchCount = includeCaptureGroupCount + 1;
     constexpr auto includePathIndex = 1;
-    constexpr auto includeClassNameIndex = 2;
+    constexpr auto includeClassNameIndex = 4;
     std::regex includeRegex(regexStr);
     auto includeDirectiveMatch{std::sregex_iterator(code.begin(), code.end(), includeRegex)};
     if (includeDirectiveMatch == std::sregex_iterator())
@@ -206,12 +206,16 @@ bool GenerateFakeProjectionFromHeader(
         projectionReplacement += name;
         projectionReplacement += "T {};\n";
         projectionReplacement += "}\n"; // namespace factory_implementation
-        std::cout << projectionReplacement << std::endl;
         std::error_code ec;
         stdfs::path outPath{GeneratedFilesDir.getValue()};
-        auto includePath{
-            std::regex_replace(firstMatch[includePathIndex].str(), std::regex(firstMatch[classNameIndex].str()), name)};
+        auto includePath{std::regex_replace(
+            firstMatch[includePathIndex].str(), std::regex(firstMatch[includeClassNameIndex].str()), name + ".idlgen.h"
+        )};
         outPath.append(includePath);
+        std::cout << "includePath=" << firstMatch[includePathIndex].str()
+                  << " includePathClassName=" << firstMatch[includeClassNameIndex].str() << std::endl;
+        std::cout << outPath << std::endl;
+        std::cout << projectionReplacement << std::endl;
         llvm::raw_fd_ostream out(
             outPath.string(), ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None
         );
