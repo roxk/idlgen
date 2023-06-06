@@ -312,17 +312,14 @@ absent -src $someInterfaceOutput -line "PrivateMethod"
 absent -src $someInterfaceOutput -line "HiddenInterface"
 absent -src $someInterfaceOutput -line "HiddenMethod"
 
-$outdatedProjectionOutput = get-gen-output "$testCodeDir\OutdatedProjection.h"
-exists -src $outdatedProjectionOutput -line "unsealed runtimeclass OutdatedProjection"
-
-$outdatedProjectionXamlOutput = get-gen-output "$testCodeDir\OutdatedProjectionXaml.xaml.h"
-exists -src $outdatedProjectionXamlOutput -line "unsealed runtimeclass OutdatedProjectionXaml"
+# Note: Outdated projection test cannot be tested here as fixing that involves generating projection from
+# bootstrap IDL. These could be tested in sample-app instead
 
 # Test re-generate wouldn't overwrite
-$outdatedProjectionXamlIdl = get-childitem "$testCodeDir" "OutdatedProjectionXaml.idl"
+$outdatedProjectionXamlIdl = get-childitem "$testCodeDir" "SomeInterface.idl"
 $outdatedProjectionXamlIdlLastModifiedTime = $outdatedProjectionXamlIdl.LastWriteTime
-$outdatedProjectionXamlOutput = get-gen-output "$testCodeDir\OutdatedProjectionXaml.xaml.h" -keepExisting
-$outdatedProjectionXamlIdl = get-childitem "$testCodeDir" "OutdatedProjectionXaml.idl"
+$outdatedProjectionXamlOutput = get-gen-output "$testCodeDir\SomeInterface.h" -keepExisting
+$outdatedProjectionXamlIdl = get-childitem "$testCodeDir" "SomeInterface.idl"
 $outdatedProjectionXamlIdlNewModifiedTime = $outdatedProjectionXamlIdl.LastWriteTime
 assert -desc "Regenerating does not overwrite if content is the same" -actual ($outdatedProjectionXamlIdlLastModifiedTime -eq $outdatedProjectionXamlIdlNewModifiedTime)
 
