@@ -1,6 +1,7 @@
 #pragma once
 
 #include "idlgen.h"
+#include "ShallowerViewModel.h"
 #include <cstdint>
 
 namespace winrt::Root::implementation
