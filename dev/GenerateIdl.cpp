@@ -263,14 +263,16 @@ std::vector<std::string> FindRuntimeClassNames(const std::string& code)
     return classNames;
 }
 
-std::vector<std::string> FindEnums(const std::string& code)
+// Pasting for easier copy and paste.
+// TODO: Use constexpr std::string in C++20.
+constexpr auto NameRegexMiddle = "\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*";
+
+template <int CaptureGroupCount, int NameIndex, typename StringType>
+std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringType&& regexStr)
 {
-    constexpr auto regexStr = "enum\\s+class\\s+_*(\\w+)\\s*:\\s*(idlgen::)*author_enum(_flags)*";
     std::regex regex(regexStr);
-    constexpr auto captureGroupCount = 3;
-    constexpr auto expectedMatchCount = captureGroupCount + 1;
-    constexpr auto classNameIndex = 1;
-    std::vector<std::string> enumNames;
+    constexpr auto expectedMatchCount = CaptureGroupCount + 1;
+    std::vector<std::string> names;
     for (auto it = code.begin(); it != code.end();)
     {
         std::smatch results;
@@ -279,9 +281,33 @@ std::vector<std::string> FindEnums(const std::string& code)
             break;
         }
         it = results[0].second;
-        enumNames.emplace_back(results[classNameIndex]);
+        names.emplace_back(results[NameIndex]);
     }
-    return enumNames;
+    return names;
+}
+
+std::vector<std::string> FindEnumNames(const std::string& code)
+{
+    constexpr auto regexStr = "enum\\s+class\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_enum(_flags)*";
+    return FindAuthoredTypeNames<5, 3>(code, regexStr);
+}
+
+std::vector<std::string> FindStructNames(const std::string& code)
+{
+    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_struct";
+    return FindAuthoredTypeNames<5, 4>(code, regexStr);
+}
+
+std::vector<std::string> FindInterfaceNames(const std::string& code)
+{
+    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_interface";
+    return FindAuthoredTypeNames<5, 4>(code, regexStr);
+}
+
+std::vector<std::string> FindDelegateNames(const std::string& code)
+{
+    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_delegate";
+    return FindAuthoredTypeNames<5, 4>(code, regexStr);
 }
 
 bool GenerateBootstrapIdl(
@@ -304,10 +330,11 @@ bool GenerateBootstrapIdl(
     std::string namespaceDefinition{
         std::regex_replace(namespaceMatchResult.str(), std::regex("(::implementation|winrt::|::factory_implementation)"), "")};
     namespaceDefinition = std::regex_replace(namespaceDefinition, std::regex("::"), ".");
-    // Find struct Class : ClassT<Class>
     auto classNames{FindRuntimeClassNames(code)};
-    // Find enum (_)Enum : idlgen::author_enum_(flags)
-    auto enumNames{FindEnums(code)};
+    auto enumNames{FindEnumNames(code)};
+    auto structNames{FindStructNames(code)};
+    auto interfaceNames{FindInterfaceNames(code)};
+    auto delegateNames{FindDelegateNames(code)};
     std::string bootstrapIdl{namespaceDefinition};
     bootstrapIdl += "\n";
     for (auto&& name : enumNames)
@@ -321,6 +348,24 @@ bool GenerateBootstrapIdl(
         bootstrapIdl += "runtimeclass ";
         bootstrapIdl += name;
         bootstrapIdl += " {};\n";
+    }
+    for (auto&& name : structNames)
+    {
+        bootstrapIdl += "struct ";
+        bootstrapIdl += name;
+        bootstrapIdl += " {};\n";
+    }
+    for (auto&& name : interfaceNames)
+    {
+        bootstrapIdl += "interface ";
+        bootstrapIdl += name;
+        bootstrapIdl += " {};\n";
+    }
+    for (auto&& name : delegateNames)
+    {
+        bootstrapIdl += "delegate void ";
+        bootstrapIdl += name;
+        bootstrapIdl += "(Object a, Object b);\n";
     }
     bootstrapIdl += "}\n"; // namespace $RootNamespace
     auto writerOpt{GetIdlWriter(filePath, true)};
