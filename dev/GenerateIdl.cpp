@@ -137,16 +137,21 @@ struct IdlWriter
     IdlWriter& operator=(IdlWriter&& that) = default;
     ~IdlWriter()
     {
+        if (!out)
+        {
+            return;
+        }
+        out.reset();
         std::string fileBackup{idlFile + ".bak"};
         std::string genFile{idlFile + ".gen"};
         stdfs::path genFilePath{genFile};
         const uint64_t genFileSize{stdfs::file_size(genFilePath)};
         if (genFileSize > 0)
         {
-            stdfs::rename(idlFile, fileBackup);
-            stdfs::rename(genFile, idlFile);
+            lfs::rename(idlFile, fileBackup);
+            lfs::rename(genFile, idlFile);
         }
-        stdfs::remove(genFile);
+        lfs::remove(genFile);
     }
 
   private:
