@@ -84,17 +84,13 @@ static lc::opt<bool> Help("h", lc::desc("Alias for -help"), lc::Hidden);
 
 static lc::opt<bool> Generate("gen", lc::desc("Generate IDL next to the input file"));
 
-static lc::opt<bool> GenerateFakeProjection(
-    "gen-fake-projection", lc::desc("Generate fake projection. --generated-files-dir and --root-namespace is required.")
+static lc::opt<bool> GenerateBootstrap(
+    "gen-bootstrap", lc::desc("Generate bootstrap idl")
 );
 
 static lc::opt<std::string> GenerateOutputPath(
     "gen-out", lc::desc("If specified and --gen is applied, control the output path of the generated IDL")
 );
-
-static lc::opt<std::string> RootNamespace("root-namespace", lc::desc("Root namespace"));
-
-static lc::opt<std::string> GeneratedFilesDir("generated-files-dir", lc::desc("Path of Generated Files"));
 
 static lc::list<std::string> Includes("include", lc::desc("Include folder(s)"));
 
@@ -125,23 +121,122 @@ static void PrintVersion(llvm::raw_ostream& OS)
     OS << "idlgen 0.0.1" << '\n';
 }
 
-bool GenerateFakeProjectionFromHeader(
+template <typename Func>
+void DebugPrint(Func&& func)
+{
+    if (Verbose)
+    {
+        func();
+    }
+}
+
+struct IdlWriter
+{
+    std::unique_ptr<llvm::raw_ostream> out;
+    IdlWriter(IdlWriter&& that) = default;
+    IdlWriter& operator=(IdlWriter&& that) = default;
+    ~IdlWriter()
+    {
+        std::string fileBackup{idlFile + ".bak"};
+        std::string genFile{idlFile + ".gen"};
+        stdfs::path genFilePath{genFile};
+        const uint64_t genFileSize{stdfs::file_size(genFilePath)};
+        if (genFileSize > 0)
+        {
+            stdfs::rename(idlFile, fileBackup);
+            stdfs::rename(genFile, idlFile);
+        }
+        stdfs::remove(genFile);
+    }
+
+  private:
+    std::string idlFile;
+    IdlWriter(std::unique_ptr<llvm::raw_ostream> out, std::string idlFile) :
+        out(std::move(out)),
+        idlFile(std::move(idlFile))
+    {
+    }
+    friend std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExtension);
+};
+
+std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExtension)
+{
+    std::string idlFile{filePath};
+    if (replaceExtension)
+    {
+        // Trim all extension to handle cases like .xaml.h -> .idl
+        auto extension = llvm::sys::path::extension(idlFile);
+        auto extensionIndex = idlFile.rfind(extension);
+        while (extensionIndex != std::string::npos && extensionIndex < idlFile.size())
+        {
+            idlFile.erase(extensionIndex);
+            extension = llvm::sys::path::extension(idlFile);
+            extensionIndex = idlFile.rfind(extension);
+        }
+        idlFile += ".idl";
+    }
+    std::error_code ec;
+    auto out{std::make_unique<llvm::raw_fd_ostream>(
+        idlFile + ".gen", ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None
+    )};
+    if (ec)
+    {
+        std::cerr << "Failed to open gen output for " << idlFile << std::endl;
+        std::cerr << ec.message() << std::endl;
+        return std::nullopt;
+    }
+    return IdlWriter(std::move(out), std::move(idlFile));
+}
+
+std::vector<std::string> FindRuntimeClassNames(const std::string& code)
+{
+    constexpr auto regexStr =
+        "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3>";
+    std::regex regex(regexStr);
+    constexpr auto captureGroupCount = 5;
+    constexpr auto expectedMatchCount = captureGroupCount + 1;
+    constexpr auto classNameIndex = 3;
+    std::vector<std::string> classNames;
+    for (auto it = code.begin(); it != code.end();)
+    {
+        std::smatch results;
+        if (!std::regex_search(it, code.end(), results, regex) || results.size() < expectedMatchCount)
+        {
+            break;
+        }
+        it = results[0].second;
+        classNames.emplace_back(results[classNameIndex]);
+    }
+    return classNames;
+}
+
+std::vector<std::string> FindEnums(const std::string& code)
+{
+    constexpr auto regexStr = "enum\\s+class\\s+_*(\\w+)\\s*:\\s*(idlgen::)*author_enum(_flags)*";
+    std::regex regex(regexStr);
+    constexpr auto captureGroupCount = 3;
+    constexpr auto expectedMatchCount = captureGroupCount + 1;
+    constexpr auto classNameIndex = 1;
+    std::vector<std::string> enumNames;
+    for (auto it = code.begin(); it != code.end();)
+    {
+        std::smatch results;
+        if (!std::regex_search(it, code.end(), results, regex) || results.size() < expectedMatchCount)
+        {
+            break;
+        }
+        it = results[0].second;
+        enumNames.emplace_back(results[classNameIndex]);
+    }
+    return enumNames;
+}
+
+bool GenerateBootstrapIdl(
+    std::string_view filePath,
     clang::StringRef buffer
 )
 {
     const std::string code{buffer.str()};
-    constexpr auto regexStr = "^#\\s*include\\s*\"(((\\\\|\\/|\\.)*(\\w+))+)\\.g\\.h\"";
-    constexpr auto includeCaptureGroupCount = 4;
-    constexpr auto includeExpectedMatchCount = includeCaptureGroupCount + 1;
-    constexpr auto includePathIndex = 1;
-    constexpr auto includeClassNameIndex = 4;
-    std::regex includeRegex(regexStr);
-    auto includeDirectiveMatch{std::sregex_iterator(code.begin(), code.end(), includeRegex)};
-    if (includeDirectiveMatch == std::sregex_iterator())
-    {
-        return true;
-    }
-    auto firstMatch{*includeDirectiveMatch};
     // Find namespace
     constexpr auto namespaceStr = "namespace\\s+(\\w|::|)+\\s*\\{";
     std::regex namespaceRegex(namespaceStr);
@@ -151,82 +246,46 @@ bool GenerateFakeProjectionFromHeader(
     {
         return true;
     }
-    // "Canonicalize" to WinRT namespace, i.e. remove implementation or factory_implementation
-    // Using :_: as this is an invalid C++ token
+    // Get WinRT namespace
     auto namespaceMatchResult{namespaceResults[namespaceIndex]};
     std::string namespaceDefinition{
-        std::regex_replace(namespaceMatchResult.str(), std::regex("::implementation"), ":_:")};
-    if (namespaceDefinition.size() == namespaceMatchResult.length())
-    {
-        namespaceDefinition = std::regex_replace(namespaceDefinition, std::regex("::factory_implementation"), ":_:");
-    }
+        std::regex_replace(namespaceMatchResult.str(), std::regex("(::implementation|winrt::|::factory_implementation)"), "")};
+    namespaceDefinition = std::regex_replace(namespaceDefinition, std::regex("::"), ".");
     // Find struct Class : ClassT<Class>
-    constexpr auto baseRegexStr =
-        "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3>";
-    std::regex baseRegex(baseRegexStr);
-    constexpr auto baseCaptureGroupCount = 5;
-    constexpr auto expectedBaseMatchCount = baseCaptureGroupCount + 1;
-    constexpr auto classNameIndex = 3;
-    std::vector<std::string> classNames;
-    for (auto it = code.begin(); it != code.end();)
+    auto classNames{FindRuntimeClassNames(code)};
+    // Find enum (_)Enum : idlgen::author_enum_(flags)
+    auto enumNames{FindEnums(code)};
+    std::string bootstrapIdl{namespaceDefinition};
+    bootstrapIdl += "\n";
+    for (auto&& name : enumNames)
     {
-        std::smatch results;
-        if (!std::regex_search(it, code.end(), results, baseRegex) || results.size() < expectedBaseMatchCount)
-        {
-            break;
-        }
-        it = results[0].second;
-        classNames.emplace_back(results[classNameIndex]);
-    }
-    if (classNames.empty())
-    {
-        return buffer.data();
+        bootstrapIdl += "enum ";
+        bootstrapIdl += name;
+        bootstrapIdl += " {};\n";
     }
     for (auto&& name : classNames)
     {
-        std::string projectionReplacement{"#pragma once\n\n"};
-        projectionReplacement += "#include <winrt/";
-        projectionReplacement += RootNamespace;
-        projectionReplacement += ".h>\n";
-        projectionReplacement += std::regex_replace(namespaceDefinition, std::regex(":_:"), "");
-        projectionReplacement += "\n";
-        projectionReplacement += "struct ";
-        projectionReplacement += name;
-        projectionReplacement += " {};\n";
-        projectionReplacement += "}\n"; // namespace $RootNamespace
-        projectionReplacement += std::regex_replace(namespaceDefinition, std::regex(":_:"), "::implementation");
-        projectionReplacement += "\n";
-        projectionReplacement += "template <typename T, typename... I> struct ";
-        projectionReplacement += name;
-        projectionReplacement += "T {};\n";
-        projectionReplacement += "}\n"; // namespace implementation
-        projectionReplacement += std::regex_replace(namespaceDefinition, std::regex(":_:"), "::factory_implementation");
-        projectionReplacement += "\n";
-        projectionReplacement += "template <typename T, typename... I> struct ";
-        projectionReplacement += name;
-        projectionReplacement += "T {};\n";
-        projectionReplacement += "}\n"; // namespace factory_implementation
-        std::error_code ec;
-        stdfs::path outPath{GeneratedFilesDir.getValue()};
-        auto includePath{std::regex_replace(
-            firstMatch[includePathIndex].str(), std::regex(firstMatch[includeClassNameIndex].str()), name + ".idlgen.h"
-        )};
-        outPath.append(includePath);
-        std::cout << "includePath=" << firstMatch[includePathIndex].str()
-                  << " includePathClassName=" << firstMatch[includeClassNameIndex].str() << std::endl;
-        std::cout << outPath << std::endl;
-        std::cout << projectionReplacement << std::endl;
-        llvm::raw_fd_ostream out(
-            outPath.string(), ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None
-        );
-        if (ec)
-        {
-            std::cerr << "Failed to open output for " << outPath << std::endl;
-            std::cerr << ec.message() << std::endl;
-            return false;
-        }
-        out << projectionReplacement;
+        bootstrapIdl += "runtimeclass ";
+        bootstrapIdl += name;
+        bootstrapIdl += " {};\n";
     }
+    bootstrapIdl += "}\n"; // namespace $RootNamespace
+    auto writerOpt{GetIdlWriter(filePath, true)};
+    if (!writerOpt)
+    {
+        std::cerr << "Failed to get idl writer" << std::endl;
+        return false;
+    }
+    auto writer{std::move(*writerOpt)};
+    DebugPrint(
+        [&]()
+        {
+            std::cout << "Generating bootstrap idl" << std::endl;
+            std::cout << filePath << std::endl;
+            std::cout << bootstrapIdl << std::endl;
+        }
+    );
+    *writer.out << bootstrapIdl;
     return true;
 }
 
@@ -279,19 +338,6 @@ int main(int argc, const char** argv)
         std::cerr << "No files specified" << std::endl;
         return 1;
     }
-    if (GenerateFakeProjection)
-    {
-        if (RootNamespace.empty())
-        {
-            std::cerr << "Root namespace must be provided when generating fake projection" << std::endl;
-            return 1;
-        }
-        else if (GeneratedFilesDir.empty())
-        {
-            std::cerr << "Generated Files must be provided when generating fake projection" << std::endl;
-            return 1;
-        }
-    }
     std::vector<std::string> clangArgs{
         "-xc++-header",
         "-Wno-unknown-attributes",
@@ -322,7 +368,7 @@ int main(int argc, const char** argv)
                   << std::endl;
         return 1;
     }
-    if (GenerateFakeProjection)
+    if (GenerateBootstrap)
     {
         for (auto&& filePath : FileNames)
         {
@@ -337,7 +383,7 @@ int main(int argc, const char** argv)
             {
                 continue;
             }
-            const auto result{GenerateFakeProjectionFromHeader(code->getBuffer())};
+            const auto result{GenerateBootstrapIdl(filePath, code->getBuffer())};
             if (!result)
             {
                 std::cerr << "fatal: Failed to generate fake projection for " << filePath << std::endl;
@@ -416,97 +462,44 @@ int main(int argc, const char** argv)
             continue;
         }
         auto fileName{llvm::sys::path::filename(filePath).str()};
-        std::optional<std::string> fileBackup;
-        std::optional<std::string> genFile;
-        std::optional<std::string> idlFile;
-        std::optional<llvm::raw_fd_ostream> fileOutputStreamOpt;
-        auto out = [&]() -> std::optional<std::reference_wrapper<llvm::raw_ostream>>
-        {
-            if (!Generate)
+        std::optional<IdlWriter> writerOpt;
+        auto out{
+            [&]() -> std::optional<std::reference_wrapper<llvm::raw_ostream>>
             {
-                return llvm::outs();
-            }
-            if (!outputFile)
-            {
-                idlFile.emplace(filePath);
-                // Trim all extension to handle cases like .xaml.h -> .idl
-                auto extension = llvm::sys::path::extension(*idlFile);
-                auto extensionIndex = idlFile->rfind(extension);
-                while (extensionIndex != std::string::npos && extensionIndex < idlFile->size())
+                if (!Generate)
                 {
-                    idlFile->erase(extensionIndex);
-                    extension = llvm::sys::path::extension(*idlFile);
-                    extensionIndex = idlFile->rfind(extension);
+                    return llvm::outs();
                 }
-                *idlFile += ".idl";
-            }
-            else
-            {
-                idlFile.emplace(outputFile->get());
-            }
-            fileBackup = *idlFile + ".bak";
-            genFile = *idlFile + ".gen";
-            std::error_code ec;
-            fileOutputStreamOpt.emplace(
-                *genFile,
-                ec,
-                lfs::CreationDisposition::CD_CreateAlways,
-                lfs::FileAccess::FA_Write,
-                lfs::OpenFlags::OF_None
-            );
-            if (ec)
-            {
-                std::cerr << "fatal: Failed to open default idl output" << std::endl;
-                std::cerr << ec.message() << std::endl;
-                return std::nullopt;
-            }
-            return *fileOutputStreamOpt;
-        }();
+                if (!outputFile)
+                {
+                    writerOpt = std::move(GetIdlWriter(filePath, true));
+                }
+                else
+                {
+                    writerOpt = std::move(GetIdlWriter(outputFile->get(), false));
+                }
+                if (!writerOpt)
+                {
+                    return std::nullopt;
+                }
+                return *writerOpt->out;
+            }()};
         if (!out)
         {
             return 1;
         }
-        auto buffer{code->getBuffer()};
         const auto result = ct::runToolOnCodeWithArgs(
             std::make_unique<idlgen::GenIdlFrontendAction>(
                 out.value().get(), Verbose, getterTemplates, propertyTemplates
             ),
-            buffer,
+            code->getBuffer(),
             clangArgs,
             filePath
         );
         if (Generate)
         {
             // Flush the file ostream
-            fileOutputStreamOpt.reset();
-            if (result && fileBackup && genFile && idlFile)
-            {
-                namespace stdfs = std::filesystem;
-                stdfs::path genFilePath{*genFile};
-                const uint64_t genFileSize{stdfs::file_size(genFilePath)};
-                if (genFileSize > 0)
-                {
-                    stdfs::path idlFilePath{*idlFile};
-                    if (stdfs::exists(idlFilePath))
-                    {
-                        const uint64_t idlFileSize{stdfs::file_size(idlFilePath)};
-                        if (genFileSize != idlFileSize || !IsContentEqual(genFilePath, idlFilePath))
-                        {
-                            llvm::sys::fs::rename(*idlFile, *fileBackup);
-                            llvm::sys::fs::rename(*genFile, *idlFile);
-                        }
-                    }
-                    else
-                    {
-                        llvm::sys::fs::rename(*idlFile, *fileBackup);
-                        llvm::sys::fs::rename(*genFile, *idlFile);
-                    }
-                }
-            }
-            if (genFile)
-            {
-                llvm::sys::fs::remove(*genFile);
-            }
+            writerOpt.reset();
         }
         outputFile.reset();
     }
