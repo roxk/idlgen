@@ -341,19 +341,21 @@ bool GenerateBootstrapIdl(
     {
         bootstrapIdl += "enum ";
         bootstrapIdl += name;
-        bootstrapIdl += " {};\n";
+        bootstrapIdl += " { _Dummy };\n";
     }
     for (auto&& name : classNames)
     {
-        bootstrapIdl += "runtimeclass ";
+        bootstrapIdl += "[default_interface] runtimeclass ";
         bootstrapIdl += name;
-        bootstrapIdl += " {};\n";
+        bootstrapIdl += " : Windows.UI.Xaml.DependencyObject { ";
+        bootstrapIdl += name;
+        bootstrapIdl += "(); };\n";
     }
     for (auto&& name : structNames)
     {
         bootstrapIdl += "struct ";
         bootstrapIdl += name;
-        bootstrapIdl += " {};\n";
+        bootstrapIdl += " { Int32 _Dummy; };\n";
     }
     for (auto&& name : interfaceNames)
     {
