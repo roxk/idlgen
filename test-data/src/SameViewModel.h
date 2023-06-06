@@ -2,6 +2,7 @@
 
 #include "SameViewModel.g.h"
 #include "SealedSameViewModel.g.h"
+#include "SameViewModelHide.g.h"
 
 namespace winrt::Root::A::implementation
 {

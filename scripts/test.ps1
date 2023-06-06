@@ -109,9 +109,35 @@ test-bootstrap "$testCodeDir\BlankPage.h" -func {
 	exists -src $out -line "runtimeclass BlankPage"
 }
 
+test-bootstrap "$testCodeDir\SameViewModel.h" -func {
+	param([string]$out)
+	exists -src $out -line "runtimeclass SameViewModel"
+	exists -src $out -line "runtimeclass SealedSameViewModel"
+}
+
 test-bootstrap "$testCodeDir\SomeEnum.h" -func {
 	param([string]$out)
 	exists -src $out -line "enum SomeEnum"
+}
+
+test-bootstrap "$testCodeDir\SomeFlag.h" -func {
+	param([string]$out)
+	exists -src $out -line "enum SomeFlag"
+}
+
+test-bootstrap "$testCodeDir\SomeStruct.h" -func {
+	param([string]$out)
+	exists -src $out -line "struct SomeStruct"
+}
+
+test-bootstrap "$testCodeDir\SomeInterface.h" -func {
+	param([string]$out)
+	exists -src $out -line "interface SomeInterface"
+}
+
+test-bootstrap "$testCodeDir\SomeDelegate.h" -func {
+	param([string]$out)
+	exists -src $out -line "delegate void SomeEventHandler"
 }
 
 # Test BlankPage
