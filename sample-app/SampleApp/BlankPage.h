@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "BlankPage.g.h"
+#include "MoreClass.g.h"
 
 namespace winrt::SampleApp::implementation
 {
@@ -28,6 +29,11 @@ namespace winrt::SampleApp::implementation
         void operator()(SampleApp::BlankPage const& sender, uint64_t e) {}
     };
 
+    struct MoreClass : MoreClassT<MoreClass>
+    {
+        MoreClass() {}
+    };
+
     struct
     BlankPage : BlankPageT<BlankPage>, idlgen::base<Windows::UI::Xaml::Controls::Page>
     {
@@ -38,10 +44,10 @@ namespace winrt::SampleApp::implementation
         }
 
         [[idlgen::property]]
-        enum Category Category() { return Category::Literature; }
+        enum Category Category();
 
         [[idlgen::property]]
-        enum Permission Permission() { return Permission::Camera | Permission::Microphone; }
+        enum Permission Permission();
 
         Point GetPoint() { return Point{}; }
 
@@ -51,14 +57,17 @@ namespace winrt::SampleApp::implementation
         void MyProperty(int32_t value);
 
         void ClickHandler(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
-    protected:
-        friend struct winrt::impl::produce<BlankPage, SampleApp::IBlankPageProtected>;
+
+        [[idlgen::protected]]
         bool ProtectedGetter();
     };
 }
 
 namespace winrt::SampleApp::factory_implementation
 {
+    struct MoreClass : MoreClassT<MoreClass, implementation::MoreClass>
+    {
+    };
     struct BlankPage : BlankPageT<BlankPage, implementation::BlankPage>
     {
     };

@@ -29,6 +29,14 @@ delegate void BlankPageEventHandler(SampleApp.BlankPage sender, UInt64 e);
 }
 namespace SampleApp
 {
+[default_interface]
+unsealed runtimeclass MoreClass
+{
+MoreClass();
+}
+}
+namespace SampleApp
+{
 unsealed runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 {
 BlankPage();

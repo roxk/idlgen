@@ -11,6 +11,7 @@
 		<CleanDependsOn>
 			$(CleanDependsOn);IdlgenCppClean
 		</CleanDependsOn>
+		<IdlgenCppExePath>$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\</IdlgenCppExePath>
 	</PropertyGroup>
 	<ItemGroup Condition="'$(IdlGenCppInclude)' == ''">
 		<IdlGenCppInclude Include="@(ClInclude)" Exclude="$(IdlGenCppExclude)" />
@@ -38,9 +39,8 @@
 			<PchOutput>$(IntDir)idlgen\%(Filename)%(Extension).gch</PchOutput>
 		</IdlGenCppPch>
 		<IdlGenCppInclude>
-			<IdlgenIdlTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename)%(Extension).timestamp</IdlgenIdlTimestamp>
-			<IdlgenIdlFile>%(RelativeDir)%(Filename).idl</IdlgenIdlFile>
-			<IdlgenIdlClearTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename).idl.timestamp</IdlgenIdlClearTimestamp>
+			<IdlTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename)%(Extension).timestamp</IdlTimestamp>
+			<BootstrapIdlTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename).bootstrap.timestamp</BootstrapIdlTimestamp>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
 	<Target Name="IdlgenCppClean">
@@ -50,26 +50,19 @@
 		</ItemGroup>
 		<Delete Files="@(_FilesToDelete)"/>
 	</Target>
-	<Target Name="IdlgenCppClearMidl" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlgenIdlClearTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlgenCppGenerateBoostrapIDL" Inputs="@(IdlGenCppInclude)" Outputs="%(BootstrapIdlTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<PropertyGroup>
-			<TimestampFile>%(IdlGenCppInclude.IdlgenIdlClearTimestamp)</TimestampFile>
+			<TimestampFile>%(IdlGenCppInclude.BootstrapIdlTimestamp)</TimestampFile>
 		</PropertyGroup>
-		<PropertyGroup>
-			<IdlFile>%(IdlGenCppInclude.IdlgenIdlFile)</IdlFile>
-		</PropertyGroup>
+		<Exec Command="$(IdlgenCppExePath)idlgen.exe %(IdlGenCppInclude.Identity) --gen-bootstrap" />
 		<WriteLinesToFile
             File="$(TimestampFile)" Lines=""
             Overwrite="true" />
-		<WriteLinesToFile
-            File="$(IdlFile)" Lines="namespace $(RootNamespace) {}"
-            Overwrite="true"
-			Condition="Exists('$(IdlFile)')"/>
 		<ItemGroup>
 			<FileWrites Include="$(TimestampFile)" />
-			<FileWrites Include="$(IdlFile)" Condition="Exists('$(IdlFile)')"/>
 		</ItemGroup>
 	</Target>
-	<Target Name="IdlgenCppMidl" DependsOnTargets="CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTSetMidlReferences;IdlgenCppClearMidl" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
+	<Target Name="IdlgenCppMidl" DependsOnTargets="CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTSetMidlReferences;IdlgenCppGenerateBoostrapIDL" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
 		<MultiToolTask
 		  Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' == 'true'"
 		  TaskName                            ="Microsoft.Build.CPPTasks.MIDL"
@@ -186,7 +179,7 @@
 		<Message Text="CppWinRTMdMerge output: @(MdMergeOutput)" Importance="$(CppWinRTVerbosity)"/>
 		<OnError ExecuteTargets="_CppWinRTCleanMdMergeOutputs" />
 	</Target>
-	<Target Name="IdlgenCppBootstrapIdlGen" BeforeTargets="IdlgenCppCheckPchCount">
+	<Target Name="IdlgenCppBootstrapIdlGen" BeforeTargets="IdlgenCppCheckPchCount" DependsOnTargets="MarkupCompilePass1">
 		<CallTarget Targets="IdlgenCppMergeProjectWinMDInputs"/>
 		<!-- CppWinRTComputeXamlGeneratedMidlInputs must be called before CppWinRTMakeProjections to add xaml provider idl -->
 		<MSBuild Projects="$(MSBuildProjectFile)" Targets="CppWinRTMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
@@ -198,12 +191,12 @@
 		<Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
 		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=&quot;%(IdlGenCppPch.Identity)&quot; -pch-out-dir=&quot;$(IntDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
-	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="Midl" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlgenIdlTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="Midl" Inputs="@(IdlGenCppInclude)" Outputs="%(IdlTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<PropertyGroup>
-			<TimestampFile>%(IdlGenCppInclude.IdlgenIdlTimestamp)</TimestampFile>
+			<TimestampFile>%(IdlGenCppInclude.IdlTimestamp)</TimestampFile>
 		</PropertyGroup>
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
-		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen --root-namespace=&quot;$(RootNamespace)&quot; @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(IntDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen @(IdlGenCppPch->'--pch=&quot;%(Identity)&quot;', ' ') -pch-out-dir=&quot;$(IntDir)idlgen&quot; %(IdlGenCppInclude.Identity) @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppGetterTemplates->'--getter-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppPropertyTemplates->'--property-template=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 		<WriteLinesToFile
             File="$(TimestampFile)" Lines=""
             Overwrite="true" />

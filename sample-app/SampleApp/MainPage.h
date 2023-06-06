@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "MainPage.g.h"
+#include "BlankPage.h"
 #include <algorithm>
 
 namespace winrt::SampleApp::implementation

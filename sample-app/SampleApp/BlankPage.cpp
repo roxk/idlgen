@@ -1,5 +1,8 @@
 ﻿#include "pch.h"
 #include "BlankPage.h"
+#if __has_include("MoreClass.g.cpp")
+#include "MoreClass.g.cpp"
+#endif
 #if __has_include("BlankPage.g.cpp")
 #include "BlankPage.g.cpp"
 #endif
@@ -9,6 +12,14 @@ using namespace Windows::UI::Xaml;
 
 namespace winrt::SampleApp::implementation
 {
+    Category BlankPage::Category()
+    {
+        return Category::Literature;
+    }
+    Permission BlankPage::Permission()
+    {
+        return Permission::Camera;
+    }
     int32_t BlankPage::MyProperty()
     {
         throw hresult_not_implemented();
