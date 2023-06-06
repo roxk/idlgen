@@ -130,6 +130,41 @@ void DebugPrint(Func&& func)
     }
 }
 
+/// <summary>
+/// Assumes file size is the same.
+/// </summary>
+/// <param name="lhs"></param>
+/// <param name="rhs"></param>
+/// <returns></returns>
+bool IsContentEqual(std::filesystem::path& lhs, std::filesystem::path& rhs)
+{
+    constexpr uint64_t blockSize = 4096;
+    uint64_t remainderFileSize = std::filesystem::file_size(lhs);
+    std::ifstream lhsStream{lhs};
+    std::ifstream rhsStream{rhs};
+    while (true)
+    {
+        char buffer1[blockSize];
+        char buffer2[blockSize];
+        size_t size = std::min(blockSize, remainderFileSize);
+        lhsStream.read(buffer1, size);
+        rhsStream.read(buffer2, size);
+        if (memcmp(buffer1, buffer2, size) != 0)
+        {
+            return false;
+        }
+        if (remainderFileSize > size)
+        {
+            remainderFileSize -= size;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return true;
+}
+
 struct IdlWriter
 {
     std::unique_ptr<llvm::raw_ostream> out;
@@ -146,10 +181,23 @@ struct IdlWriter
         std::string genFile{idlFile + ".gen"};
         stdfs::path genFilePath{genFile};
         const uint64_t genFileSize{stdfs::file_size(genFilePath)};
+        stdfs::path idlFilePath{idlFile};
         if (genFileSize > 0)
         {
-            lfs::rename(idlFile, fileBackup);
-            lfs::rename(genFile, idlFile);
+            if (stdfs::exists(idlFilePath))
+            {
+                const uint64_t idlFileSize{stdfs::file_size(idlFilePath)};
+                if (genFileSize != idlFileSize || !IsContentEqual(genFilePath, idlFilePath))
+                {
+                    llvm::sys::fs::rename(idlFile, fileBackup);
+                    llvm::sys::fs::rename(genFile, idlFile);
+                }
+            }
+            else
+            {
+                llvm::sys::fs::rename(idlFile, fileBackup);
+                llvm::sys::fs::rename(genFile, idlFile);
+            }
         }
         lfs::remove(genFile);
     }
@@ -291,41 +339,6 @@ bool GenerateBootstrapIdl(
         }
     );
     *writer.out << bootstrapIdl;
-    return true;
-}
-
-/// <summary>
-/// Assumes file size is the same.
-/// </summary>
-/// <param name="lhs"></param>
-/// <param name="rhs"></param>
-/// <returns></returns>
-bool IsContentEqual(std::filesystem::path& lhs, std::filesystem::path& rhs)
-{
-    constexpr uint64_t blockSize = 4096;
-    uint64_t remainderFileSize = std::filesystem::file_size(lhs);
-    std::ifstream lhsStream{lhs};
-    std::ifstream rhsStream{rhs};
-    while (true)
-    {
-        char buffer1[blockSize];
-        char buffer2[blockSize];
-        size_t size = std::min(blockSize, remainderFileSize);
-        lhsStream.read(buffer1, size);
-        rhsStream.read(buffer2, size);
-        if (memcmp(buffer1, buffer2, size) != 0)
-        {
-            return false;
-        }
-        if (remainderFileSize > size)
-        {
-            remainderFileSize -= size;
-        }
-        else
-        {
-            break;
-        }
-    }
     return true;
 }
 
