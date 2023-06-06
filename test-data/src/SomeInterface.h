@@ -2,6 +2,7 @@
 
 #include "idlgen.h"
 #include "wil/cppwinrt_authoring.h"
+#include <winrt/Root.h>
 #include <cstdint>
 
 namespace winrt::Root::implementation
