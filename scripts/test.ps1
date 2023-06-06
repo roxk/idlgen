@@ -29,13 +29,16 @@ $pchFlags = "--pch=`"$pch`""
 $pchOutDirFlags = "--pch-out-dir=$pchOutDir"
 
 function gen {
-	param([string]$filePath, [switch]$genPch)
+	param([string]$filePath, [switch]$genPch, [switch]$bootstrap)
 	$LASTEXITCODE = 0
 	push-location $testCodeDir
 	if ($genPch.IsPresent) {
 		$genPchFlags = "--gen-pch"
 	}
-	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags $pchFlags $pchOutDirFlags $genPchFlags | out-host
+	if ($bootstrap.IsPresent) {
+		$genBootstrapFlags = "--gen-bootstrap"
+	}
+	&$idlgen $includes $verboseFlag $filePath --gen $getterTemplatesFlags $propertyTemplatesFlags $pchFlags $pchOutDirFlags $genPchFlags $genBootstrapFlags | out-host
 	pop-location
 	if ($LASTEXITCODE -ne 0) {
 		echo "idlgen returned $LASTEXITCODE"
@@ -44,12 +47,12 @@ function gen {
 }
 
 function get-gen-output {
-	param([string]$filePath, [switch]$keepExisting)
+	param([string]$filePath, [switch]$keepExisting, [switch]$bootstrap)
 	$idlPath = $filePath.Replace(".xaml", "").Replace(".h", ".idl")
 	if ((test-path $idlPath) -and !$keepExisting.IsPresent) {
 		remove-item $idlPath
 	}
-	gen -filePath $filePath
+	gen -filePath $filePath -bootstrap:$bootstrap.IsPresent
 	return get-content $idlPath
 }
 
@@ -88,16 +91,27 @@ function absent {
 	assert "`"$line`" is absent" -actual $actual
 }
 
+function test-bootstrap {
+	param([string]$filePath, [scriptblock]$func)
+	$out = get-gen-output -filePath $filePath -bootstrap
+	&$func -out $out
+}
+
 # Test only pch generation
 if (test-path $pchOutDir) {
 	remove-item $pchOutDir -Recurse
 }
 gen -filePath "" -genPch
 
-# Remove all existing .idlgen.h
-$existingIdlgenHeader = get-childitem "$testDataDir\include" -recurse *.idlgen.h
-foreach ($header in $existingIdlgenHeader) {
-	remove-item $header.FullName
+# Test bootstrap
+test-bootstrap "$testCodeDir\BlankPage.h" -func {
+	param([string]$out)
+	exists -src $out -line "runtimeclass BlankPage"
+}
+
+test-bootstrap "$testCodeDir\SomeEnum.h" -func {
+	param([string]$out)
+	exists -src $out -line "enum SomeEnum"
 }
 
 # Test BlankPage
