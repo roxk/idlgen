@@ -119,6 +119,10 @@ test-bootstrap "$testCodeDir\SameViewModel.h" -func {
 test-bootstrap "$testCodeDir\ImplementInterface.h" -func {
 	param([string]$out)
 	exists -src $out -line "runtimeclass ImplementInterface"
+	exists -src $out -line "runtimeclass ImplementInterfaceB"
+	exists -src $out -line "runtimeclass ImplementInterfaceC"
+	exists -src $out -line "runtimeclass ImplementInterfaceD"
+	exists -src $out -line "runtimeclass ImplementMoreInterface"
 }
 
 test-bootstrap "$testCodeDir\SomeEnum.h" -func {

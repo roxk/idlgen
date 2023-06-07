@@ -13,9 +13,15 @@ namespace winrt::Root
 
 	struct IOutdatedProjection : IUnknown {};
 
-	struct OutdatedProjection : Base {};
+	struct ImplementInterface : Base {};
 
-	struct OutdatedProjectionB : Base {};
+	struct ImplementInterfaceB : Base {};
+
+	struct ImplementInterfaceC : Base {};
+	
+	struct ImplementInterfaceD : Base {};
+
+	struct ImplementMoreInterface : Base {};
 
 	namespace A
 	{
