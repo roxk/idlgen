@@ -4,8 +4,8 @@
 
 namespace winrt::Root
 {
-	template<typename T>
-	struct IdlgenAttributesT : winrt::ProduceBase
+	template<typename T, typename... I>
+	struct IdlgenAttributesT
 	{
 	};
 }

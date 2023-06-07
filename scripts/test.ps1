@@ -1,4 +1,5 @@
 param([string]$config, [switch]$verbose)
+$ErrorActionPreference = "Stop"
 
 # TODO: Write in C# instead with Process...? Or just unit test in cpp?
 
@@ -113,6 +114,11 @@ test-bootstrap "$testCodeDir\SameViewModel.h" -func {
 	param([string]$out)
 	exists -src $out -line "runtimeclass SameViewModel"
 	exists -src $out -line "runtimeclass SealedSameViewModel"
+}
+
+test-bootstrap "$testCodeDir\ImplementInterface.h" -func {
+	param([string]$out)
+	exists -src $out -line "runtimeclass ImplementInterface"
 }
 
 test-bootstrap "$testCodeDir\SomeEnum.h" -func {

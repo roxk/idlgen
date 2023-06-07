@@ -245,7 +245,7 @@ std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExt
 std::vector<std::string> FindRuntimeClassNames(const std::string& code)
 {
     constexpr auto regexStr =
-        "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3>";
+        "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+\\3T)<\\3(,\\s*\\w+)*>";
     std::regex regex(regexStr);
     constexpr auto captureGroupCount = 5;
     constexpr auto expectedMatchCount = captureGroupCount + 1;
