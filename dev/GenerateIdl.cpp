@@ -242,7 +242,7 @@ std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExt
     return IdlWriter(std::move(out), std::move(idlFile));
 }
 
-std::vector<std::string> FindRuntimeClassNames(const std::string& code)
+std::set<std::string> FindRuntimeClassNames(const std::string& code)
 {
     constexpr auto regexStr = "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+"
                               "\\3T)<(\\w|:)*\\3(,\\s*(\\w|:)+)*>";
@@ -250,7 +250,7 @@ std::vector<std::string> FindRuntimeClassNames(const std::string& code)
     constexpr auto captureGroupCount = 7;
     constexpr auto expectedMatchCount = captureGroupCount + 1;
     constexpr auto classNameIndex = 3;
-    std::vector<std::string> classNames;
+    std::set<std::string> classNames;
     for (auto it = code.begin(); it != code.end();)
     {
         std::smatch results;
@@ -259,7 +259,7 @@ std::vector<std::string> FindRuntimeClassNames(const std::string& code)
             break;
         }
         it = results[0].second;
-        classNames.emplace_back(results[classNameIndex]);
+        classNames.insert(results[classNameIndex]);
     }
     return classNames;
 }

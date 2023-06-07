@@ -108,6 +108,8 @@ gen -filePath "" -genPch
 test-bootstrap "$testCodeDir\BlankPage.h" -func {
 	param([string]$out)
 	exists -src $out -line "runtimeclass BlankPage"
+	$blankPageCount = $out.Split("BlankPage").Length - 1
+	assert -desc "No duplicate class" -actual $blankPageCount -eq 1
 }
 
 test-bootstrap "$testCodeDir\SameViewModel.h" -func {
