@@ -16,10 +16,14 @@ run -func {
 }
 run -func {
 	. "$PSScriptRoot\build-nuget" -version 0.0.1
-	$nugetDest = "$PSScriptRoot\..\sample-app\LocalPackages\IdlGen.IdlGen.Cpp.0.0.1.nupkg"
+        $localPackagesDir = "$PSScriptRoot\..\sample-app\LocalPackages"
+	$nugetDest = "$localPackagesDir\IdlGen.IdlGen.Cpp.0.0.1.nupkg"
 	if (test-path $nugetDest) {
-		remove-item $nugetDest
+	    remove-item $nugetDest
 	}
+	if (!(test-path $localPackagesDir)) {
+            new-item $localPackagesDir -itemtype Directory
+        }
 	copy-item "$PSScriptRoot\..\nuget\IdlGen.IdlGen.Cpp.0.0.1.nupkg" $nugetDest
 	. "$PSScriptRoot\test-sample-app"
 }
