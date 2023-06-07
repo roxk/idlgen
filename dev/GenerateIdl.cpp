@@ -84,9 +84,7 @@ static lc::opt<bool> Help("h", lc::desc("Alias for -help"), lc::Hidden);
 
 static lc::opt<bool> Generate("gen", lc::desc("Generate IDL next to the input file"));
 
-static lc::opt<bool> GenerateBootstrap(
-    "gen-bootstrap", lc::desc("Generate bootstrap idl")
-);
+static lc::opt<bool> GenerateBootstrap("gen-bootstrap", lc::desc("Generate bootstrap idl"));
 
 static lc::opt<std::string> GenerateOutputPath(
     "gen-out", lc::desc("If specified and --gen is applied, control the output path of the generated IDL")
@@ -121,8 +119,7 @@ static void PrintVersion(llvm::raw_ostream& OS)
     OS << "idlgen 0.0.1" << '\n';
 }
 
-template <typename Func>
-void DebugPrint(Func&& func)
+template <typename Func> void DebugPrint(Func&& func)
 {
     if (Verbose)
     {
@@ -230,7 +227,11 @@ std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExt
     }
     std::error_code ec;
     auto out{std::make_unique<llvm::raw_fd_ostream>(
-        idlFile + ".gen", ec, lfs::CreationDisposition::CD_CreateAlways, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_None
+        idlFile + ".gen",
+        ec,
+        lfs::CreationDisposition::CD_CreateAlways,
+        lfs::FileAccess::FA_Write,
+        lfs::OpenFlags::OF_None
     )};
     if (ec)
     {
@@ -265,7 +266,8 @@ std::vector<std::string> FindRuntimeClassNames(const std::string& code)
 
 // Pasting for easier copy and paste.
 // TODO: Use constexpr std::string in C++20.
-constexpr auto NameRegexMiddle = "\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*";
+constexpr auto NameRegexMiddle =
+    "\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*";
 
 template <int CaptureGroupCount, int NameIndex, typename StringType>
 std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringType&& regexStr)
@@ -288,32 +290,33 @@ std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringTy
 
 std::vector<std::string> FindEnumNames(const std::string& code)
 {
-    constexpr auto regexStr = "enum\\s+class\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_enum(_flags)*";
+    constexpr auto regexStr = "enum\\s+class\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*("
+                              "idlgen::)*author_enum(_flags)*";
     return FindAuthoredTypeNames<5, 3>(code, regexStr);
 }
 
 std::vector<std::string> FindStructNames(const std::string& code)
 {
-    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_struct";
+    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*"
+                              "(idlgen::)*author_struct";
     return FindAuthoredTypeNames<5, 4>(code, regexStr);
 }
 
 std::vector<std::string> FindInterfaceNames(const std::string& code)
 {
-    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_interface";
+    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*"
+                              "(idlgen::)*author_interface";
     return FindAuthoredTypeNames<5, 4>(code, regexStr);
 }
 
 std::vector<std::string> FindDelegateNames(const std::string& code)
 {
-    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*author_delegate";
+    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*"
+                              "(idlgen::)*author_delegate";
     return FindAuthoredTypeNames<5, 4>(code, regexStr);
 }
 
-bool GenerateBootstrapIdl(
-    std::string_view filePath,
-    clang::StringRef buffer
-)
+bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
 {
     const std::string code{buffer.str()};
     // Find namespace
@@ -327,8 +330,9 @@ bool GenerateBootstrapIdl(
     }
     // Get WinRT namespace
     auto namespaceMatchResult{namespaceResults[namespaceIndex]};
-    std::string namespaceDefinition{
-        std::regex_replace(namespaceMatchResult.str(), std::regex("(::implementation|winrt::|::factory_implementation)"), "")};
+    std::string namespaceDefinition{std::regex_replace(
+        namespaceMatchResult.str(), std::regex("(::implementation|winrt::|::factory_implementation)"), ""
+    )};
     namespaceDefinition = std::regex_replace(namespaceDefinition, std::regex("::"), ".");
     auto classNames{FindRuntimeClassNames(code)};
     auto enumNames{FindEnumNames(code)};
