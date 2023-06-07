@@ -62,7 +62,7 @@
 			<FileWrites Include="$(TimestampFile)" />
 		</ItemGroup>
 	</Target>
-	<Target Name="IdlgenCppMidl" DependsOnTargets="CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTSetMidlReferences;IdlgenCppGenerateBoostrapIDL" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
+	<Target Name="IdlgenCppMidl" DependsOnTargets="CppWinRTAddXamlMetaDataProviderIdl;CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTSetMidlReferences;IdlgenCppGenerateBoostrapIDL" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
 		<MultiToolTask
 		  Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' == 'true'"
 		  TaskName                            ="Microsoft.Build.CPPTasks.MIDL"
