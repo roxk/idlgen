@@ -209,22 +209,25 @@ struct IdlWriter
     friend std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExtension);
 };
 
+std::string GetIdl(std::string_view path)
+{
+    // Trim all extension to handle cases like .xaml.h -> .idl
+    std::string idlFile{path};
+    auto extension = llvm::sys::path::extension(idlFile);
+    auto extensionIndex = idlFile.rfind(extension);
+    while (extensionIndex != std::string::npos && extensionIndex < idlFile.size())
+    {
+        idlFile.erase(extensionIndex);
+        extension = llvm::sys::path::extension(idlFile);
+        extensionIndex = idlFile.rfind(extension);
+    }
+    idlFile += ".idl";
+    return idlFile;
+}
+
 std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExtension)
 {
-    std::string idlFile{filePath};
-    if (replaceExtension)
-    {
-        // Trim all extension to handle cases like .xaml.h -> .idl
-        auto extension = llvm::sys::path::extension(idlFile);
-        auto extensionIndex = idlFile.rfind(extension);
-        while (extensionIndex != std::string::npos && extensionIndex < idlFile.size())
-        {
-            idlFile.erase(extensionIndex);
-            extension = llvm::sys::path::extension(idlFile);
-            extensionIndex = idlFile.rfind(extension);
-        }
-        idlFile += ".idl";
-    }
+    std::string idlFile{replaceExtension ? GetIdl(filePath) : filePath };
     std::error_code ec;
     auto out{std::make_unique<llvm::raw_fd_ostream>(
         idlFile + ".gen",
@@ -341,6 +344,7 @@ bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
     auto delegateNames{FindDelegateNames(code)};
     std::string bootstrapIdl{namespaceDefinition};
     bootstrapIdl += "\n";
+    const auto idlSize = bootstrapIdl.size();
     for (auto&& name : enumNames)
     {
         bootstrapIdl += "enum ";
@@ -372,6 +376,16 @@ bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
         bootstrapIdl += "delegate void ";
         bootstrapIdl += name;
         bootstrapIdl += "(Object a, Object b);\n";
+    }
+    const auto isEmpty = bootstrapIdl.size() == idlSize;
+    if (isEmpty && !stdfs::exists(GetIdl(filePath)))
+    {
+        // If content is empty (i.e. No WinRT entities) and idl file doesn't exist, the file
+        // is 99.9% not an implementation type header. Do nothing.
+        // Note that we still want to output an empty idl in case an existing idl file is present
+        // since the empty content might be caused by refactoring an implementation type header
+        // or editing mistakes.
+        return true;
     }
     bootstrapIdl += "}\n"; // namespace $RootNamespace
     auto writerOpt{GetIdlWriter(filePath, true)};

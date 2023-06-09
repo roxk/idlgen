@@ -152,6 +152,10 @@ test-bootstrap "$testCodeDir\SomeDelegate.h" -func {
 	exists -src $out -line "delegate void SomeEventHandler"
 }
 
+gen "$testCodeDir\NonWinRtHeader.h" -bootstrap
+$idlExists = test-path "$testCodeDir\NonWinRtHeader.idl"
+assert -desc "Non WinRT header does not generate bootstrap idl" -actual ($idlExists -ne $true)
+
 # Test BlankPage
 # TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })
 $blankPageOutput = get-gen-output "$testCodeDir\BlankPage.h"
