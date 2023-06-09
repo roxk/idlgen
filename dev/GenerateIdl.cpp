@@ -227,7 +227,7 @@ std::string GetIdl(std::string_view path)
 
 std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExtension)
 {
-    std::string idlFile{replaceExtension ? GetIdl(filePath) : filePath };
+    std::string idlFile{replaceExtension ? GetIdl(filePath) : filePath};
     std::error_code ec;
     auto out{std::make_unique<llvm::raw_fd_ostream>(
         idlFile + ".gen",
