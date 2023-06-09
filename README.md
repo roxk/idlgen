@@ -127,6 +127,14 @@ Below is a table for all attributes and their usage.
 
 *Note*: By default, the tool would generate `[default_interface]` attribute for an empty class (a class that doesn't have any methods other than constructor) so you don't need to add it.
 
+## Limitation
+
+Due to [bootstrapping](#"Bootstrapping"-idlgen), Idlgen currently has the following limitation:
+
+1. Authored WinRT projected types must be treated as incomplete types in headers. That is, you can only refer to the name of the type as if it is forward declared. This limitation applies to all projected types, including runtime class, enum, etc. In practice, this means method definitions which use projected types must be defined in .cpp files.
+
+   - If you are using visual studio, you can right click affected method and choose "Move definition location" to automatically fix it.
+
 ## Tips
 
 ### Common Header Modification
@@ -205,11 +213,7 @@ Just follow the advice in [Incremental Adoption in Existing Codebase](#Increment
 
 Idl generation from C++ actually involves the classic chicken and egg problem. To generate idl, a header file needs to be compiled. To compile the header file, C++/WinRT projection need to exist. To generate C++/WinRT projection, winmd and thus idl files are required.
 
-Idlgen solves this problem by inserting a "bootstrap" build step before generating idl. During bootstrapping, idlgen would compile existing idl files and forces C++/WinRT to generate projection. Said projection would thus allow idlgen to compile headers and generate idls without issues.
-
-Bootstrapping is only needed when there is no projection generated yet. To prevent doing redundant work, idlgen re-uses as much of existing C++/WinRT targets as possible. With C++/WinRT's built-in incremental build support, bootstrapping would be skipped automatically when necessary. (The actual details can be tricky, see #53)
-
-Note that while idlgen actually skips parsing a header's projection (i.e. `Class.g.h` for `Class.h`) to allow seamless IDL generation from outdated or non-existent projection, bootstrapping is still needed to generate projection for windows SDK or other libraries's winmd.
+Idlgen solves this problem by inserting a "bootstrap" build step before generating idl. During bootstrapping, idlgen would generate dummy idls and forces C++/WinRT to generate projection. Said projection would thus allow idlgen to compile headers and generate idls without issues such as definition removal.
 
 ## Contribution
 
