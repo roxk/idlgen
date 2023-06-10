@@ -17,9 +17,6 @@ if ($resetnuget.IsPresent) {
 	}
 	copy-item "$PSScriptRoot\..\nuget\IdlGen.IdlGen.Cpp.0.0.1.nupkg" $nugetDest
 }
-$scriptDir = $PSScriptRoot
-$sampleAppDir = "$scriptDir\..\sample-app"
-nuget restore $sampleAppDir
-$buildCmd = "msbuild $sampleAppDir -t:clean -t:build -p:Configuration=Debug -p:Platform=x64 | out-host"
+$tasks = "$PSScriptRoot\test-sample-app-tasks"
 powershell -c "Import-Module `"`"`"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Microsoft.VisualStudio.DevShell.dll`"`"`";`
-Enter-VsDevShell d5206e10 -SkipAutomaticLocation -DevCmdArguments `"`"`"-arch=x64 -host_arch=x64`"`"`";$buildCmd"
+Enter-VsDevShell d5206e10 -SkipAutomaticLocation -DevCmdArguments `"`"`"-arch=x64 -host_arch=x64`"`"`";&$tasks"
