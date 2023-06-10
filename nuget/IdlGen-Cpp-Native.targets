@@ -67,6 +67,8 @@
 			<FileWrites Include="$(TimestampFile)" />
 		</ItemGroup>
 	</Target>
+	<!-- CppWinRTAddXamlMetaDataProviderIdl and CppWinRTComputeXamlGeneratedMidlInputs must be included here -->
+	<!-- so that they are included in the winmd -->
 	<Target Name="IdlgenCppMidl" DependsOnTargets="CppWinRTAddXamlMetaDataProviderIdl;CppWinRTComputeXamlGeneratedMidlInputs;CppWinRTSetMidlReferences;IdlgenCppGenerateBoostrapIDL" Inputs="@(Midl)" Outputs="@(Midl->'$(IntDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
 		<MultiToolTask
 		  Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' == 'true'"
@@ -152,6 +154,36 @@
 		  YieldDuringToolExecution            ="$(MidlYieldDuringToolExecution)">
 		</MIDL>
 	</Target>
+	<!-- To prevent cppwinrt from updating $RootNamespace.h and $RootNamespace.0.h and friends unnecessarily, we -->
+	<!-- need to pretend bootstrap never happened. This is achieved by saving these header before bootstrap, and -->
+	<!-- restoring them after generating IDL but before cppwinrt -->
+	<Target Name="SaveExistingComponentWinmdIfNeeded" BeforeTargets="IdlgenCppMergeProjectWinMDInputs">
+		<ItemGroup>
+			<MergedWinmd Remove="@(MergedWinmd)"/>
+			<MergedWinmd Include="$(CppWinRTMergedDir)*.winmd"/>
+			<NamespaceHeader Remove="@(NamespaceHeader)"/>
+			<NamespaceHeader Include="$(GeneratedFilesDir)winrt\%(MergedWinmd.Filename)*.h;$(GeneratedFilesDir)winrt\impl\%(MergedWinmd.Filename)*.h"/>
+		</ItemGroup>
+		<Copy
+			Condition="@(NamespaceHeader->Count()) != 0"
+            SkipUnchangedFiles="False"
+            SourceFiles="@(NamespaceHeader)"
+            DestinationFiles="@(NamespaceHeader->'%(RelativeDir)%(Filename).h.bak')" />
+	</Target>
+	<Target Name="MoveBackExistingComponentWinmdIfNeeded" BeforeTargets="Midl" DependsOnTargets="SaveExistingComponentWinmdIfNeeded;IdlGenCppGenerateIDL">
+		<ItemGroup>
+			<MergedWinmd Remove="@(MergedWinmd)"/>
+			<MergedWinmd Include="$(CppWinRTMergedDir)*.winmd"/>
+			<NamespaceHeader Remove="@(NamespaceHeader)"/>
+			<NamespaceHeader Include="$(GeneratedFilesDir)winrt\%(MergedWinmd.Filename)*.h;$(GeneratedFilesDir)winrt\impl\%(MergedWinmd.Filename)*.h"/>
+		</ItemGroup>
+		<Copy
+			Condition="@(NamespaceHeader->Count()) != 0"
+            SkipUnchangedFiles="False"
+            SourceFiles="@(NamespaceHeader->'%(RelativeDir)%(Filename).h.bak')"
+            DestinationFiles="@(NamespaceHeader->'%(RelativeDir)%(Filename).h')" />
+		<Delete Files="@(NamespaceHeader->'%(RelativeDir)%(Filename).h.bak')"/>
+	</Target>
 	<!-- Copy and pasted from cppwint.targets, changing Midl dependency to IdlgenCppMidl and ignore cache (which depends on MIDL) -->
 	<!-- We need this to avoid circular dependency -->
 	<Target Name="IdlgenCppMergeProjectWinMDInputs"
@@ -186,7 +218,6 @@
 	</Target>
 	<Target Name="IdlgenCppBootstrapIdlGen" BeforeTargets="IdlgenCppCheckPchCount" DependsOnTargets="MarkupCompilePass1">
 		<CallTarget Targets="IdlgenCppMergeProjectWinMDInputs"/>
-		<!-- CppWinRTComputeXamlGeneratedMidlInputs must be called before CppWinRTMakeProjections to add xaml provider idl -->
 		<MSBuild Projects="$(MSBuildProjectFile)" Targets="CppWinRTMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
 	</Target>
 	<Target Name="IdlgenCppCheckPchCount">
