@@ -174,15 +174,15 @@
 		<ItemGroup>
 			<MergedWinmd Remove="@(MergedWinmd)"/>
 			<MergedWinmd Include="$(CppWinRTMergedDir)*.winmd"/>
-			<NamespaceHeader Remove="@(NamespaceHeader)"/>
-			<NamespaceHeader Include="$(GeneratedFilesDir)winrt\%(MergedWinmd.Filename)*.h;$(GeneratedFilesDir)winrt\impl\%(MergedWinmd.Filename)*.h"/>
+			<NamespaceHeaderBackup Remove="@(NamespaceHeaderBackup)"/>
+			<NamespaceHeaderBackup Include="$(GeneratedFilesDir)winrt\%(MergedWinmd.Filename)*.h.bak;$(GeneratedFilesDir)winrt\impl\%(MergedWinmd.Filename)*.h.bak"/>
 		</ItemGroup>
 		<Copy
-			Condition="@(NamespaceHeader->Count()) != 0"
+			Condition="@(NamespaceHeaderBackup->Count()) != 0"
             SkipUnchangedFiles="False"
-            SourceFiles="@(NamespaceHeader->'%(RelativeDir)%(Filename).h.bak')"
-            DestinationFiles="@(NamespaceHeader->'%(RelativeDir)%(Filename).h')" />
-		<Delete Files="@(NamespaceHeader->'%(RelativeDir)%(Filename).h.bak')"/>
+            SourceFiles="@(NamespaceHeaderBackup)"
+            DestinationFiles="@(NamespaceHeaderBackup->'%(RelativeDir)%(Filename)')" />
+		<Delete Files="@(NamespaceHeaderBackup)"/>
 	</Target>
 	<!-- Copy and pasted from cppwint.targets, changing Midl dependency to IdlgenCppMidl and ignore cache (which depends on MIDL) -->
 	<!-- We need this to avoid circular dependency -->
