@@ -129,7 +129,7 @@ Below is a table for all attributes and their usage.
 
 ## Limitation
 
-Due to [bootstrapping](#"Bootstrapping"-idlgen), Idlgen currently has the following limitation:
+Due to [bootstrapping](#Bootstrapping-idlgen), Idlgen currently has the following limitation:
 
 1. Authored WinRT projected types must be treated as incomplete types in headers. That is, you can only refer to the name of the type as if it is forward declared. This limitation applies to all projected types, including runtime class, enum, etc. In practice, this means method definitions which use projected types must be defined in .cpp files.
 
@@ -177,13 +177,13 @@ Idlgen ouputs build logs to Output -> Build window. Look at what is failing and 
 
 #### Idlgen complains some include(s) is missing
 
-Idlgen needs to parse WinRT projection header files (except a header's own projection) and other headers as if it's compiling your header, so make sure you have included _all_ necessary headers. It's suggested that you add `pch.h` to all header files to ease include effort.
+Idlgen needs to parse WinRT projection header files and other headers as if it's compiling your header, so make sure you have included _all_ necessary headers. It's suggested that you add `pch.h` to all header files to ease include effort.
 
 #### I made a mistake in the header file, and idlgen generated an idl file that cannot be compiled!
 
 Fix your header and rebuild, and idlgen would re-generate the idl. It should just work™️. If it doesn't, please file a bug.
 
-*How it works*: Idlgen clear (i.e. empty) idl before bootsrapping so malformed idl doesn't cause problems. If for some reason automatical clearing doesn't work, you can workaround by manually clearing idl file.
+*How it works*: Idlgen runs a bootstrap pass before IDL generation so malformed idl doesn't cause problems. If for some reason [bootstrapping](#Bootstrapping-idlgen) doesn't work, you can revert your edit to header (assuming the old header + idl was compilable), build once, and edit again. Please also file a bug.
 
 ## Incremental Adoption in Existing Codebase
 
