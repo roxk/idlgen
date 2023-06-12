@@ -162,6 +162,7 @@ namespace winrt::Root::A::implementation
 		wil::simple_event<int32_t> WilEvent;
 		wil::typed_event<int32_t, int32_t> WilTypedEvent;
 	protected:
+		friend struct ProduceBase<IBlankPageProtected>;
 		[[idlgen::hide]]
 		void HideProtectedMethod();
 		void ProtecedMethod();

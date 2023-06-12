@@ -5,7 +5,7 @@
 namespace winrt::Root::A
 {
 	template<typename T>
-	struct TestIncludeImplT : winrt::ProduceBase
+	struct TestIncludeImplT : winrt::ProduceBase<>
 	{
 	};
 }

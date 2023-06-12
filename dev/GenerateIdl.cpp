@@ -319,9 +319,13 @@ std::vector<std::string> FindDelegateNames(const std::string& code)
     return FindAuthoredTypeNames<5, 4>(code, regexStr);
 }
 
-bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
+/// <summary>
+/// Given winrt::A::implementation, returns winrt::A.
+/// </summary>
+/// <param name="code"></param>
+/// <returns></returns>
+std::string FindWinRtNamespaceInCpp(std::string const& code, bool removeWinRt)
 {
-    const std::string code{buffer.str()};
     // Find namespace
     constexpr auto namespaceStr = "namespace\\s+(\\w|::|)+\\s*\\{";
     std::regex namespaceRegex(namespaceStr);
@@ -329,13 +333,28 @@ bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
     constexpr auto namespaceIndex = 0;
     if (!std::regex_search(code.begin(), code.end(), namespaceResults, namespaceRegex))
     {
+        return "";
+    }
+    // Get WinRT namespace in C++
+    auto namespaceMatchResult{namespaceResults[namespaceIndex]};
+    return std::regex_replace(
+        namespaceMatchResult.str(),
+        std::regex(
+            removeWinRt ? "(::implementation|winrt::|::factory_implementation)"
+                        : "(::implementation|::factory_implementation)"
+        ),
+        ""
+    );
+}
+
+bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
+{
+    const std::string code{buffer.str()};
+    std::string namespaceDefinition{FindWinRtNamespaceInCpp(code, true)};
+    if (namespaceDefinition.empty())
+    {
         return true;
     }
-    // Get WinRT namespace
-    auto namespaceMatchResult{namespaceResults[namespaceIndex]};
-    std::string namespaceDefinition{std::regex_replace(
-        namespaceMatchResult.str(), std::regex("(::implementation|winrt::|::factory_implementation)"), ""
-    )};
     namespaceDefinition = std::regex_replace(namespaceDefinition, std::regex("::"), ".");
     auto classNames{FindRuntimeClassNames(code)};
     auto enumNames{FindEnumNames(code)};
@@ -405,6 +424,54 @@ bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
     );
     *writer.out << bootstrapIdl;
     return true;
+}
+
+std::string InsertForwardDeclarationForClassInterfaces(clang::StringRef buffer)
+{
+    std::string code{buffer};
+    const auto classNames{FindRuntimeClassNames(code)};
+    if (classNames.empty())
+    {
+        return code;
+    }
+    // Find #include "*.g.h"
+    constexpr auto includeStr = "#include\\s+\"\\w+\\.g\\.h\"";
+    std::regex includeRegex(includeStr);
+    std::match_results<std::string::iterator> includeResults;
+    constexpr auto includeIndex = 0;
+    if (!std::regex_search(code.begin(), code.end(), includeResults, includeRegex))
+    {
+        DebugPrint([]() { std::cout << "No include to insert forward declaration" << std::endl; });
+        return code;
+    }
+    auto includeResult{includeResults[includeIndex]};
+    auto insertPosition{includeResult.first};
+    auto namespaceDefinition{FindWinRtNamespaceInCpp(code, false)};
+    if (namespaceDefinition.empty())
+    {
+        DebugPrint([]() { std::cout << "No namespce to insert forward declaration" << std::endl; });
+        return code;
+    }
+    std::string insertion{namespaceDefinition};
+    insertion += "\n";
+    for (auto&& className : classNames)
+    {
+        insertion += "struct I";
+        insertion += className;
+        insertion += "Protected;\n";
+        insertion += "struct I";
+        insertion += className;
+        insertion += "Statics;\n";
+    }
+    insertion += "}\n"; // namespace $RootNamespace
+    DebugPrint(
+        [&]()
+        {
+            std::cout << "Inserting forward declaration for class interfaces" << std::endl;
+            std::cout << insertion << std::endl;
+        });
+    code.insert(insertPosition - code.begin(), insertion);
+    return code;
 }
 
 int main(int argc, const char** argv)
@@ -571,11 +638,12 @@ int main(int argc, const char** argv)
         {
             return 1;
         }
+        auto buffer{InsertForwardDeclarationForClassInterfaces(code->getBuffer())};
         const auto result = ct::runToolOnCodeWithArgs(
             std::make_unique<idlgen::GenIdlFrontendAction>(
                 out.value().get(), Verbose, getterTemplates, propertyTemplates
             ),
-            code->getBuffer(),
+            buffer,
             clangArgs,
             filePath
         );

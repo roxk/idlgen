@@ -55,6 +55,7 @@ namespace winrt
 		void Release() {}
 		void AddRef() {}
 	};
+	template<typename T = void>
 	struct ProduceBase : Windows::Foundation::IInspectable
 	{
 		void Release() {}
