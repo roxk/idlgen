@@ -102,7 +102,12 @@ Please see [Idlgen Custom Attributes](#Idlgen-Custom-Attributes) for more detail
 
 ### Visibility
 
-By default, all generated methods/properties are public. To generate protected methods/properties, make them protected in C++. Alternatively, you can use attribute to specify a declaration should be protected.
+By default, all generated methods/properties are public. To generate protected methods/properties, make them protected in C++. Then, you need to add the following friend declaration to allow projection to access your protected methods:
+```
+friend struct winrt::impl::produce<MyClass, IMyClassProtected>;
+```
+
+Alternatively, you can use attribute to specify a declaration with public accessibility should be protected in idl.
 
 ### Overridable
 
@@ -145,7 +150,7 @@ Due to [bootstrapping](#Bootstrapping-idlgen), Idlgen currently has the followin
 |Hide public event handler for any other runtime class (See note)|Make the handler private, then add `friend ClassT<Class>`|
 |Hide public overriden methods|Use `[[idlgen::hide]]` on the method|
 |Make a class' applicable methods properties by default|Use `[[idlgen::property]]` on the class|
-|Make methods protected|Declare them in `protected:` block|
+|Make methods protected|Declare them in `protected:` block, then add `friend struct winrt::impl::produce<Class,IClassProtected>`|
 |Make `wil::single_threaded_rw_property<bool> Prop` overridable|Use `[[idlgen::overridable]]` on the property|
 
 Note: The friend syntax is different because for XAML `ClassT` is a struct, for any other runtime class it is an alias template.
