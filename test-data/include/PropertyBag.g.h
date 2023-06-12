@@ -5,7 +5,7 @@
 namespace winrt::Root::A
 {
 	template<typename T>
-	struct PropertyBagT : winrt::ProduceBase
+	struct PropertyBagT : winrt::ProduceBase<>
 	{
 	};
 }

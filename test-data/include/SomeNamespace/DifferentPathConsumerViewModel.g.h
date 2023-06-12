@@ -5,7 +5,7 @@
 namespace winrt::Root::SomeNamespace
 {
 	template<typename T>
-	struct DifferentPathConsumerViewModelT : winrt::ProduceBase
+	struct DifferentPathConsumerViewModelT : winrt::ProduceBase<>
 	{
 	};
 }
