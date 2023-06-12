@@ -469,7 +469,8 @@ std::string InsertForwardDeclarationForClassInterfaces(clang::StringRef buffer)
         {
             std::cout << "Inserting forward declaration for class interfaces" << std::endl;
             std::cout << insertion << std::endl;
-        });
+        }
+    );
     code.insert(insertPosition - code.begin(), insertion);
     return code;
 }
