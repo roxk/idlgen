@@ -11,7 +11,7 @@ namespace Idlgen.Cpp
         public const string Name = "Idlgen.Idlgen.Cpp Extension";
         public const string Description = @"Provides support for IDL generation from C++ header using IdlGen.IdlGen.Cpp nuget package.";
         public const string Language = "en-US";
-        public const string Version = "0.1.1";
+        public const string Version = "0.1.2";
         public const string Author = "Roxk Yiu";
         public const string Tags = "idl, midl, C++, idlgen";
     }
