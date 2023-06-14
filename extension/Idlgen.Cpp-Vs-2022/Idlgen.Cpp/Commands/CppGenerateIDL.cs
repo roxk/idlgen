@@ -54,7 +54,8 @@ namespace Idlgen.Cpp
                     return;
                 }
                 evalProject.SetProperty("IdlGenCppGenerateIDL", "true");
-                evalProject.SetProperty("IdlGenCppInclude", $"{activeFile.Name}");
+                var relativePath = activeFile.FullPath.Replace(evalProject.DirectoryPath, "").TrimPrefix("\\");
+                evalProject.SetProperty("IdlGenCppInclude", relativePath);
                 evalProject.SetProperty("IdlGenCppExclude", "");
                 evalProject.SetProperty("Platform", "x64");
                 var execProject = evalProject.CreateProjectInstance();
