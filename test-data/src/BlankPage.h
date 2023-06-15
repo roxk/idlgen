@@ -43,7 +43,7 @@ namespace winrt::Root::A::implementation
 	[[idlgen::attribute("bindable")]]
 	[[idlgen::attribute("default_interface")]]
 	[[idlgen::attribute("Windows.UI.Xaml.Markup.ContentProperty(\"Property\")")]]
-	BlankPage : BlankPageT<BlankPage>, idlgen::author_class, idlgen::base<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>, Interface
+	BlankPage : BlankPageT<BlankPage>, idlgen::author_class<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>, Interface
 	{
 		BlankPage();
 		BlankPage(uint64_t a);

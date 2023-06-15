@@ -1248,7 +1248,7 @@ std::optional<std::vector<clang::QualType>> idlgen::IdlgenVisitor::GetExtend(cla
             continue;
         }
         auto typeName{GetQualifiedName(cxxType)};
-        if (typeName != "idlgen::base")
+        if (!(typeName == nameAuthorClass || typeName == nameAuthorInterface))
         {
             continue;
         }

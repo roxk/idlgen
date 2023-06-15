@@ -5,7 +5,7 @@
 
 namespace winrt::Root::A::implementation
 {
-	class TestIncludeImpl : TestIncludeImplT<TestIncludeImpl>, idlgen::author_class
+	class TestIncludeImpl : TestIncludeImplT<TestIncludeImpl>, idlgen::author_class<>
 	{
 
 	};

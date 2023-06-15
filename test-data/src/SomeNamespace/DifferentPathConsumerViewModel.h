@@ -6,7 +6,7 @@
 
 namespace winrt::Root::SomeNamespace::implementation
 {
-	struct DifferentPathConsumerViewModel : DifferentPathConsumerViewModelT<DifferentPathConsumerViewModel>, idlgen::author_class
+	struct DifferentPathConsumerViewModel : DifferentPathConsumerViewModelT<DifferentPathConsumerViewModel>, idlgen::author_class<>
 	{
 		void Set(Root::SomeNamespace::DifferentPathViewModel a);
 	};

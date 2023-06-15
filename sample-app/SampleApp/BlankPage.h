@@ -29,13 +29,13 @@ namespace winrt::SampleApp::implementation
         void operator()(SampleApp::BlankPage const& sender, uint64_t e) {}
     };
 
-    struct MoreClass : MoreClassT<MoreClass>, idlgen::author_class
+    struct MoreClass : MoreClassT<MoreClass>, idlgen::author_class<>
     {
         MoreClass() {}
     };
 
     struct
-    BlankPage : BlankPageT<BlankPage>, idlgen::author_class, idlgen::base<Windows::UI::Xaml::Controls::Page>
+    BlankPage : BlankPageT<BlankPage>, idlgen::author_class<Windows::UI::Xaml::Controls::Page>
     {
         BlankPage()
         {

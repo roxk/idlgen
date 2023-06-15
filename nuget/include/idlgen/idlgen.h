@@ -4,12 +4,6 @@
 
 namespace idlgen
 {
-	template <typename B, typename... I>
-	struct base
-	{
-		// TODO: Verify if we need `no_unique_address`. winrt already applies `empty_bases` on classes
-	};
-
 	using author_enum = int64_t;
 
 	using author_enum_flags = uint64_t;
@@ -21,12 +15,16 @@ namespace idlgen
 	struct author_delegate
 	{
 	};
-	
+
+	template <typename... B>
 	struct author_interface
 	{
+		// TODO: Verify if we need `no_unique_address`. winrt already applies `empty_bases` on classes
 	};
 
+	template <typename... B>
 	struct author_class
 	{
+		// TODO: Verify if we need `no_unique_address`. winrt already applies `empty_bases` on classes
 	};
 }

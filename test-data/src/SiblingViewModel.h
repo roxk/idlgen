@@ -5,7 +5,7 @@
 
 namespace winrt::Root::B::implementation
 {
-	class SiblingViewModel : SiblingViewModelT<SiblingViewModel>, idlgen::author_class
+	class SiblingViewModel : SiblingViewModelT<SiblingViewModel>, idlgen::author_class<>
 	{
 
 	};
