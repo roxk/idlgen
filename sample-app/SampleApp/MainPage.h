@@ -8,7 +8,7 @@ namespace winrt::SampleApp::implementation
 {
     struct
     [[idlgen::import("Status.idl")]]
-    MainPage : MainPageT<MainPage>, idlgen::base<Windows::UI::Xaml::Controls::Page>
+    MainPage : MainPageT<MainPage>, idlgen::author_class, idlgen::base<Windows::UI::Xaml::Controls::Page>
     {
         MainPage() {}
 

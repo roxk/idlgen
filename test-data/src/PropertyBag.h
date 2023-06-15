@@ -1,5 +1,6 @@
 #pragma once
 
+#include "idlgen.h"
 #include "PropertyBag.g.h"
 #include "SameViewModel.h"
 #include "wil/cppwinrt_authoring.h"
@@ -8,7 +9,7 @@
 
 namespace winrt::Root::A::implementation
 {
-	struct [[idlgen::property]] PropertyBag : PropertyBagT<PropertyBag>
+	struct [[idlgen::property]] PropertyBag : PropertyBagT<PropertyBag>, idlgen::author_class
 	{
 		uint32_t UInt32Prop();
 		void UInt32Prop(uint32_t a);

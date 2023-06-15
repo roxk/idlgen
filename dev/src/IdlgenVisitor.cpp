@@ -15,6 +15,7 @@ constexpr auto nameAuthorEnumFlags = "idlgen::author_enum_flags";
 constexpr auto nameAuthorStruct = "idlgen::author_struct";
 constexpr auto nameAuthorDelegate = "idlgen::author_delegate";
 constexpr auto nameAuthorInterface = "idlgen::author_interface";
+constexpr auto nameAuthorClass = "idlgen::author_class";
 
 idlgen::IdlgenVisitor::IdlgenVisitor(
     clang::CompilerInstance& ci,
@@ -1188,6 +1189,11 @@ std::optional<idlgen::RuntimeClassKind> idlgen::IdlgenVisitor::GetRuntimeClassKi
         debugPrint([&]() { std::cout << className << " is not complete" << std::endl; });
         return std::nullopt;
     }
+    if (IsBaseOfType(record, nameAuthorClass))
+    {
+        debugPrint([&]() { std::cout << className << " is an implementation type" << std::endl; });
+        return idlgen::RuntimeClassKind::Implementation;
+    }
     auto bases{record->bases()};
     for (auto&& base : bases)
     {
@@ -1206,53 +1212,6 @@ std::optional<idlgen::RuntimeClassKind> idlgen::IdlgenVisitor::GetRuntimeClassKi
         if (cxxType->getName() == "IInspectable" || cxxType->getName() == "IUnknown")
         {
             return idlgen::RuntimeClassKind::Projected;
-        }
-        auto templateSpecType{baseType->getAs<clang::TemplateSpecializationType>()};
-        auto spec{clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxxType)};
-        if (templateSpecType != nullptr && spec != nullptr)
-        {
-            auto templateDecl{templateSpecType->getTemplateName().getAsTemplateDecl()};
-            auto templateName{templateDecl->getNameAsString()};
-            debugPrint([&]() { std::cout << templateName << " is a template specialization" << std::endl; });
-            auto params{spec->getTemplateArgs().asArray()};
-            for (auto&& param : params)
-            {
-                auto paramKind{param.getKind()};
-                if (paramKind != clang::TemplateArgument::ArgKind::Type)
-                {
-                    debugPrint(
-                        [&]()
-                        {
-                            std::cout << "Template param ";
-                            param.print(clang::LangOptions(), llvm::outs(), true);
-                            std::cout << " is not a type" << std::endl;
-                        }
-                    );
-                    continue;
-                }
-                auto type{param.getAsType()->getAsCXXRecordDecl()};
-                if (type == nullptr)
-                {
-                    debugPrint([&]()
-                               { std::cout << param.getAsType().getAsString() << " is not a CXXRecord" << std::endl; });
-                    continue;
-                }
-                auto templateParamTypeName{type->getNameAsString()};
-                auto expectedParamTypeName{std::string_view(templateName).substr(0, templateName.size() - 1)};
-                debugPrint(
-                    [&]()
-                    {
-                        std::cout << "templateParamTypeName=" << templateParamTypeName << " className=" << className
-                                  << " templateName=" << templateName
-                                  << " expectedParamTypeName=" << expectedParamTypeName
-                                  << " cxxTypeName=" << cxxType->getName().data() << std::endl;
-                    }
-                );
-                if (templateParamTypeName == expectedParamTypeName && templateParamTypeName == className)
-                {
-                    return idlgen::RuntimeClassKind::Implementation;
-                }
-            }
         }
         if (auto opt = GetRuntimeClassKind(cxxType, implementationOnly))
         {
@@ -1665,12 +1624,12 @@ bool idlgen::IdlgenVisitor::IsBaseOfType(clang::CXXRecordDecl* decl, std::string
         auto baseType{base.getType().getTypePtrOrNull()};
         if (baseType == nullptr)
         {
-            return false;
+            continue;
         }
         auto cxxBase{baseType->getAsCXXRecordDecl()};
         if (cxxBase == nullptr)
         {
-            return false;
+            continue;
         }
         auto baseQualifiedName{cxxBase->getQualifiedNameAsString()};
         if (baseQualifiedName == name)
