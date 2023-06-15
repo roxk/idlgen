@@ -5,7 +5,7 @@
 
 namespace winrt::Root::implementation
 {
-	class ShallowerViewModel : ShallowerViewModelT<ShallowerViewModel>, idlgen::author_class
+	class ShallowerViewModel : ShallowerViewModelT<ShallowerViewModel>, idlgen::author_class<>
 	{
 
 	};

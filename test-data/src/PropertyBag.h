@@ -9,7 +9,7 @@
 
 namespace winrt::Root::A::implementation
 {
-	struct [[idlgen::property]] PropertyBag : PropertyBagT<PropertyBag>, idlgen::author_class
+	struct [[idlgen::property]] PropertyBag : PropertyBagT<PropertyBag>, idlgen::author_class<>
 	{
 		uint32_t UInt32Prop();
 		void UInt32Prop(uint32_t a);
