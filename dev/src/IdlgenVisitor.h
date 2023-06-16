@@ -155,10 +155,10 @@ class DelegatePrinter : public Printer
 {
   private:
     clang::CXXRecordDecl* record;
-    clang::CXXMethodDecl* method;
+    std::vector<clang::QualType> types;
 
   public:
-    DelegatePrinter(clang::CXXRecordDecl* record, clang::CXXMethodDecl* method);
+    DelegatePrinter(clang::CXXRecordDecl* record, std::vector<clang::QualType> types);
     void Print(IdlgenVisitor& visitor, llvm::raw_ostream& out) override;
 };
 class StructPrinter : public Printer
@@ -289,6 +289,7 @@ class IdlgenVisitor : public clang::RecursiveASTVisitor<IdlgenVisitor>
     static std::vector<std::string> GetWinRtNamespaces(clang::NamedDecl* decl);
     static std::string GetQualifiedName(clang::CXXRecordDecl* record);
     clang::QualType GetFirstTemplateTypeParam(clang::ClassTemplateSpecializationDecl const* templateSpecDecl);
+    std::vector<clang::QualType> GetTemplateTypeParam(clang::ClassTemplateSpecializationDecl const* templateSpecDecl);
     std::optional<std::string> GetLocFilePath(clang::NamedDecl* decl);
     std::optional<std::string> GetLocFileName(clang::CXXRecordDecl* record);
     template <typename Func> void ForThisAndBaseMethods(clang::CXXRecordDecl const* record, Func&& func)

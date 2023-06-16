@@ -24,9 +24,8 @@ namespace winrt::SampleApp::implementation
         int64_t Y;
     };
 
-    struct _BlankPageEventHandler : idlgen::author_delegate
+    struct _BlankPageEventHandler : idlgen::author_delegate<void, SampleApp::BlankPage, uint64_t>
     {
-        void operator()(SampleApp::BlankPage const& sender, uint64_t e) {}
     };
 
     struct MoreClass : MoreClassT<MoreClass>, idlgen::author_class<>

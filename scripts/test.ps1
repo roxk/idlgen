@@ -345,7 +345,7 @@ $someDelegateOutput = get-gen-output "$testCodeDir\SomeDelegate.h"
 exists -src $someDelegateOutput -line "import `"ShallowerViewModel.idl`";"
 exists -src $someDelegateOutput -line "import `"SomeFlag.idl`";"
 exists -src $someDelegateOutput -line "[webhosthidden]"
-exists -src $someDelegateOutput -line "delegate void SomeEventHandler(Root.ShallowerViewModel vm, UInt64 e);"
+exists -src $someDelegateOutput -line "delegate void SomeEventHandler(Root.ShallowerViewModel sender, UInt64 e);"
 # hidden
 absent -src $someDelegateOutput -line "NonWinRtTypeHandler"
 absent -src $someDelegateOutput -line "HiddenHandler"

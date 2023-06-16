@@ -12,6 +12,7 @@ namespace idlgen
 	{
 	};
 
+	template<typename R, typename Sender, typename E>
 	struct author_delegate
 	{
 	};
