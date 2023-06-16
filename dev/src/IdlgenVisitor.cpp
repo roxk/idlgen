@@ -1361,6 +1361,32 @@ clang::QualType idlgen::IdlgenVisitor::GetFirstTemplateTypeParam(
     return clang::QualType();
 }
 
+std::vector<clang::QualType> idlgen::IdlgenVisitor::GetTemplateTypeParam(
+    clang::ClassTemplateSpecializationDecl const* templateSpecDecl
+)
+{
+    std::vector<clang::QualType> types;
+    auto params{templateSpecDecl->getTemplateArgs().asArray()};
+    for (auto&& param : params)
+    {
+        auto paramKind{param.getKind()};
+        if (paramKind != clang::TemplateArgument::ArgKind::Type)
+        {
+            debugPrint(
+                [&]()
+                {
+                    std::cout << "Template param ";
+                    param.print(clang::LangOptions(), llvm::outs(), true);
+                    std::cout << " is not a type" << std::endl;
+                }
+            );
+            continue;
+        }
+        types.emplace_back(param.getAsType());
+    }
+    return types;
+}
+
 std::optional<std::string> idlgen::IdlgenVisitor::GetLocFilePath(clang::NamedDecl* decl)
 {
     auto& srcManager{astContext.getSourceManager()};
@@ -1529,36 +1555,40 @@ std::unique_ptr<idlgen::DelegatePrinter> idlgen::IdlgenVisitor::TryHandleAsDeleg
     {
         return nullptr;
     }
-    clang::CXXMethodDecl* method{nullptr};
-    auto methods{decl->methods()};
-    for (auto&& candidateMethod : methods)
-    {
-        debugPrint(
-            [&]() { std::cout << "Finding delegate signature from" << candidateMethod->getNameAsString() << std::endl; }
-        );
-        if (method != nullptr)
-        {
-            return nullptr;
-        }
-        if (GetRuntimeClassMethodKind(false, candidateMethod) != MethodKind::Method)
-        {
-            return nullptr;
-        }
-        if (candidateMethod->param_size() != 2)
-        {
-            return nullptr;
-        }
-        method = candidateMethod;
-    }
-    if (method == nullptr)
+    auto baseType{decl->bases().begin()->getType()};
+    auto specDecl{clang::dyn_cast<clang::ClassTemplateSpecializationDecl>(StripReferenceAndGetNamedDecl(baseType))};
+    if (specDecl == nullptr)
     {
         return nullptr;
     }
-    if (method->getNameAsString() != "operator()")
+    auto types{GetTemplateTypeParam(specDecl)};
+    constexpr auto returnTypeIndex = 0;
+    constexpr auto senderIndex = 1;
+    constexpr auto eIndex = 2;
+    constexpr auto paramCount = 3;
+    if (types.size() != paramCount)
     {
         return nullptr;
     }
-    return std::make_unique<idlgen::DelegatePrinter>(decl, method);
+    auto returnType{types[returnTypeIndex]};
+    if (!IsRuntimeClassMethodType(returnType, false))
+    {
+        return nullptr;
+    }
+    auto senderType{types[senderIndex]};
+    if (!IsRuntimeClassMethodType(senderType, true))
+    {
+        return nullptr;
+    }
+    auto eType{types[eIndex]};
+    if (!IsRuntimeClassMethodType(eType, true))
+    {
+        return nullptr;
+    }
+    FindFileToInclude(returnType);
+    FindFileToInclude(senderType);
+    FindFileToInclude(eType);
+    return std::make_unique<idlgen::DelegatePrinter>(decl, std::move(types));
 }
 
 std::unique_ptr<idlgen::Printer> idlgen::IdlgenVisitor::TryHandleAsStruct(clang::CXXRecordDecl* decl)
@@ -1727,20 +1757,28 @@ void idlgen::PropertyMethodPrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostr
     }
 }
 
-idlgen::DelegatePrinter::DelegatePrinter(clang::CXXRecordDecl* record, clang::CXXMethodDecl* method) :
+idlgen::DelegatePrinter::DelegatePrinter(clang::CXXRecordDecl* record, std::vector<clang::QualType> types) :
     record(record),
-    method(method)
+    types(std::move(types))
 {
 }
 
 void idlgen::DelegatePrinter::Print(IdlgenVisitor& visitor, llvm::raw_ostream& out)
 {
+    constexpr auto returnTypeIndex = 0;
+    constexpr auto senderIndex = 1;
+    constexpr auto eIndex = 2;
+    constexpr auto paramCount = 3;
+    assert(types.size() == paramCount);
     auto name{record->getName()};
     out << "delegate ";
-    out << visitor.TranslateCxxTypeToWinRtType(method->getReturnType()) << " ";
+    out << visitor.TranslateCxxTypeToWinRtType(types[returnTypeIndex]) << " ";
     out << name.ltrim("_");
-    visitor.PrintMethodParams(method);
-    out << "\n";
+    out << "(";
+    out << visitor.TranslateCxxTypeToWinRtType(types[senderIndex]) << " sender";
+    out << ", ";
+    out << visitor.TranslateCxxTypeToWinRtType(types[eIndex]) << " e";
+    out << ");\n";
 }
 
 idlgen::StructPrinter::StructPrinter(clang::CXXRecordDecl* record, std::vector<clang::FieldDecl*> fields) :
