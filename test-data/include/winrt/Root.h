@@ -23,6 +23,8 @@ namespace winrt::Root
 
 	struct ImplementMoreInterface : Base {};
 
+	struct UnconventionalRuntimeClass : Base {};
+
 	namespace A
 	{
 		struct BlankPage : Base {};

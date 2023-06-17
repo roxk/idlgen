@@ -105,4 +105,12 @@ namespace winrt
 			struct INotifyPropertyChanged : Base {};
 		}
 	}
+
+	namespace Windows::UI::Xaml::Markup
+	{
+		template <typename D>
+		struct ComponentConnectorT : D
+		{
+		};
+	}
 }

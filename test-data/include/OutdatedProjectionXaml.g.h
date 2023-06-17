@@ -1,7 +1,6 @@
 #pragma once
 
 #include "winrt/Root.h"
-#include "Class.h"
 #include <cstdint>
 
 namespace winrt::Root::implementation
