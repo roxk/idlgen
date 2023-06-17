@@ -98,12 +98,6 @@ function test-bootstrap {
 	&$func -out $out
 }
 
-# Test only pch generation
-if (test-path $pchOutDir) {
-	remove-item $pchOutDir -Recurse
-}
-gen -filePath "" -genPch
-
 # Test bootstrap
 test-bootstrap "$testCodeDir\BlankPage.h" -func {
 	param([string]$out)
@@ -155,6 +149,12 @@ test-bootstrap "$testCodeDir\SomeDelegate.h" -func {
 gen "$testCodeDir\NonWinRtHeader.h" -bootstrap
 $idlExists = test-path "$testCodeDir\NonWinRtHeader.idl"
 assert -desc "Non WinRT header does not generate bootstrap idl" -actual ($idlExists -ne $true)
+
+# Test only pch generation
+if (test-path $pchOutDir) {
+	remove-item $pchOutDir -Recurse
+}
+gen -filePath "" -genPch
 
 # Test BlankPage
 # TODO: Rewrite each test case as lambda so we can write test-gen-output("path", (output) -> { exists -src $output })
