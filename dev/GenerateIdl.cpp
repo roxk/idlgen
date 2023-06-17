@@ -271,8 +271,9 @@ std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringTy
 
 std::set<std::string> FindRuntimeClassNames(const std::string& code)
 {
-    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*(\\w+)\\s*:\\s*.+\\s*"
-                              "(idlgen::)*author_class";
+    constexpr auto regexStr =
+        "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*(\\w+)\\s*:\\s*.+\\s*"
+        "(idlgen::)*author_class";
     std::regex regex(regexStr);
     constexpr auto captureGroupCount = 5;
     constexpr auto expectedMatchCount = captureGroupCount + 1;
