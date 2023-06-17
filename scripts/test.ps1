@@ -146,6 +146,11 @@ test-bootstrap "$testCodeDir\SomeDelegate.h" -func {
 	exists -src $out -line "delegate void SomeEventHandler"
 }
 
+test-bootstrap "$testCodeDir\UnconventionalRuntimeClass.h" -func {
+	param([string]$out)
+	exists -src $out -line "runtimeclass UnconventionalRuntimeClass"
+}
+
 gen "$testCodeDir\NonWinRtHeader.h" -bootstrap
 $idlExists = test-path "$testCodeDir\NonWinRtHeader.idl"
 assert -desc "Non WinRT header does not generate bootstrap idl" -actual ($idlExists -ne $true)
@@ -367,6 +372,9 @@ exists -src $someInterfaceOutput -line "event Windows.Foundation.EventHandler<Bo
 absent -src $someInterfaceOutput -line "PrivateMethod"
 absent -src $someInterfaceOutput -line "HiddenInterface"
 absent -src $someInterfaceOutput -line "HiddenMethod"
+
+$unconventionalRuntimeClassOutput = get-gen-output "$testCodeDir\UnconventionalRuntimeClass.h"
+exists -src $unconventionalRuntimeClassOutput -line "unsealed runtimeclass UnconventionalRuntimeClass"
 
 # Note: Outdated projection test cannot be tested here as fixing that involves generating projection from
 # bootstrap IDL. These could be tested in sample-app instead
