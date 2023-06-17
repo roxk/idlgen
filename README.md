@@ -32,17 +32,18 @@ On top of the nuget package, you can also install IDE extension to streamline th
 
 1. Add a new runtime class (view model or XAML page) from C++/WinRT template. Or, you can start with existing runtime classes.
 2. Add `pch.h` and `idlgen.h`, and other necessary includes in the header of your implementation type.
-3. Edit the header file. E.g. add a method.
-4. Build the project. A custom build step that generates idl files would run before `Midl`.
-5. Viola! The idl file of the implementation type has been updated. `Midl` would then update/generate a `winmd` with the modification, and C++/WinRT would pick it up when generating projection.
-6. Made a mistake in header, e.g. forgot to add an import? No worries! Just edit your header and rebuild. Idlgen would pick up your changes and proceed to generate an updated idl. It just works™️.
+3. Make your implementation class inherits `idlgen::author_class`. 
+4. Edit the header file. E.g. add a method.
+5. Build the project. A custom build step that generates idl files would run before `Midl`.
+6. Viola! The idl file of the implementation type has been updated. `Midl` would then update/generate a `winmd` with the modification, and C++/WinRT would pick it up when generating projection.
+7. Made a mistake in header, e.g. forgot to add an import? No worries! Just edit your header and rebuild. Idlgen would pick up your changes and proceed to generate an updated idl. It just works™️.
 
 The library would generate the whole runtimm class definition for you. There should be literally zero edit you need to make on the resultant idl file.
 
 ### Automatically Generated Structures
 
 The library could automatically generate the following structures in an ordinary idl files:
-- Runtime class definition, if an implementation type is found
+- Runtime class definition, if an implementation type inherits `author_class`
 - All (static) methods
 - All (static) events
 - Import for supported entities in another header file. Supported entities include
@@ -58,7 +59,9 @@ Additionally, idlgen could generate the following with the use of some tag types
 
 #### Base
 
-To specify the base type and interface for a runtime class, the class should inherit from `idlgen::base` tag template. For example, to inherit from `Page` and implement `INotifyPropertyChanged`, a runtime class should inherit `idlgen::base<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>`.
+To specify the base type and interface for a runtime class/interface, developers should specify the base types in the corresponding tag template's template parameters. For runtime class, the tag template is `idlgen::author_class`. For interface, `idlgen::author_interface`.
+
+For example, to inherit from `Page` and implement `INotifyPropertyChanged`, an implementation type should inherits `idlgen::author_class<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>`. To add required interface, an authored interface should inherits `idlgen::author_interface<BaseInterface>`.
 
 #### Property
 
@@ -76,19 +79,24 @@ Template types that overloads `operator()` with return type and parameters match
 
 #### Struct, Delegate, Enum
 
-To generate these structures, define the structure in C++ and inherit the correct tag type according to the following table.
+To generate these structures, define the structure in C++ and inherit the correct _authoring tag type_ according to the following table.
 
 To prevent name collision between projected type and its authored types, you can prefix type name with `_` to prevent name collision. Idlgen would trim `_` out of type names in idl. 
 
 Types which inherit the following tag types are called authored types (similar to how implementation of runtime class are called implemenation types).
 
+#### Note: These tag types must be inherited as immediate base (i.e. not via an intermediate class) due to bootstrapping.
+
 |Structure|Tag type|Note|Example|Result|
 |--|--|--|--|--|
+|runtime class|`idlgen::author_class`|N/A|`struct MainPage : MainPageT<MainPage>, idlgen::author_class {}`|`runtimeclass MainPage {}`|
 |struct|`idlgen::author_struct`|N/A|`struct _Point : idlgen::author_struct { int32_t X; int32_t Y; }`|`struct Pointer { Int32 X; Int32 Y;}`|
 |delegate|`idlgen::author_delegate`|Overload `operator()`|`struct _Handler : idlgen::author_delegate { void operator()(int32_t a, int32_t b);}`|`delegate void Handler(Int32 a, Int32 b)`|
 |enum|`idlgen::author_enum`|Must be scoped enum|`enum class _State : idlgen::author_enum {A, B}`|`enum State {A, B}`|
 |enum flags|`idlgen::author_enum_flags`|Must be scoped enum|`enum class _State : idlgen::author_enum_flags {A = 0x1, B = 0x2}`|`[flags] enum State {A = 0x1, B = 0x2}`|
 |interface|`idlgen::author_interface`|N/A|`struct _Interface : idlgen::author_interface { void Method(); }`|`interface Interface { void Method(); }`|
+
+**Note**: Runtime class's authoring tag type is also included in the table for the sake of completeness. In this sense, an implementation type is also an authored type, but when this document mention authored types, it usually does not mean implementation type.
 
 ### Structures Requiring Special Author Help
 
@@ -139,6 +147,18 @@ Due to [bootstrapping](#Bootstrapping-idlgen), Idlgen currently has the followin
 1. Authored WinRT projected types must be treated as incomplete types in headers. That is, you can only refer to the name of the type as if it is forward declared. This limitation applies to all projected types, including runtime class, enum, etc. In practice, this means method definitions which use projected types must be defined in .cpp files.
 
    - If you are using visual studio, you can right click affected method and choose "Move definition location" to automatically fix it.
+
+2. Authoring tag types must be inherited as immediate base. That is, the following would generate `interface SomeInterface`:
+```
+struct _SomeInterface : idlgen::author_interface {};
+```
+but the following does _NOT_:
+```
+struct Base : idlgen::author_interface {};
+
+struct _SomeInterface : Base {};
+```
+`interface Base` would be generated instead.
 
 ## Tips
 
@@ -218,7 +238,7 @@ Just follow the advice in [Incremental Adoption in Existing Codebase](#Increment
 
 Idl generation from C++ actually involves the classic chicken and egg problem. To generate idl, a header file needs to be compiled. To compile the header file, C++/WinRT projection need to exist. To generate C++/WinRT projection, winmd and thus idl files are required.
 
-Idlgen solves this problem by inserting a "bootstrap" build step before generating idl. During bootstrapping, idlgen would generate dummy idls and forces C++/WinRT to generate projection. Said projection would thus allow idlgen to compile headers and generate idls without issues such as definition removal.
+Idlgen solves this problem by inserting a "bootstrap" build step before generating idl. During bootstrapping, idlgen would generate dummy idls and forces C++/WinRT to generate projection. Said projection would thus free idlgen from issues such as definition removal.
 
 ## Contribution
 
