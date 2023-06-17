@@ -245,28 +245,6 @@ std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExt
     return IdlWriter(std::move(out), std::move(idlFile));
 }
 
-std::set<std::string> FindRuntimeClassNames(const std::string& code)
-{
-    constexpr auto regexStr = "(struct|class)(\\s|\\w|\\[|\\]|:|\"|\\(|\\)|,|\\.|\\\\)+(\\w+)\\s+:(\\s+\\w+,*)*(\\s+"
-                              "\\3T)<(\\w|:)*\\3(,\\s*(\\w|:)+)*>";
-    std::regex regex(regexStr);
-    constexpr auto captureGroupCount = 7;
-    constexpr auto expectedMatchCount = captureGroupCount + 1;
-    constexpr auto classNameIndex = 3;
-    std::set<std::string> classNames;
-    for (auto it = code.begin(); it != code.end();)
-    {
-        std::smatch results;
-        if (!std::regex_search(it, code.end(), results, regex) || results.size() < expectedMatchCount)
-        {
-            break;
-        }
-        it = results[0].second;
-        classNames.insert(results[classNameIndex]);
-    }
-    return classNames;
-}
-
 // Pasting for easier copy and paste.
 // TODO: Use constexpr std::string in C++20.
 constexpr auto NameRegexMiddle =
@@ -289,6 +267,28 @@ std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringTy
         names.emplace_back(results[NameIndex]);
     }
     return names;
+}
+
+std::set<std::string> FindRuntimeClassNames(const std::string& code)
+{
+    constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*(\\w+)\\s*:\\s*.+\\s*"
+                              "(idlgen::)*author_class";
+    std::regex regex(regexStr);
+    constexpr auto captureGroupCount = 5;
+    constexpr auto expectedMatchCount = captureGroupCount + 1;
+    constexpr auto classNameIndex = 4;
+    std::set<std::string> classNames;
+    for (auto it = code.begin(); it != code.end();)
+    {
+        std::smatch results;
+        if (!std::regex_search(it, code.end(), results, regex) || results.size() < expectedMatchCount)
+        {
+            break;
+        }
+        it = results[0].second;
+        classNames.insert(results[classNameIndex]);
+    }
+    return classNames;
 }
 
 std::vector<std::string> FindEnumNames(const std::string& code)
