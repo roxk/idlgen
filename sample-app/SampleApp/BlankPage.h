@@ -43,10 +43,10 @@ namespace winrt::SampleApp::implementation
         }
 
         [[idlgen::property]]
-        enum Category Category();
+        Category Category();
 
         [[idlgen::property]]
-        enum Permission Permission();
+        Permission Permission();
 
         Point GetPoint() { return Point{}; }
 
