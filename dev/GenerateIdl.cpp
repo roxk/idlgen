@@ -86,6 +86,11 @@ static lc::opt<bool> Generate("gen", lc::desc("Generate IDL next to the input fi
 
 static lc::opt<bool> GenerateBootstrap("gen-bootstrap", lc::desc("Generate bootstrap idl"));
 
+static lc::opt<bool> GenerateProjectionPatch(
+    "gen-projection-patch",
+    lc::desc("Generate projection patch, such as IClassProtected. Expect input file to be Class.g.h")
+);
+
 static lc::opt<std::string> GenerateOutputPath(
     "gen-out", lc::desc("If specified and --gen is applied, control the output path of the generated IDL")
 );
@@ -251,11 +256,11 @@ constexpr auto NameRegexMiddle =
     "\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*(idlgen::)*";
 
 template <int CaptureGroupCount, int NameIndex, typename StringType>
-std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringType&& regexStr)
+std::set<std::string> FindAuthoredTypeNames(const std::string& code, StringType&& regexStr)
 {
     std::regex regex(regexStr);
     constexpr auto expectedMatchCount = CaptureGroupCount + 1;
-    std::vector<std::string> names;
+    std::set<std::string> names;
     for (auto it = code.begin(); it != code.end();)
     {
         std::smatch results;
@@ -264,7 +269,7 @@ std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringTy
             break;
         }
         it = results[0].second;
-        names.emplace_back(results[NameIndex]);
+        names.insert(results[NameIndex]);
     }
     return names;
 }
@@ -272,7 +277,7 @@ std::vector<std::string> FindAuthoredTypeNames(const std::string& code, StringTy
 std::set<std::string> FindRuntimeClassNames(const std::string& code)
 {
     constexpr auto regexStr =
-        "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*(\\w+)\\s*:\\s*.+\\s*"
+        "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|_|:|\\.)*\\]\\]\\s+)*(\\w+)\\s*:\\s*.+\\s*"
         "(idlgen::)*author_class";
     std::regex regex(regexStr);
     constexpr auto captureGroupCount = 5;
@@ -292,28 +297,28 @@ std::set<std::string> FindRuntimeClassNames(const std::string& code)
     return classNames;
 }
 
-std::vector<std::string> FindEnumNames(const std::string& code)
+std::set<std::string> FindEnumNames(const std::string& code)
 {
     constexpr auto regexStr = "enum\\s+class\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*("
                               "idlgen::)*author_enum(_flags)*";
     return FindAuthoredTypeNames<5, 3>(code, regexStr);
 }
 
-std::vector<std::string> FindStructNames(const std::string& code)
+std::set<std::string> FindStructNames(const std::string& code)
 {
     constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*"
                               "(idlgen::)*author_struct";
     return FindAuthoredTypeNames<5, 4>(code, regexStr);
 }
 
-std::vector<std::string> FindInterfaceNames(const std::string& code)
+std::set<std::string> FindInterfaceNames(const std::string& code)
 {
     constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*"
                               "(idlgen::)*author_interface";
     return FindAuthoredTypeNames<5, 4>(code, regexStr);
 }
 
-std::vector<std::string> FindDelegateNames(const std::string& code)
+std::set<std::string> FindDelegateNames(const std::string& code)
 {
     constexpr auto regexStr = "(struct|class)\\s+(\\[\\[(\\w|\\s|\\(|\\)|\"|\\\\|,|:|\\.)*\\]\\]\\s+)*_*(\\w+)\\s*:\\s*"
                               "(idlgen::)*author_delegate";
@@ -427,43 +432,26 @@ bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
     return true;
 }
 
-std::string InsertForwardDeclarationForClassInterfaces(clang::StringRef buffer)
+bool GenerateProjectionPatchToGeneratedHeader(clang::StringRef filePath, clang::StringRef buffer)
 {
     std::string code{buffer};
-    const auto classNames{FindRuntimeClassNames(code)};
-    if (classNames.empty())
-    {
-        return code;
-    }
-    // Find #include "*.g.h"
-    constexpr auto includeStr = "#include\\s+\"\\w+\\.g\\.h\"";
-    std::regex includeRegex(includeStr);
-    std::match_results<std::string::iterator> includeResults;
-    constexpr auto includeIndex = 0;
-    if (!std::regex_search(code.begin(), code.end(), includeResults, includeRegex))
-    {
-        DebugPrint([]() { std::cout << "No include to insert forward declaration" << std::endl; });
-        return code;
-    }
-    auto includeResult{includeResults[includeIndex]};
-    auto insertPosition{includeResult.first};
+    auto fileName{lsp::filename(filePath)};
+    auto className{std::regex_replace(fileName.str(), std::regex(".g.h"), "")};
+    DebugPrint([&]() { std::cout << "Generating projection patch for class " << className << std::endl; });
     auto namespaceDefinition{FindWinRtNamespaceInCpp(code, false)};
     if (namespaceDefinition.empty())
     {
         DebugPrint([]() { std::cout << "No namespce to insert forward declaration" << std::endl; });
-        return code;
+        return true;
     }
     std::string insertion{namespaceDefinition};
     insertion += "\n";
-    for (auto&& className : classNames)
-    {
-        insertion += "struct I";
-        insertion += className;
-        insertion += "Protected;\n";
-        insertion += "struct I";
-        insertion += className;
-        insertion += "Statics;\n";
-    }
+    insertion += "struct I";
+    insertion += className;
+    insertion += "Protected;\n";
+    insertion += "struct I";
+    insertion += className;
+    insertion += "Statics;\n";
     insertion += "}\n"; // namespace $RootNamespace
     DebugPrint(
         [&]()
@@ -472,8 +460,18 @@ std::string InsertForwardDeclarationForClassInterfaces(clang::StringRef buffer)
             std::cout << insertion << std::endl;
         }
     );
-    code.insert(insertPosition - code.begin(), insertion);
-    return code;
+    std::error_code ec;
+    auto out{std::make_unique<llvm::raw_fd_ostream>(
+        filePath, ec, lfs::CreationDisposition::CD_OpenExisting, lfs::FileAccess::FA_Write, lfs::OpenFlags::OF_Append
+    )};
+    if (ec)
+    {
+        std::cerr << "Failed to open output for " << filePath.str() << std::endl;
+        std::cerr << ec.message() << std::endl;
+        return false;
+    }
+    *out << insertion;
+    return true;
 }
 
 int main(int argc, const char** argv)
@@ -536,6 +534,30 @@ int main(int argc, const char** argv)
                 continue;
             }
             const auto result{GenerateBootstrapIdl(filePath, code->getBuffer())};
+            if (!result)
+            {
+                std::cerr << "fatal: Failed to generate fake projection for " << filePath << std::endl;
+                return 1;
+            }
+        }
+        return 0;
+    }
+    if (GenerateProjectionPatch)
+    {
+        for (auto&& filePath : FileNames)
+        {
+            auto codeOrErr{llvm::MemoryBuffer::getFileAsStream(filePath)};
+            if (std::error_code ec = codeOrErr.getError())
+            {
+                std::cerr << ec.message() << std::endl;
+                return 1;
+            }
+            auto code(std::move(codeOrErr.get()));
+            if (code->getBufferSize() == 0)
+            {
+                continue;
+            }
+            const auto result{GenerateProjectionPatchToGeneratedHeader(filePath, code->getBuffer())};
             if (!result)
             {
                 std::cerr << "fatal: Failed to generate fake projection for " << filePath << std::endl;
@@ -640,12 +662,11 @@ int main(int argc, const char** argv)
         {
             return 1;
         }
-        auto buffer{InsertForwardDeclarationForClassInterfaces(code->getBuffer())};
         const auto result = ct::runToolOnCodeWithArgs(
             std::make_unique<idlgen::GenIdlFrontendAction>(
                 out.value().get(), Verbose, getterTemplates, propertyTemplates
             ),
-            buffer,
+            code->getBuffer(),
             clangArgs,
             filePath
         );

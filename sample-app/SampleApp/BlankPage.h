@@ -59,6 +59,8 @@ namespace winrt::SampleApp::implementation
 
         [[idlgen::protected]]
         bool ProtectedGetter();
+    private:
+        friend struct winrt::impl::produce<BlankPage, SampleApp::IBlankPageProtected>;
     };
 }
 

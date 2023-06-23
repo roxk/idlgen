@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "pch.h"
+#include "BlankPage.h"
 #include "MainPage.g.h"
 #include <algorithm>
 
@@ -18,6 +19,9 @@ namespace winrt::SampleApp::implementation
         void MyProperty(int32_t value);
 
         Status Status() { return mStatus; }
+    protected:
+        friend struct winrt::impl::produce<MainPage, SampleApp::IMainPageProtected>;
+        int32_t Property();
     private:
         friend struct MainPageT<MainPage>;
         uint32_t MinMaxWorks(uint32_t a) { return std::max(a, 42u); }
