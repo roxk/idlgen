@@ -5,6 +5,7 @@ unsealed runtimeclass MainPage : Windows.UI.Xaml.Controls.Page
 {
 MainPage();
 Int32 MyProperty;
+protected Int32 Property();
 SampleApp.Status Status();
 }
 }

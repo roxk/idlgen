@@ -44,8 +44,10 @@
 			<PchOutput>$(IntDir)idlgen\%(Filename)%(Extension).gch</PchOutput>
 		</IdlGenCppPch>
 		<IdlGenCppInclude>
+			<ComponentHeader>$(GeneratedFilesDir)$(RelativeDir)%(Filename).g.h</ComponentHeader>
 			<IdlTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename)%(Extension).timestamp</IdlTimestamp>
 			<BootstrapIdlTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename).bootstrap.timestamp</BootstrapIdlTimestamp>
+			<ComponentHeaderTimestamp>$(IntDir)idlgen\$(RelativeDir)%(Filename).g.timestamp</ComponentHeaderTimestamp>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
 	<Target Name="IdlgenCppClean">
@@ -60,6 +62,19 @@
 			<TimestampFile>%(IdlGenCppInclude.BootstrapIdlTimestamp)</TimestampFile>
 		</PropertyGroup>
 		<Exec Command="$(IdlgenCppExePath)idlgen.exe %(IdlGenCppInclude.Identity) --gen-bootstrap" />
+		<WriteLinesToFile
+            File="$(TimestampFile)" Lines=""
+            Overwrite="true" />
+		<ItemGroup>
+			<FileWrites Include="$(TimestampFile)" />
+		</ItemGroup>
+	</Target>
+	<Target Name="GenerateBootstrapProjectionPatch" Inputs="@(IdlGenCppInclude)" Outputs="%(ComponentHeaderTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<PropertyGroup>
+			<Header>%(IdlGenCppInclude.ComponentHeader)</Header>
+			<TimestampFile>%(IdlGenCppInclude.ComponentHeaderTimestamp)</TimestampFile>
+		</PropertyGroup>
+		<Exec Command="$(IdlgenCppExePath)idlgen.exe &quot;$(Header)&quot; --gen-projection-patch" Condition="Exists('$(Header)')" />
 		<WriteLinesToFile
             File="$(TimestampFile)" Lines=""
             Overwrite="true" />
@@ -219,6 +234,7 @@
 	<Target Name="IdlgenCppBootstrapIdlGen" BeforeTargets="IdlgenCppCheckPchCount" DependsOnTargets="MarkupCompilePass1">
 		<CallTarget Targets="IdlgenCppMergeProjectWinMDInputs"/>
 		<MSBuild Projects="$(MSBuildProjectFile)" Targets="CppWinRTMakeProjections" Properties="_IdlgenCppDummyProp=Foo"/>
+		<CallTarget Targets="GenerateBootstrapProjectionPatch"/>
 	</Target>
 	<Target Name="IdlgenCppCheckPchCount">
 		<Error Text="More than 1 pch specified. Idlgen only supports 1 pch at a time." Condition="@(IdlGenCppPch->Count()) > 1"/>

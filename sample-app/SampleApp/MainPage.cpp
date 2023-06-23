@@ -17,6 +17,11 @@ namespace winrt::SampleApp::implementation
         throw hresult_not_implemented();
     }
 
+    int32_t MainPage::Property()
+    {
+        return 0;
+    }
+
     void MainPage::ClickHandler(IInspectable const&, RoutedEventArgs const&)
     {
         myButton().Content(box_value(L"Clicked"));
