@@ -160,6 +160,8 @@ struct _SomeInterface : Base {};
 ```
 `interface Base` would be generated instead.
 
+3. When a header listed in `pch.h` is updated, `pch.gch` produced by clang (used by idlgen to speed up subsequent IDL generation) would be invalidated. As a workaround, you could "touch" (e.g. insert a newline and then removing it) `pch.h` whenever a downstream header is updated to let idlgen re-build `pch.gch`.
+
 ## Tips
 
 ### Common Header Modification
