@@ -31,6 +31,10 @@ namespace winrt::SampleApp::implementation
     struct MoreClass : MoreClassT<MoreClass>, idlgen::author_class<>
     {
         MoreClass() {}
+
+    protected:
+        friend struct winrt::impl::produce<MoreClass, SampleApp::IMoreClassProtected>;
+        void Method() {}
     };
 
     struct

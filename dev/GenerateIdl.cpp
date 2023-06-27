@@ -214,18 +214,24 @@ struct IdlWriter
     friend std::optional<IdlWriter> GetIdlWriter(std::string_view filePath, bool replaceExtension);
 };
 
+std::string TrimExtension(std::string_view path)
+{
+    std::string fileName{path};
+    auto extension = llvm::sys::path::extension(fileName);
+    auto extensionIndex = fileName.rfind(extension);
+    while (extensionIndex != std::string::npos && extensionIndex < fileName.size())
+    {
+        fileName.erase(extensionIndex);
+        extension = llvm::sys::path::extension(fileName);
+        extensionIndex = fileName.rfind(extension);
+    }
+    return fileName;
+}
+
 std::string GetIdl(std::string_view path)
 {
     // Trim all extension to handle cases like .xaml.h -> .idl
-    std::string idlFile{path};
-    auto extension = llvm::sys::path::extension(idlFile);
-    auto extensionIndex = idlFile.rfind(extension);
-    while (extensionIndex != std::string::npos && extensionIndex < idlFile.size())
-    {
-        idlFile.erase(extensionIndex);
-        extension = llvm::sys::path::extension(idlFile);
-        extensionIndex = idlFile.rfind(extension);
-    }
+    auto idlFile{TrimExtension(path)};
     idlFile += ".idl";
     return idlFile;
 }
@@ -436,7 +442,7 @@ bool GenerateProjectionPatchToGeneratedHeader(clang::StringRef filePath, clang::
 {
     std::string code{buffer};
     auto fileName{lsp::filename(filePath)};
-    auto className{std::regex_replace(fileName.str(), std::regex(".g.h"), "")};
+    std::string className{TrimExtension(fileName)};
     DebugPrint([&]() { std::cout << "Generating projection patch for class " << className << std::endl; });
     auto namespaceDefinition{FindWinRtNamespaceInCpp(code, false)};
     if (namespaceDefinition.empty())
