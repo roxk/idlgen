@@ -29,10 +29,10 @@ delegate void BlankPageEventHandler(SampleApp.BlankPage sender, UInt64 e);
 }
 namespace SampleApp
 {
-[default_interface]
 unsealed runtimeclass MoreClass
 {
 MoreClass();
+protected void Method();
 }
 }
 namespace SampleApp
