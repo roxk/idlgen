@@ -86,6 +86,12 @@ static lc::opt<bool> Generate("gen", lc::desc("Generate IDL next to the input fi
 
 static lc::opt<bool> GenerateBootstrap("gen-bootstrap", lc::desc("Generate bootstrap idl"));
 
+static lc::opt<std::string> BootstrapClassOut(
+    "bootstrap-class-out",
+    lc::desc("If specified with --gen-bootstrap,"
+             " write newline-separated class names found during bootstrap to the file")
+);
+
 static lc::opt<bool> GenerateProjectionPatch(
     "gen-projection-patch",
     lc::desc("Generate projection patch, such as IClassProtected. Expect input file to be Class.g.h")
@@ -359,7 +365,9 @@ std::string FindWinRtNamespaceInCpp(std::string const& code, bool removeWinRt)
     );
 }
 
-bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
+bool GenerateBootstrapIdl(
+    std::string_view filePath, clang::StringRef buffer, std::optional<std::string_view> classNamesOutPath
+)
 {
     const std::string code{buffer.str()};
     std::string namespaceDefinition{FindWinRtNamespaceInCpp(code, true)};
@@ -435,6 +443,27 @@ bool GenerateBootstrapIdl(std::string_view filePath, clang::StringRef buffer)
         }
     );
     *writer.out << bootstrapIdl;
+    if (classNamesOutPath)
+    {
+        std::error_code ec;
+        auto classNameOut{std::make_unique<llvm::raw_fd_ostream>(
+            *classNamesOutPath,
+            ec,
+            lfs::CreationDisposition::CD_CreateAlways,
+            lfs::FileAccess::FA_Write,
+            lfs::OpenFlags::OF_None
+        )};
+        if (ec)
+        {
+            std::cerr << "Failed to open output for " << *classNamesOutPath << std::endl;
+            std::cerr << ec.message() << std::endl;
+            return false;
+        }
+        for (auto&& className : classNames)
+        {
+            *classNameOut << className << "\n";
+        }
+    }
     return true;
 }
 
@@ -539,7 +568,11 @@ int main(int argc, const char** argv)
             {
                 continue;
             }
-            const auto result{GenerateBootstrapIdl(filePath, code->getBuffer())};
+            const auto result{GenerateBootstrapIdl(
+                filePath,
+                code->getBuffer(),
+                BootstrapClassOut.empty() ? std::nullopt : std::optional<std::string_view>(BootstrapClassOut)
+            )};
             if (!result)
             {
                 std::cerr << "fatal: Failed to generate fake projection for " << filePath << std::endl;

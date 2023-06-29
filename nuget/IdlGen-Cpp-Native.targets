@@ -45,7 +45,7 @@
 		</IdlGenCppPch>
 		<IdlGenCppInclude>
 			<IdlTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename)%(Extension).timestamp</IdlTimestamp>
-			<BootstrapIdlTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename).bootstrap.timestamp</BootstrapIdlTimestamp>
+			<BootstrapClassOut>$(IntDir)idlgen\%(RelativeDir)%(Filename).bootstrap.classes</BootstrapClassOut>
 		</IdlGenCppInclude>
 	</ItemDefinitionGroup>
 	<Target Name="IdlgenCppClean">
@@ -55,43 +55,45 @@
 		</ItemGroup>
 		<Delete Files="@(_FilesToDelete)"/>
 	</Target>
-	<Target Name="IdlgenCppGenerateBoostrapIDL" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(BootstrapIdlTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-		<PropertyGroup>
-			<TimestampFile>%(IdlGenCppInclude.BootstrapIdlTimestamp)</TimestampFile>
-		</PropertyGroup>
-		<Exec Command="$(IdlgenCppExePath)idlgen.exe %(IdlGenCppInclude.Identity) --gen-bootstrap" />
-		<WriteLinesToFile
-            File="$(TimestampFile)" Lines=""
-            Overwrite="true" />
+	<Target Name="IdlgenCppGenerateBoostrapIDL" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(BootstrapClassOut)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<Exec Command="$(IdlgenCppExePath)idlgen.exe %(IdlGenCppInclude.Identity) --gen-bootstrap --bootstrap-class-out %(IdlGenCppInclude.BootstrapClassOut)" />
+	</Target>
+	<Target Name="PrepareBootstrapProjectionPatchInput" BeforeTargets="ComputeBootstrapProjectionPatchInputRaw" Returns="@(BootstrapProjectionPatchInputRaw)">
 		<ItemGroup>
-			<FileWrites Include="$(TimestampFile)" />
+			<BootstrapProjectionPatchInputRaw Remove="@(BootstrapProjectionPatchInputRaw)"/>
 		</ItemGroup>
 	</Target>
-	<!-- We cannot simply use @(IdlGenCppInclude) as 1 header can define more than 1 class. A simple solution is to generation patch for all .g.h. -->
-	<Target Name="ComputeBootstrapProjectionPatchInput" Returns="@(ComputeBootstrapProjectionPatchInput)">
-		<PropertyGroup>
-			<_ComponentGeneratedHeader>$(GeneratedFilesDir)**\*.g.h</_ComponentGeneratedHeader>
-			<_ExcludedComponentGeneratedHeader>$(GeneratedFilesDir)**\*.xaml.g.h</_ExcludedComponentGeneratedHeader>
-		</PropertyGroup>
+	<Target Name="ComputeBootstrapProjectionPatchInputRaw" Inputs="@(IdlgenCppInclude)" Outputs="%(Identity).foo">
+		<ReadLinesFromFile
+            File="%(IdlgenCppInclude.BootstrapClassOut)" Condition="Exists('%(IdlgenCppInclude.BootstrapClassOut)')">
+			<Output
+                TaskParameter="Lines"
+                PropertyName="_ClassNames"/>
+		</ReadLinesFromFile>
+		<ItemGroup Condition="'$(_ClassNames)' != ''">
+			<BootstrapProjectionPatchInputRaw Include="$(_ClassNames)">
+				<Source>%(IdlgenCppInclude.Identity)</Source>
+				<ComponentHeaderDir>$(GeneratedFilesDir)%(IdlgenCppInclude.RelativeDir)</ComponentHeaderDir>
+				<ComponentHeaderTimestampDir>$(IntDir)idlgen\%(IdlgenCppInclude.RelativeDir)</ComponentHeaderTimestampDir>
+			</BootstrapProjectionPatchInputRaw>
+		</ItemGroup>
+	</Target>
+	<Target Name="ComputeBootstrapProjectionPatchInput" DependsOnTargets="ComputeBootstrapProjectionPatchInputRaw" Returns="@(BootstrapProjectionPatchInput)">
 		<ItemGroup>
-			<_ComponentGeneratedHeader Include="$(_ComponentGeneratedHeader)" Exclude="$(_ExcludedComponentGeneratedHeader)"/>
-			<BootstrapProjectionPatchInput Remove="@(BootstrapProjectionPatchInput)"/>
-			<BootstrapProjectionPatchInput Include="@(_ComponentGeneratedHeader)">
-				<ComponentHeaderTimestamp>$(IntDir)idlgen\%(RelativeDir)%(Filename)%(Extension).patch.timestamp</ComponentHeaderTimestamp>
+			<BootstrapProjectionPatchInput Include="@(BootstrapProjectionPatchInputRaw)">
+				<Source>%(BootstrapProjectionPatchInputRaw.Source)</Source>
+				<Header>%(BootstrapProjectionPatchInputRaw.ComponentHeaderDir)%(BootstrapProjectionPatchInputRaw.Identity).g.h</Header>
+				<TimestampFile>%(BootstrapProjectionPatchInputRaw.ComponentHeaderTimestampDir)%(BootstrapProjectionPatchInputRaw.Identity).patch.timestamp</TimestampFile>
 			</BootstrapProjectionPatchInput>
 		</ItemGroup>
 	</Target>
-	<Target Name="GenerateBootstrapProjectionPatch" DependsOnTargets="ComputeBootstrapProjectionPatchInput" Inputs="@(BootstrapProjectionPatchInput)" Outputs="%(ComponentHeaderTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-		<PropertyGroup>
-			<Header>%(BootstrapProjectionPatchInput.Identity)</Header>
-			<TimestampFile>%(BootstrapProjectionPatchInput.ComponentHeaderTimestamp)</TimestampFile>
-		</PropertyGroup>
-		<Exec Command="$(IdlgenCppExePath)idlgen.exe &quot;$(Header)&quot; --gen-projection-patch" Condition="Exists('$(Header)')" />
+	<Target Name="GenerateBootstrapProjectionPatch" DependsOnTargets="ComputeBootstrapProjectionPatchInput" Inputs="@(BootstrapProjectionPatchInput->'%(Source)')" Outputs="%(TimestampFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+		<Exec Command="$(IdlgenCppExePath)idlgen.exe &quot;%(BootstrapProjectionPatchInput.Header)&quot; --gen-projection-patch" Condition="Exists('%(BootstrapProjectionPatchInput.Header)')" />
 		<WriteLinesToFile
-            File="$(TimestampFile)" Lines=""
+            File="%(BootstrapProjectionPatchInput.TimestampFile)" Lines=""
             Overwrite="true" />
 		<ItemGroup>
-			<FileWrites Include="$(TimestampFile)" />
+			<FileWrites Include="%(BootstrapProjectionPatchInput.TimestampFile)" />
 		</ItemGroup>
 	</Target>
 	<!-- CppWinRTAddXamlMetaDataProviderIdl and CppWinRTComputeXamlGeneratedMidlInputs must be included here -->
