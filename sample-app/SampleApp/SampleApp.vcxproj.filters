@@ -11,6 +11,9 @@
     <Midl Include="App.idl" />
     <Midl Include="MainPage.idl" />
     <Midl Include="Status.idl" />
+    <Midl Include="SomeFolder\PageType.idl">
+      <Filter>SomeFolder</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -21,6 +24,9 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h">
+      <Filter>SomeFolder</Filter>
+    </ClInclude>
+    <ClInclude Include="SomeFolder\PageType.h">
       <Filter>SomeFolder</Filter>
     </ClInclude>
   </ItemGroup>

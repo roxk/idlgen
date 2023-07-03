@@ -17,6 +17,11 @@ namespace winrt::SampleApp::implementation
         throw hresult_not_implemented();
     }
 
+    PageType MainPage::PageType()
+    {
+        return PageType::Main;
+    }
+
     int32_t MainPage::Property()
     {
         return 0;
