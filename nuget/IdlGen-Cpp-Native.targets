@@ -57,7 +57,10 @@
 		<Delete Files="@(_FilesToDelete)"/>
 	</Target>
 	<Target Name="IdlgenCppGenerateBoostrapIDL" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(BootstrapClassOut)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-		<MakeDir Directories="$(IdlgencppIntDir)" Condition="!Exists('$(IdlgencppIntDir)')" />
+		<PropertyGroup>
+			<BootstrapClassOutDir>$(IdlgencppIntDir)%(IdlGenCppInclude.RelativeDir)</BootstrapClassOutDir>
+		</PropertyGroup>
+		<MakeDir Directories="$(BootstrapClassOutDir)" Condition="!Exists('$(BootstrapClassOutDir)')" />
 		<Exec Command="$(IdlgenCppExePath)idlgen.exe %(IdlGenCppInclude.Identity) --gen-bootstrap --bootstrap-class-out %(IdlGenCppInclude.BootstrapClassOut)" />
 	</Target>
 	<Target Name="PrepareBootstrapProjectionPatchInput" BeforeTargets="ComputeBootstrapProjectionPatchInputRaw" Returns="@(BootstrapProjectionPatchInputRaw)">

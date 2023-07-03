@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "BlankPage.h"
 #include "MainPage.g.h"
+#include "SomeFolder/PageType.h"
 #include <algorithm>
 
 namespace winrt::SampleApp::implementation
@@ -19,6 +20,8 @@ namespace winrt::SampleApp::implementation
         void MyProperty(int32_t value);
 
         Status Status() { return mStatus; }
+
+        PageType PageType();
     protected:
         friend struct winrt::impl::produce<MainPage, SampleApp::IMainPageProtected>;
         int32_t Property();

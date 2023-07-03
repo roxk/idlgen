@@ -1,0 +1,8 @@
+namespace SampleApp
+{
+enum PageType
+{
+Main = 0,
+Blank = 1,
+};
+}

@@ -123,6 +123,7 @@
     <ClInclude Include="MainPage.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="SomeFolder\PageType.h" />
     <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h" />
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +178,7 @@
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Midl>
+    <Midl Include="SomeFolder\PageType.idl" />
     <Midl Include="Status.idl" />
   </ItemGroup>
   <ItemGroup>
