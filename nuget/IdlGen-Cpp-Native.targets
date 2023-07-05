@@ -12,7 +12,7 @@
 		<IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
 	</PropertyGroup>
 	<PropertyGroup>
-		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\include\idlgen</IdlGenCppIncludeDirs>
+		<IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(MSBuildThisFileDirectory)..\..\include</IdlGenCppIncludeDirs>
 		<CleanDependsOn>
 			$(CleanDependsOn);IdlgenCppClean
 		</CleanDependsOn>
@@ -26,7 +26,6 @@
 		<IdlGenCppInclude Include="$(IdlGenCppInclude)" Exclude="$(IdlGenCppExclude)" />
 	</ItemGroup>
 	<ItemGroup>
-		<IdlGenCppIncludeDirs Include="$(IdlGenCppIncludeDirs)"/>
 		<IdlGenCppAdditionalDefines Include="$(IdlGenCppAdditionalDefines)"/>
 	</ItemGroup>
 	<ItemGroup>
@@ -92,7 +91,7 @@
 			</BootstrapProjectionPatchInput>
 		</ItemGroup>
 	</Target>
-	<Target Name="GenerateBootstrapProjectionPatch" DependsOnTargets="ComputeBootstrapProjectionPatchInput" Inputs="@(BootstrapProjectionPatchInput->'%(Source)')" Outputs="%(TimestampFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="GenerateBootstrapProjectionPatch" DependsOnTargets="ComputeBootstrapProjectionPatchInput" Inputs="$(MSBuildAllProjects);@(BootstrapProjectionPatchInput->'%(Source)')" Outputs="%(TimestampFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Exec Command="$(IdlgenCppExePath)idlgen.exe &quot;%(BootstrapProjectionPatchInput.Header)&quot; --gen-projection-patch" Condition="Exists('%(BootstrapProjectionPatchInput.Header)')" />
 		<WriteLinesToFile
             File="%(BootstrapProjectionPatchInput.TimestampFile)" Lines=""
@@ -258,11 +257,23 @@
 	<Target Name="IdlgenCppCheckPchCount">
 		<Error Text="More than 1 pch specified. Idlgen only supports 1 pch at a time." Condition="@(IdlGenCppPch->Count()) > 1"/>
 	</Target>
-	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="IdlgenCppCheckPchCount" Inputs="$(MSBuildAllProjects);@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="ComputeAdditionalIncludeDirectories" Returns="@(IdlGenCppIncludeDirs)">
+		<PropertyGroup>
+			<_ClIncludeDirectories>@(ClCompile->'%(AdditionalIncludeDirectories)')</_ClIncludeDirectories>
+		</PropertyGroup>
+		<ItemGroup>
+			<_ClIncludeDirectories Remove="@(_ClIncludeDirectories)"/>
+			<_ClIncludeDirectories Include="$(_ClIncludeDirectories)"/>
+			<_ClIncludeDirectories Include="$(IdlGenCppIncludeDirs)"/>
+			<IdlGenCppIncludeDirs Remove="@(IdlGenCppIncludeDirs)"/>
+			<IdlGenCppIncludeDirs Include="@(_ClIncludeDirectories->Distinct())"/>
+		</ItemGroup>
+	</Target>
+	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="IdlgenCppCheckPchCount;ComputeAdditionalIncludeDirectories" Inputs="$(MSBuildAllProjects);@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
 		<Exec Command="$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\idlgen.exe --gen-pch --pch=&quot;%(IdlGenCppPch.Identity)&quot; -pch-out-dir=&quot;$(IntDir)idlgen&quot; @(IdlGenCppAdditionalDefines->'--define=&quot;%(Identity)&quot;', ' ') @(IdlGenCppIncludeDirs->'--include=&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
 	</Target>
-	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="Midl" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(IdlTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+	<Target Name="IdlGenCppGenerateIDL" BeforeTargets="Midl" DependsOnTargets="ComputeAdditionalIncludeDirectories" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(IdlTimestamp)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<PropertyGroup>
 			<TimestampFile>%(IdlGenCppInclude.IdlTimestamp)</TimestampFile>
 		</PropertyGroup>

@@ -42,6 +42,7 @@ unsealed runtimeclass BlankPage : Windows.UI.Xaml.Controls.Page
 BlankPage();
 SampleApp.Category Category{get;};
 SampleApp.Permission Permission{get;};
+UInt32 WilProp{get;};
 void AssignHandler(SampleApp.BlankPageEventHandler handler);
 protected Boolean ProtectedGetter();
 void ClickHandler(Object sender, Windows.UI.Xaml.RoutedEventArgs args);
