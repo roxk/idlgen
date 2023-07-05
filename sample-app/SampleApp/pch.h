@@ -16,3 +16,14 @@
 #include <winrt/Windows.UI.Xaml.Markup.h>
 #include <winrt/Windows.UI.Xaml.Navigation.h>
 #include "idlgen.h"
+#include <wil/wistd_type_traits.h>
+#include <wil/cppwinrt_authoring.h>
+
+namespace wil
+{
+	template<typename T>
+	using prop = single_threaded_property<T>;
+
+	template <typename T>
+	using rw_prop = single_threaded_rw_property<T>;
+}

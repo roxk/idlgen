@@ -63,6 +63,8 @@ namespace winrt::SampleApp::implementation
 
         [[idlgen::protected]]
         bool ProtectedGetter();
+
+        wil::prop<uint32_t> WilProp;
     private:
         friend struct winrt::impl::produce<BlankPage, SampleApp::IBlankPageProtected>;
     };

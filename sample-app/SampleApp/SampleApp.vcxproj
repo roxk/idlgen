@@ -21,6 +21,8 @@
     </IdlGenCppDisableUnknownAttributeWarning>
     <IdlGenCppAdditionalDefines>NOMINMAX</IdlGenCppAdditionalDefines>
     <CppWinRTVerbosity>normal</CppWinRTVerbosity>
+    <IdlGenCppGetterTemplate>wil::single_threaded_property;wil::prop</IdlGenCppGetterTemplate>
+    <IdlGenCppPropertyTemplate>wil::single_threaded_rw_property;wil::rw_prop</IdlGenCppPropertyTemplate>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -100,11 +102,13 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -194,6 +198,7 @@
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets" Condition="Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.ImplementationLibrary.1.0.230629.1\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.230629.1\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -203,5 +208,6 @@
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
     <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.props'))" />
     <Error Condition="!Exists('..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IdlGen.IdlGen.Cpp.0.0.1\build\native\IdlGen.IdlGen.Cpp.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.ImplementationLibrary.1.0.230629.1\build\native\Microsoft.Windows.ImplementationLibrary.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.ImplementationLibrary.1.0.230629.1\build\native\Microsoft.Windows.ImplementationLibrary.targets'))" />
   </Target>
 </Project>
