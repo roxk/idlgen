@@ -25,5 +25,5 @@
 Current script always build for `x64` on `x64` host.
 
 2. Open `dev` with VS and starts building `x64-Debug`. Or, run `./scripts/build-idlgen`.
-3. Test by `./scripts/run-test-code -config Debug -gen stdout`. Inspect the output manually.
+3. Test by `./scripts/test -config Debug -gen stdout`. Inspect the output manually.
 4. Or, test in sample app. See [sample-app/README.md](sample-app/README.md)
