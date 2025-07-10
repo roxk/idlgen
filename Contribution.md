@@ -8,6 +8,7 @@
 - Ninja
 - Visual Studio 2022
   - CMake support
+- vswhere (get via `winget install vswhere`)
 
 #### For Building Clang
 
