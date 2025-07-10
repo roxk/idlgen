@@ -7,9 +7,10 @@ if (!($config -eq "Release" -or $config -eq "Debug")) {
 
 $scriptDir = $PSScriptRoot
 $rootDir = "$scriptDir/.."
+. "$scriptDir\get-vcvars"
 $ninjaBuildDir = "$rootDir/build-ninja/$config"
 if (!(test-path $ninjaBuildDir)) {
 	echo "build-ninja doesn't 'exist. Run populdate-build-ninja.ps1 first"
 	exit 0
 }
-cmd /c "cd `"$ninjaBuildDir`" && vcvars64.bat && ninja"
+cmd /c "cd `"$ninjaBuildDir`" && `"$vcvars`" && ninja"
