@@ -1,21 +1,17 @@
 #pragma once
 
-#include "pch.h"
 #include "SomeEnum.h"
 #include "SomeDelegate.h"
 #include "SomeStruct.h"
 #include "SomeInterface.h"
-#include "BlankPage.g.h"
 // Test inconsistent file name case
 #include "sameviewmodel.h"
-#include "TestIncludeImpl.h"
-#include "TestIncludeInTemplate.h"
 #include "SomeNamespace/DifferentPathViewModel.h"
-#include "wil/cppwinrt_authoring.h"
-#include "cppxaml/cppxaml.h"
 #include <cstdint>
+#include <winrt/Windows.UI.Xaml.Controls.h>
+#include <winrt/Windows.UI.Xaml.Data.INotifyPropertyChanged.h>
 
-namespace winrt::Root::A::implementation
+namespace winrt::implementation::idlgen
 {
 	enum TestEnumInMethod : int32_t
 	{
@@ -23,27 +19,16 @@ namespace winrt::Root::A::implementation
 		B
 	};
 
-	// Make sure we don't crash when checking against template parameter (not all args are type)
-	template <typename... T>
-	struct PackedTemplate {};
-
-	template <int I>
-	struct IntegerTemplate {};
-
-	struct ImplStruct : PackedTemplate<ImplStruct>, IntegerTemplate<10> {};
-
 	struct Interface
 	{
 		virtual void MethodOverriden(uint32_t a) = 0;
 	};
 
 	struct
-		[[idlgen::import("SameViewModel.idl", "ShallowerViewModel.idl",
-			"SiblingViewModel.idl")]]
 	[[idlgen::attribute("bindable")]]
 	[[idlgen::attribute("default_interface")]]
 	[[idlgen::attribute("Windows.UI.Xaml.Markup.ContentProperty(\"Property\")")]]
-	BlankPage : BlankPageT<BlankPage>, idlgen::author_class<Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged>, Interface
+	BlankPage : Windows::UI::Xaml::Controls::Page, Windows::UI::Xaml::Data::INotifyPropertyChanged, Interface
 	{
 		BlankPage();
 		BlankPage(uint64_t a);
@@ -121,11 +106,6 @@ namespace winrt::Root::A::implementation
 		void ImplPropertyOnlyExposeGetter(SameViewModel const& a);
 		[[idlgen::property]]
 		TestIncludeImpl TestIncludeImplWithOnlyImplUse();
-		ImplStruct InternalMethod();
-		void InternalMethod(ImplStruct const& s);
-		void ParamDisallowImpl(SameViewModel const& a);
-		SameViewModel ParamDisallowImplEvenReturnAllow(SameViewModel const& a);
-		void MethodMixingImplAndProjected(Root::A::SameViewModel const& a, Root::A::implementation::SameViewModel const& b);
 		[[idlgen::hide]]
 		void HideMethod();
 		[[idlgen::protected]]

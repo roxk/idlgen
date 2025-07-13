@@ -6,31 +6,41 @@ This document is inteded for developers who are interested in knowing how idlgen
 
 The challenge of generating idl from C++ (or really, any other languages) is two folds. First, some of [midl 3.0](https://learn.microsoft.com/en-us/uwp/midl-3/intro) is a superset of C++. That is, there are concepts in midl that are not expressable in C++ via vanilla C++. Second, parsing C++ itself.
 
-idlgen gets away with the first problem by inventing its own DSL on top of vanilla C++. This is inevitable - we need some ways to express concepts that are not inherit to C++. This DSL manifests itself in idlgen as some marker types, and some implementation-defined attributes. This is not the only possible design - but idlgen tries to achieve the following while designing the DSL:
+idlgen solves the first problem by inventing its own DSL on top of vanilla C++. We need _some_ ways to express concepts that are not expressible in plain C++. The amount of extra DSL to learn to author WinRT types decide the DX of idlgen. Idlgen 1.0 wasn't very good in this regard. Idlgen 2.0 is much better.
 
-1. Code generation should be robust
-2. The DSL should be ergonomic (i.e. as little boilerplate as possible)
-3. The DSL should be type-safe
-4. The DSL's only prerequisite is C++/WinRT
-5. The DSL is extensible via C++'s own features
+In idlgen 1.0, the design aims to keep the existing C++/WinRT header structure, and the DSL manifests itself as some marker types and implementation-defined attributes. There are also certain rules to remember when authoring protected/private members/handlers. You need to configure IdlgenCpp build settings for property accessor.
 
-For the second problem, idlgen turns to clang. idlgen is actually parsing C++ header files with full C++ grammar. This is also inevitable. Inventing its own parser and grammar is only going to increase developer's cognitive load. The library also wants to stick to Microsoft's recent commitment to standard comformance - that is, the library encourange developers keep writing standard-conforming C++. Any DSL the library invents has to be expressible in terms of C++ features.
+While idl generation technically works, the experience isn't very good. There were obvious improvements to be made (support macro, alias), but it was obvious that this direction wouldn't get us very far as the major bottleneck was parsing arbitrary code in implementation type's header. That is, idlgen is only interested in WinRT type definition, but it has to parse a lots of irrelevant code as the implementation type naturally mixes lots of ordinary C++ code (std, the generated headers, etc).
+
+Idlgen 2.0 flips the problem around by limiting what developers can write when trying to author generated WinRT types. Thanks to certain limitation, idlgen can generate idl from C++ headers fast, and with much better ergonomics. These limitations include:
+- authored WinRT types must be inside a designated nested namespace
+- no template is allowed
+- property are expressed using designated property accessor
+- event are similarly expressed using designated event accessor
+
+For the second problem, idlgen 1.0 turns to clang. For 2.0 as of C++26 - it still has to rely on clang, sadly.
+
+Idlgen 1.0 would parse C++ headers using clang to gather authored WinRT types. Then, it would emit idl and deals with bootstrapping and other complexities caused by mixing idl generation source and idl-using code in the same entity.
+
+C++26 gives us static reflection, which contains enough facilities to reflect almost all of authored WinRT types as seen in [this PoC on compiler explorer](https://godbolt.org/z/9M6qKqGvv). However, there is one crucial missing pieces - constexpr IO. We cannot generate idl nor winmd during compilation.
+
+That being said, it is possible to gather the generated idl/winmd as a program output. So in future iteration (idlegen 2.5?), it is possible to replace clang with just ordinary C\+\+26 static reflection code. I envision the replacement to be a program compiled using developer's code and output the generated idl/winmd.
+
+For now, idlgen 2.0 works basically the same way as 1.0 with regards to code parsing.
 
 ## Design Details
 
-For midl concepts, and C++/WinRT component authoring concepts that are expressible/orthogonal in C++, idlgen does not invent any new types/patterns. The following tables list such concepts and how they are expressed in C++ with idlgen:
+For midl/WinRT construct that are expressible/orthogonal in C++, idlgen does not invent any new types/patterns. The following tables list such construct and how they are expressed in C++ with idlgen:
 
-|midl/WinRT component authoring concept|C++ concepts|
+|midl/WinRT construct|C++|Example in midl|Example in C++|
 |--|--|
-|WinRT namespace|C++ namespace, excluding implementation specific details|
-|Runtime class|C++ projected type|
-|Implementation namespace and type|Type `ClassT` and `implementation` namespace|
-|Constructor (factory)|C++ constructor|
-|Method|C++ method|
-|Primitive types|C++ primitive types|
-|Import|Include*|
-
-[*]: For header containing implementation type, or authoring types recognized by idlgen
+|WinRT namespace|a designated nested namespace pattern|`namespace MyNamespace`|`namespace winrt::MyNamespace::implementation::idlgen`|
+|Runtime class|struct/class in implementation::idlgen|`runtimeclass DependencyObject`|`struct DependencyObject`|
+|Constructor (factory)|Constructor|`DependencyObject()`|`DependencyObject()`|
+|Method|Member function|`Int32 Func()`|`uint32_t Func()`|
+|Primitive types|C++ primitive types|`Double`|`double`|
+|Import|Include|`import "A.idl"`|`include "A.h"`|
+|Property|`wil`'s property helper|`Int32 MyProperty{get;set;};`|`wil::single_threaded_rw_property<int32_t>`|
 
 ### Concepts Not Expressible in C++
 
@@ -38,8 +48,7 @@ For concepts not expressible in C++, the following table list how they are expre
 
 |midl/WinRT component authoring concept|C++ concepts|
 |--|--|
-|Property|`idlgen::property` attribute|
-|Private/Override methods|C++ private, or `idlgen::hide` attribute|
+|Private|C++ private|
 |Attribute|`idlgen::attribute` attribute|
 
 ### Concepts expressible in C++, But Cause Ambiguous Name Lookup
