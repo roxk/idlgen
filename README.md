@@ -1,4 +1,4 @@
-﻿# idlgen, an IDL Generator for WinRT
+﻿# idlgen, idl-free C++/WinRT
 
 [![nuget](https://img.shields.io/nuget/v/IdlGen.IdlGen.Cpp)](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/)
 [![VS2022](https://img.shields.io/visual-studio-marketplace/v/Roxk.Idlgencpp.svg?label=Visual%20Studio%202022%20(Preview))](https://marketplace.visualstudio.com/items?itemName=Roxk.idlgencpp)
@@ -8,9 +8,7 @@ _idl-free_ C++/WinRT is here.
 
 ![Generate idl from C++ header](banner.png)
 
-Idlgen is a library for generating idl files when implementing WinRT components. With this library, you never have to write a single line of MIDL3 again.
-
-Currently, only C++ is supported.
+idlgen is a C\+\+20 library for authoring C++/WinRT types without writing idl. This bring the developer experience on par with C++/CX.
 
 ## Installation
 

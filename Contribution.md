@@ -2,28 +2,26 @@
 
 ## Prerequisite
 
-- cmake 3.22
-- LLVM 16
-- Powershell 7
-- Ninja
-- Visual Studio 2022
-  - CMake support
-- vswhere (get via `winget install vswhere`)
+### Core
+- dotnet 6+
 
-#### For Building Clang
+### Extensions
+- Visual Studio 2022/2026
+- C# Workload
 
-- Python3
+### Sample Apps
+- Visual Studio 2022/2026
+- C++ Workload
+- WinUI Workload (optional)
+- nuget (the cli tool)
 
 ## Getting Started
 
-1. Run the following
+1. Install dotnet 6+ SDK
+2. Run the following
 ```
-./scripts/clone-llvm
-./scripts/populate-build-ninja -config Debug
-./scripts/build-clang -config Debug
+dotnet run ./scripts/getWinLibs.cs
+dotnet run ./scripts/test.cs
 ```
-Current script always build for `x64` on `x64` host.
 
-2. Open `dev` with VS and starts building `x64-Debug`. Or, run `./scripts/build-idlgen`.
-3. Test by `./scripts/test -config Debug -gen stdout`. Inspect the output manually.
-4. Or, test in sample app. See [sample-app/README.md](sample-app/README.md)
+
