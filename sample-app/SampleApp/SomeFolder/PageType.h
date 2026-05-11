@@ -1,10 +1,8 @@
 #pragma once
 
-#include "pch.h"
-
-namespace winrt::SampleApp::implementation
+namespace winrt::SampleApp::author
 {
-	enum class _PageType : idlgen::author_enum
+	enum class PageType : int
 	{
 		Main,
 		Blank

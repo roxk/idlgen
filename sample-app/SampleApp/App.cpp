@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
 
 #include "App.h"
-#include "MainPage.h"
+#include "MainPage.author.h"
 
 using namespace winrt;
 using namespace Windows::ApplicationModel;
