@@ -6,9 +6,9 @@
     <title>IdlGen.IdlGen.Cpp</title>
     <authors>Roxk Yiu</authors>
     <owners>Roxk Yiu</owners>
-    <description>This package generates WinRT idl from C++ header file.</description>
+    <description>This package allows idl-free C++/WinRT type authoring</description>
     <copyright>Copyright 2023</copyright>
-    <tags>IDL MIDL C++/WinRT WinRT</tags>
+    <tags>IDL MIDL C++/WinRT WinRT C++/CX</tags>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="file">LICENSE</license>
     <projectUrl>https://github.com/roxk/idlgen</projectUrl>
@@ -18,8 +18,9 @@
     <file src="README.md"/>
     <file src="..\LICENSE"/>
 
-    <file target="bin\x64\idlgen.exe" src="..\dev\out\build\x64-Release\idlgen.exe"/>
+    <file target="mingw64" src="..\winLibs\mingw64\**\*"/>
 	<file target="include" src="include\**\*.*"/>
+	<file target="src" src="..\dev\src\**\*.*"/>
 	<file target="build\native\IdlGenCppRules.Project.xml" src="IdlGenCppRules.Project.xml"/>
 	<file target="build\native\IdlGen.IdlGen.Cpp.props" src="IdlGen-Cpp.props"/>
 	<file target="build\native\IdlGen.IdlGen.Cpp.targets" src="IdlGen-Cpp-Native.targets"/>

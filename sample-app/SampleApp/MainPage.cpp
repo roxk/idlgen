@@ -1,34 +1,34 @@
 ﻿#include "pch.h"
-#include "MainPage.h"
-#include "MainPage.g.cpp"
+#include "MainPage.author.h"
 
 using namespace winrt;
 using namespace Windows::UI::Xaml;
 
-namespace winrt::SampleApp::implementation
+namespace winrt::SampleApp::author
 {
-    int32_t MainPage::MyProperty()
+    int32_t MainPage::MyProperty(winrt::author::getter)
     {
         throw hresult_not_implemented();
     }
-
-    void MainPage::MyProperty(int32_t /* value */)
+    winrt::author::setter MainPage::MyProperty(int32_t /* value */)
     {
         throw hresult_not_implemented();
     }
-
-    PageType MainPage::PageType()
+    Category MainPage::Category(winrt::author::getter)
+    {
+        return Category::Literature;
+    }
+    PageType MainPage::PageType(winrt::author::getter)
     {
         return PageType::Main;
     }
-
-    int32_t MainPage::Property()
+    int32_t MainPage::Getter(winrt::author::getter)
     {
         return 0;
     }
-
-    void MainPage::ClickHandler(IInspectable const&, RoutedEventArgs const&)
+    void MainPage::Method()
+    {}
+    void MainPage::ClickHandler(IInspectable const&, RoutedEventArgs const&, winrt::author::ignore)
     {
-        myButton().Content(box_value(L"Clicked"));
     }
 }

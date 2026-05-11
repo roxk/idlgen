@@ -2,6 +2,8 @@ import "SomeFolder\PageType.idl";
 import "Status.idl";
 namespace SampleApp
 {
+delegate void TestHandler(Object sender, Object args);
+
 unsealed runtimeclass MainPage : Windows.UI.Xaml.Controls.Page
 {
 MainPage();

@@ -29,6 +29,7 @@
     <ClInclude Include="SomeFolder\PageType.h">
       <Filter>SomeFolder</Filter>
     </ClInclude>
+    <ClInclude Include="BlankPage.author.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
@@ -70,5 +71,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
   </ItemGroup>
 </Project>

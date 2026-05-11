@@ -1,9 +1,0 @@
-namespace SampleApp
-{
-    enum Status
-    {
-        Active,
-        InActive,
-        Unknown
-    };
-}
