@@ -1,5 +1,2 @@
-#pragma once
-
-#include "wil/cppwinrt_authoring.h"
-#include "cppxaml/cppxaml.h"
-#include "idlgen.h"
+#include "winrt/base.h"
+#include "winrt/Windows.Foundation.h"

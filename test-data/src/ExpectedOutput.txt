@@ -1,0 +1,163 @@
+namespace App1 {
+interface IControl {
+void Paint();
+}
+}
+namespace App1 {
+interface ITest requires App1.IControl {
+void SetText(String value);
+}
+}
+namespace App1 {
+interface IListBox requires App1.IControl {
+void SetItems(ref String[] items);
+}
+}
+namespace App1 {
+interface IComboBox requires App1.ITest, App1.IListBox {
+void SetSelectedIndex(Int32 index);
+}
+}
+namespace App1 {
+[default_interface]
+unsealed runtimeclass AuthorClass : Microsoft.UI.Xaml.FrameworkElement, App1.ITest {
+UInt8 Byte { get; };
+Int16 Short { get; };
+UInt16 UShort { get; };
+Int32 Int { get; };
+UInt32 UInt { get; };
+Int64 Long { get; };
+UInt64 ULong { get; };
+Char Character { get; };
+String String { get; };
+Single Float { get; };
+Double Double { get; };
+Boolean Boolean { get; };
+Guid GuidType { get; };
+Windows.Foundation.DateTime DateTime { get; };
+Windows.Foundation.TimeSpan TimeSpan { get; };
+Windows.Foundation.Point Point { get; };
+Windows.Foundation.Size Size { get; };
+Windows.Foundation.Rect Rect { get; };
+Object Object { get; };
+Windows.Foundation.IAsyncAction AsyncAction();
+Windows.Foundation.IAsyncOperation<Int32> AsyncOperation();
+void PassArray(Int32[] values);
+void FillArray(ref Int32[] values);
+void ReceiveArray(out out Int32[] values);
+Int32[] ReturnComArray();
+void InputParameterRefConst(ref const Windows.Foundation.Point point);
+void OutParameterStruct(out Windows.Foundation.Point point);
+void OutParameterReferenceType(out Object object);
+Windows.Foundation.IReference<Int32> BoxedInt { get; };
+overridable void Paint();
+overridable void SetText(String value);
+static void StaticMethod();
+protected void ProtectedMethod();
+void UsingAuthoredType(App1.ITest test);
+Int32 Foo();
+Int32 Foo(Int32 value);
+Int32 Foo(Int32 value, Single value2);
+Int32 Getter { get; };
+Int32 Property;
+event Windows.Foundation.AsyncActionCompletedHandler AsyncActionCompleted;
+AuthorClass();
+}
+}
+namespace App1 {
+[default_interface]
+runtimeclass Area {
+Area(Int32 width, Int32 height);
+Int32 Height;
+Int32 Width;
+Int32 NumberOfAreas { get; };
+}
+}
+namespace App1 {
+[default_interface]
+static runtimeclass StaticArea {
+static void F();
+static void F(Double x);
+static void F(Double x, Double y);
+}
+}
+namespace App1 {
+[default_interface]
+partial runtimeclass PartialClass {
+static void Divide(Int32 x, Int32 y, out Int32 result, out Int32 remainder);
+PartialClass();
+}
+}
+namespace App1 {
+delegate void AsyncActionCompletedHandler(Object sender, Windows.Foundation.AsyncStatus args);
+}
+namespace App1 {
+struct Point {
+Int32 x;
+Int32 y;
+};
+}
+namespace App1 {
+enum Color {
+Red = 0,
+Green = 1,
+Blue = 2
+};
+}
+namespace App1 {
+[flags]
+enum SetOfBooleanValues {
+None = 0,
+Value1 = 1,
+Value2 = 2,
+Value3 = 4
+};
+}
+namespace App1 {
+[attributeusage(target_runtimeclass, target_property, target_method, target_event)]
+[allowmultiple]
+attribute HelpAttribute {
+String ClassUri;
+String MemberTopic;
+Int32 Version;
+}
+}
+namespace App1 {
+[App1.Help("htts://booksku", "BookSku class", 0)]
+[default_interface]
+runtimeclass BookSku {
+BookSku();
+}
+}
+namespace App1 {
+[contentproperty("Children")]
+[default_interface]
+runtimeclass MyPanel {
+Object Children();
+MyPanel();
+}
+}
+namespace App1 {
+[default_interface]
+runtimeclass Area2 {
+Area2(Int32 width, Int32 height);
+Int32 Height;
+Int32 Width;
+Int32 NumberOfAreas { get; };
+}
+}
+namespace App1 {
+[interface_name("IMyName", CEB27355-F772-407C-9540-6467A7199BC7)]
+[contract(Windows.Foundation.UniversalApiContract, 1)]
+[default_interface]
+runtimeclass Sample {
+Sample();
+}
+}
+namespace App1 {
+[uuid("94569FA9-D3BB-4D01-BF7C-B8E1D8F8B30C")]
+[contract(Windows.Foundation.UniversalApiContract, 1)]
+interface ISomethingMarker {
+}
+}
+

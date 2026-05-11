@@ -11,3 +11,5 @@ test-data/include/**/*.g.h.bak
 bin
 obj
 out
+winLibs
+pch.h.gch
