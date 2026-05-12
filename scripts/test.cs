@@ -40,7 +40,8 @@ else
 }
 var input = $"{devDirPath}/main.cpp";
 var outputExePath = $"{outDirPath}/main.exe";
-var outputFilePath = $"{outDirPath}/output.txt";
+var outputIdlPath = $"{outDirPath}/outputIdl.txt";
+var outputImplPath = $"{outDirPath}/outputImpl.txt";
 var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -include pch.h -ftime-report {input} -o {outputExePath}";
 Directory.CreateDirectory(outDirPath);
 var cp = Process.Start(new ProcessStartInfo
@@ -53,21 +54,27 @@ cp!.WaitForExit();
 if (cp.ExitCode != 0)
 {
     Console.WriteLine("Failed to compile. Abort generating idl");
+    return -1;
 }
 else
 {
     Console.WriteLine("Generating idl...");
 }
-var mp = Process.Start(new ProcessStartInfo
+var idlp = Process.Start(new ProcessStartInfo
 {
     FileName = "powershell",
-    Arguments = $"-c \"{outputExePath}\" | Out-File {outputFilePath} -Encoding utf8",
+    Arguments = $"-c \"{outputExePath}\" -idl | Out-File {outputIdlPath} -Encoding utf8",
     UseShellExecute = false,
 });
-mp!.WaitForExit();
+idlp!.WaitForExit();
+if (idlp.ExitCode != 0)
+{
+    Console.WriteLine("Failed to generate idl");
+    return -1;
+}
 Console.WriteLine("Testing output...");
 const string expectedOutputPath = "test-data/src/ExpectedOutput.txt";
-using var reader1 = new StreamReader(outputFilePath);
+using var reader1 = new StreamReader(outputIdlPath);
 using var reader2 = new StreamReader(expectedOutputPath);
 string? line1;
 string? line2;
@@ -80,7 +87,7 @@ while (true)
     if (line1 == null && line2 == null)
     {
         Console.WriteLine("Test passed");
-        return 0;
+        break;
     }
     if (line1 == null ||  line2 == null || !line1.Equals(line2))
     {
@@ -90,3 +97,17 @@ while (true)
         return -1;
     }
 }
+Console.WriteLine("Generating implementation...");
+var implp = Process.Start(new ProcessStartInfo
+{
+    FileName = "powershell",
+    Arguments = $"-c \"{outputExePath}\" -implementation | Out-File {outputImplPath} -Encoding utf8",
+    UseShellExecute = false,
+});
+implp!.WaitForExit();
+if (implp.ExitCode != 0)
+{
+    Console.WriteLine("Failed to generate implementation");
+    return -1;
+}
+return 0;

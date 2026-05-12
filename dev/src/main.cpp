@@ -134,7 +134,11 @@ consteval void printSelfName(
 
 template <typename Func = decltype([](auto const& x) { return x; })>
 consteval void printParentThenSelfName(
-    std::meta::info candidate, vector_string& result, bool isParameter = false, Func&& identifierMapper = Func()
+    std::meta::info candidate,
+    vector_string& result,
+    bool isParameter = false,
+    std::string_view separator = ".",
+    Func&& identifierMapper = Func()
 )
 {
     auto isAuthorNamespaceValue = isAuthorNamespace(candidate);
@@ -156,10 +160,10 @@ consteval void printParentThenSelfName(
         }
         if (parent != ^^::&&parent != ^^winrt)
         {
-            printParentThenSelfName(parent, result, isParameter, identifierMapper);
+            printParentThenSelfName(parent, result, isParameter, separator, identifierMapper);
             if (!isAuthorNamespaceValue)
             {
-                result += ".";
+                result += separator;
             }
         }
     }
@@ -331,7 +335,7 @@ template <typename Func> consteval vector_string fqn(std::meta::info info, bool 
     }
     else
     {
-        printParentThenSelfName(winrtType, result, isParameter, identifierMapper);
+        printParentThenSelfName(winrtType, result, isParameter, ".", identifierMapper);
     }
     return result;
 }
@@ -916,11 +920,16 @@ consteval void findWinRtEntities(std::meta::info ns, std::vector<WinRtEntity>& e
     }
 }
 
-consteval void printNamespace(std::meta::info info, vector_string& result)
+consteval void printNamespace(std::meta::info info, vector_string& result, std::string_view separator = ".")
 {
     result += "namespace ";
-    printParentThenSelfName(std::meta::parent_of(info), result);
+    printParentThenSelfName(std::meta::parent_of(info), result, false, separator);
     result += " {\n";
+}
+
+consteval void printNamespaceOnly(std::meta::info info, vector_string& result, std::string_view separator = ".")
+{
+    printParentThenSelfName(std::meta::parent_of(info), result, false, separator);
 }
 
 consteval bool isIgnored(std::meta::info member)
@@ -1188,27 +1197,28 @@ template <std::meta::info type> consteval void printBaseAttributes(vector_string
     }
 }
 
-template <std::meta::info info> consteval void printRuntimeClass(vector_string& result)
+template <std::meta::info info> consteval void printRuntimeClass(vector_string& idl, vector_string& implementation)
 {
     constexpr auto type = info;
-    printNamespace(type, result);
-    printBaseAttributes<type>(result);
-    result += "[default_interface]\n";
+    printNamespace(type, idl);
+    printBaseAttributes<type>(idl);
+    idl += "[default_interface]\n";
     constexpr auto isStaticClassValue = isStaticClass(type);
     if constexpr (isUnsealed(type))
     {
-        result += "unsealed ";
+        idl += "unsealed ";
     }
     else if constexpr (isStaticClassValue)
     {
-        result += "static ";
+        idl += "static ";
     }
     if (isPartialClass(type))
     {
-        result += "partial ";
+        idl += "partial ";
     }
-    result += "runtimeclass ";
-    result += std::meta::identifier_of(type);
+    idl += "runtimeclass ";
+    auto typeName = std::meta::identifier_of(type);
+    idl += typeName;
     constexpr auto ctx = std::meta::access_context::unchecked();
     auto bases = std::meta::bases_of(type, ctx);
     trimIgnoredBaseType(bases);
@@ -1234,10 +1244,11 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     }
     if (hasBases)
     {
-        result += " : ";
+        idl += " : ";
     }
     auto basesCount = bases.size();
     auto baseIndex = 0;
+    std::optional<std::meta::info> runtimeClassBase;
     for (auto base : bases)
     {
         auto baseType = std::meta::type_of(base);
@@ -1249,25 +1260,30 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
             basesCount += args.size();
             for (auto arg : args)
             {
-                result += fqn(arg);
+                if (is_winrt_category(arg, ^^winrt::impl::class_category))
+                {
+                    runtimeClassBase = arg;
+                }
+                idl += fqn(arg);
                 if (baseIndex + 1 < basesCount)
                 {
-                    result += ", ";
+                    idl += ", ";
                 }
                 ++baseIndex;
             }
             continue;
         }
-        result += fqn(baseType);
+        idl += fqn(baseType);
         if (baseIndex + 1 < basesCount)
         {
-            result += ", ";
+            idl += ", ";
         }
         ++baseIndex;
     }
-    result += " {\n";
+    idl += " {\n";
     auto members = std::meta::members_of(type, ctx);
     std::vector<ClassMemberInfo> infos;
+    bool hasCtor = false;
     for (auto member : members)
     {
         if (isIgnored(member))
@@ -1276,6 +1292,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         }
         else if (isConstructor(member) && !isStaticClassValue)
         {
+            hasCtor = true;
             insertOrGet(infos, member).constructor = member;
         }
         else if (std::meta::is_special_member_function(member))
@@ -1303,38 +1320,131 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
             insertOrThrow(infos, member).method = member;
         }
     }
-    printMemberInfos(type, infos, result);
-    result += "}\n";
-    result += "}\n";
+    printMemberInfos(type, infos, idl);
+    idl += "}\n";
+    idl += "}\n";
+    // heap implements
+    implementation += "#if __has_include(\"";
+    implementation += typeName;
+    implementation += ".g.h\")\n";
+    implementation += "#include \"";
+    implementation += typeName;
+    implementation += ".g.h\"\n";
+    // Assume if .g.h exists, .g.cpp also exists
+    implementation += "#include \"";
+    implementation += typeName;
+    implementation += ".g.cpp\"\n";
+    implementation += "#endif\n";
+    implementation += "namespace winrt::";
+    printNamespaceOnly(type, implementation);
+    implementation += "::implementation {\n";
+    implementation += "struct ";
+    implementation += typeName;
+    implementation += "Heap : author::";
+    implementation += typeName;
+    implementation += " {\n";
+    implementation += "using author::";
+    implementation += typeName;
+    implementation += "::";
+    implementation += typeName;
+    implementation += ";\n";
+    implementation += "void use_make_function_to_create_this_object() {}\n";
+    implementation += "};\n";
+    // ClassT
+    implementation += "struct ";
+    implementation += typeName;
+    implementation += " : ";
+    implementation += typeName;
+    implementation += "T<";
+    implementation += typeName;
+    implementation += ">, ";
+    implementation += typeName;
+    implementation += "Heap {\n";
+    implementation += "using ";
+    implementation += typeName;
+    implementation += "Heap::";
+    implementation += typeName;
+    implementation += "Heap;\n";
+    auto printDeclareBaseFromThis = [&]() {
+        implementation += std::meta::display_string_of(*runtimeClassBase);
+        implementation += "& base = *static_cast<";
+        implementation += typeName;
+        implementation += "Heap*>(this);\n";
+    };
+    if (runtimeClassBase.has_value())
+    {
+        // TODO: Use AddRef or detect ctor?
+        implementation += typeName;
+        implementation += "() {\n    ";
+        printDeclareBaseFromThis();
+        implementation += "    base = m_inner.try_as<";
+        implementation += std::meta::display_string_of(*runtimeClassBase);
+        implementation += ">();\n";
+        implementation += "}\n";
+        implementation += R""(uint32_t __stdcall Release() {
+    auto const count = this->implements::Release();
+    if (count == 1) {
+        )"";
+        printDeclareBaseFromThis();
+        implementation += R""(        base = nullptr;
+    }
+    return count;
+}
+void* operator new(std::size_t) {
+    void* mem = std::malloc(sizeof()"";
+    implementation += typeName;
+    implementation += R""());
+    return mem;
+})"";
+        implementation += "\n";
+    }
+    implementation += "};\n";
+    implementation += "}\n";
+    if (hasCtor)
+    {
+        implementation += "namespace winrt::";
+        printNamespaceOnly(type, implementation);
+        implementation += "::factory_implementation {\n";
+        implementation += "struct ";
+        implementation += typeName;
+        implementation += " : ";
+        implementation += typeName;
+        implementation += "T<";
+        implementation += typeName;
+        implementation += ", implementation::";
+        implementation += typeName;
+        implementation += "> {};\n";
+        implementation += "}\n";
+    }
 }
 
-template <std::meta::info type> consteval void printInterface(vector_string& result)
+template <std::meta::info type> consteval void printInterface(vector_string& idl, vector_string& implementation)
 {
-    printNamespace(type, result);
-    printBaseAttributes<type>(result);
-    result += "interface ";
-    result += std::meta::identifier_of(type);
+    printNamespace(type, idl);
+    printBaseAttributes<type>(idl);
+    idl += "interface ";
+    idl += std::meta::identifier_of(type);
     auto ctx = std::meta::access_context::unchecked();
     auto bases = std::meta::bases_of(type, ctx);
     trimIgnoredBaseType(bases);
     auto basesCount = bases.size();
     if (basesCount > 0)
     {
-        result += " requires ";
+        idl += " requires ";
     }
     auto baseCount = bases.size();
     auto baseIndex = 0;
     for (auto base : bases)
     {
         auto baseType = std::meta::type_of(base);
-        result += fqn(baseType);
+        idl += fqn(baseType);
         if (baseIndex + 1 < baseCount)
         {
-            result += ", ";
+            idl += ", ";
         }
         ++baseIndex;
     }
-    result += " {\n";
+    idl += " {\n";
     auto members = std::meta::members_of(type, ctx);
     std::vector<ClassMemberInfo> infos;
     for (auto member : members)
@@ -1368,9 +1478,9 @@ template <std::meta::info type> consteval void printInterface(vector_string& res
             insertOrThrow(infos, member).method = member;
         }
     }
-    printMemberInfos(type, infos, result);
-    result += "}\n";
-    result += "}\n";
+    printMemberInfos(type, infos, idl);
+    idl += "}\n";
+    idl += "}\n";
 }
 
 consteval void printDelegate(vector_string& result, std::meta::info info)
@@ -1553,11 +1663,20 @@ consteval std::vector<WinRtEntity> getEntites()
 }
 
 constexpr auto expectedOutputSize = 8096;
+constexpr auto expectedImplementationFileSize = expectedOutputSize;
 
-consteval vector_string gen_idl_impl()
+struct GenResult
 {
-    vector_string result;
-    result.reserve(expectedOutputSize);
+    vector_string idl;
+    vector_string implementation;
+};
+
+consteval GenResult gen_idl_impl()
+{
+    vector_string idl;
+    vector_string implementation;
+    idl.reserve(expectedOutputSize);
+    implementation.reserve(expectedImplementationFileSize);
     constexpr static auto entities = std::define_static_array(getEntites());
     template for (constexpr auto entity : entities)
     {
@@ -1565,41 +1684,68 @@ consteval vector_string gen_idl_impl()
         constexpr auto info = entity.info;
         if constexpr (type == WinRtEntityType::RuntimeClass)
         {
-            printRuntimeClass<info>(result);
+            printRuntimeClass<info>(idl, implementation);
         }
         else if constexpr (type == WinRtEntityType::Interface)
         {
-            printInterface<info>(result);
+            printInterface<info>(idl, implementation);
         }
         else if constexpr (type == WinRtEntityType::Delegate)
         {
-            printDelegate(result, info);
+            printDelegate(idl, info);
         }
         else if constexpr (type == WinRtEntityType::Struct)
         {
-            printStruct(result, info);
+            printStruct(idl, info);
         }
         else if constexpr (type == WinRtEntityType::Enum)
         {
-            printEnum<info>(result);
+            printEnum<info>(idl);
         }
         else if constexpr (type == WinRtEntityType::Attribute)
         {
-            printAttribute(result, info);
+            printAttribute(idl, info);
         }
     }
-    return result;
+    return { idl, implementation };
 }
 
 consteval auto gen_idl()
 {
-    return std::define_static_array(gen_idl_impl().data());
+    auto result = gen_idl_impl();
+    return std::pair(std::define_static_array(result.idl.data()), std::define_static_array(result.implementation.data()));
 }
 
-constexpr auto idl = gen_idl();
+constexpr auto generated = gen_idl();
 
-int main()
+int main(int argc, char* argv[])
 {
-    std::cout << std::string(idl.data(), idl.size()) << std::endl;
+    if (argc <= 1)
+    {
+        std::cerr << "expected one argument. usage: .exe -idl|-implementation" << std::endl;
+        return -1;
+    }
+    if (argc > 2)
+    {
+        std::cerr << "unknown argument" << argv[2] <<  std::endl;
+        return -1;
+    }
+    auto arg = std::string_view(argv[1]);
+    auto& [idl, implementation] = generated;
+    if (arg == "-idl")
+    {
+        std::cout << std::string(idl.data(), idl.size()) << std::endl;
+    }
+    else if (arg == "-implementation")
+    {
+        std::cout << "#include \"pch.h\"" << std::endl;
+        std::cout << "#include \"author_types.h\"" << std::endl;
+        std::cout << std::string(implementation.data(), implementation.size()) << std::endl;
+    }
+    else
+    {
+        std::cerr << "unknown argument" << arg << std::endl;
+        return -1;
+    }
     return 0;
 }

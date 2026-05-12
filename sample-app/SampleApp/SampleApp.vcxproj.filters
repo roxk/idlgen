@@ -9,8 +9,6 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
-    <Midl Include="MainPage.idl" />
-    <Midl Include="Status.idl" />
     <Midl Include="SomeFolder\PageType.idl">
       <Filter>SomeFolder</Filter>
     </Midl>
@@ -30,6 +28,7 @@
       <Filter>SomeFolder</Filter>
     </ClInclude>
     <ClInclude Include="BlankPage.author.h" />
+    <ClInclude Include="MainPage.author.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
