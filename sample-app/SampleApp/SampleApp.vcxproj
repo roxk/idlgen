@@ -167,13 +167,11 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+	<ClInclude Include="$(GeneratedFilesDir)idlgen.impl.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl">
       <DependentUpon>App.xaml</DependentUpon>
-    </Midl>
-    <Midl Include="MainPage.idl">
-      <DependentUpon>MainPage.xaml</DependentUpon>
     </Midl>
     <Midl Include="SomeFolder\PageType.idl" />
   </ItemGroup>
