@@ -920,7 +920,7 @@ consteval void findWinRtEntities(std::meta::info ns, std::vector<WinRtEntity>& e
     }
 }
 
-consteval void printNamespace(std::meta::info info, vector_string& result, std::string_view separator = ".")
+consteval void printNamespaceScope(std::meta::info info, vector_string& result, std::string_view separator = ".")
 {
     result += "namespace ";
     printParentThenSelfName(std::meta::parent_of(info), result, false, separator);
@@ -1211,7 +1211,7 @@ consteval void tryInclude(vector_string& result, std::string_view what)
 template <std::meta::info info> consteval void printRuntimeClass(vector_string& idl, vector_string& implementation, vector_string& implementationCpp)
 {
     constexpr auto type = info;
-    printNamespace(type, idl);
+    printNamespaceScope(type, idl);
     printBaseAttributes<type>(idl);
     idl += "[default_interface]\n";
     constexpr auto isStaticClassValue = isStaticClass(type);
@@ -1455,8 +1455,7 @@ void* operator new(std::size_t) {
     }
     implementation += "namespace winrt::";
     printNamespaceOnly(type, implementation, "::");
-    implementation += "::";
-    implementation += "author {\n";
+    implementation += "::author {\n";
     implementation += "inline auto self(winrt::";
     printNamespaceOnly(type, implementation, "::");
     implementation += "::author::";
@@ -1473,7 +1472,7 @@ void* operator new(std::size_t) {
 
 template <std::meta::info type> consteval void printInterface(vector_string& idl, vector_string& implementation)
 {
-    printNamespace(type, idl);
+    printNamespaceScope(type, idl);
     printBaseAttributes<type>(idl);
     idl += "interface ";
     idl += std::meta::identifier_of(type);
@@ -1539,7 +1538,7 @@ template <std::meta::info type> consteval void printInterface(vector_string& idl
 consteval void printDelegate(vector_string& result, std::meta::info info)
 {
     auto type = info;
-    printNamespace(type, result);
+    printNamespaceScope(type, result);
     result += "delegate void ";
     result += std::meta::identifier_of(type);
     auto ctx = std::meta::access_context::unchecked();
@@ -1570,7 +1569,7 @@ consteval void printDelegate(vector_string& result, std::meta::info info)
 consteval void printStruct(vector_string& result, std::meta::info info)
 {
     auto type = info;
-    printNamespace(type, result);
+    printNamespaceScope(type, result);
     result += "struct ";
     result += std::meta::identifier_of(type);
     result += " {\n";
@@ -1600,7 +1599,7 @@ consteval void printStruct(vector_string& result, std::meta::info info)
 template <std::meta::info info> consteval void printEnum(vector_string& result)
 {
     constexpr auto type = info;
-    printNamespace(type, result);
+    printNamespaceScope(type, result);
     auto isFlags = std::meta::underlying_type(type) == ^^unsigned int;
     if (isFlags)
     {
@@ -1632,7 +1631,7 @@ template <std::meta::info info> consteval void printEnum(vector_string& result)
 consteval void printAttribute(vector_string& result, std::meta::info info)
 {
     auto type = info;
-    printNamespace(type, result);
+    printNamespaceScope(type, result);
     auto ctx = std::meta::access_context::unchecked();
     auto bases = std::meta::bases_of(type, ctx);
     for (auto base : bases)
