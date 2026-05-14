@@ -1,12 +1,12 @@
-#include "winrt/author/base.h"
+#include "author_types.h"
 #include "formatter.h"
 #include "vector_string.h"
+#include "winrt/author/base.h"
 #include <cstring>
 #include <iostream>
 #include <meta>
 #include <string>
 #include <string_view>
-#include "author_types.h"
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -1197,7 +1197,18 @@ template <std::meta::info type> consteval void printBaseAttributes(vector_string
     }
 }
 
-template <std::meta::info info> consteval void printRuntimeClass(vector_string& idl, vector_string& implementation)
+consteval void tryInclude(vector_string& result, std::string_view what)
+{
+    result += "#if __has_include(\"";
+    result += what;
+    result += "\")\n";
+    result += "#include \"";
+    result += what;
+    result += "\"\n";
+    result += "#endif\n";
+}
+
+template <std::meta::info info> consteval void printRuntimeClass(vector_string& idl, vector_string& implementation, vector_string& implementationCpp)
 {
     constexpr auto type = info;
     printNamespace(type, idl);
@@ -1324,17 +1335,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     idl += "}\n";
     idl += "}\n";
     // heap implements
-    implementation += "#if __has_include(\"";
-    implementation += typeName;
-    implementation += ".g.h\")\n";
-    implementation += "#include \"";
-    implementation += typeName;
-    implementation += ".g.h\"\n";
-    // Assume if .g.h exists, .g.cpp also exists
-    implementation += "#include \"";
-    implementation += typeName;
-    implementation += ".g.cpp\"\n";
-    implementation += "#endif\n";
+    tryInclude(implementation, typeName + ".g.h"s);
     implementation += "namespace winrt::";
     printNamespaceOnly(type, implementation);
     implementation += "::implementation {\n";
@@ -1365,7 +1366,8 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     implementation += "Heap::";
     implementation += typeName;
     implementation += "Heap;\n";
-    auto printDeclareBaseFromThis = [&]() {
+    auto printDeclareBaseFromThis = [&]()
+    {
         implementation += std::meta::display_string_of(*runtimeClassBase);
         implementation += "& base = *static_cast<";
         implementation += typeName;
@@ -1392,8 +1394,8 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
 }
 void* operator new(std::size_t) {
     void* mem = std::malloc(sizeof()"";
-    implementation += typeName;
-    implementation += R""());
+        implementation += typeName;
+        implementation += R""());
     return mem;
 })"";
         implementation += "\n";
@@ -1416,6 +1418,8 @@ void* operator new(std::size_t) {
         implementation += "> {};\n";
         implementation += "}\n";
     }
+    tryInclude(implementationCpp, typeName + ".g.cpp"s);
+    tryInclude(implementationCpp, typeName + ".xaml.g.hpp"s);
 }
 
 template <std::meta::info type> consteval void printInterface(vector_string& idl, vector_string& implementation)
@@ -1669,14 +1673,17 @@ struct GenResult
 {
     vector_string idl;
     vector_string implementation;
+    vector_string implementationCpp;
 };
 
 consteval GenResult gen_idl_impl()
 {
     vector_string idl;
     vector_string implementation;
+    vector_string implementationCpp;
     idl.reserve(expectedOutputSize);
     implementation.reserve(expectedImplementationFileSize);
+    implementationCpp.reserve(expectedImplementationFileSize);
     constexpr static auto entities = std::define_static_array(getEntites());
     template for (constexpr auto entity : entities)
     {
@@ -1684,7 +1691,7 @@ consteval GenResult gen_idl_impl()
         constexpr auto info = entity.info;
         if constexpr (type == WinRtEntityType::RuntimeClass)
         {
-            printRuntimeClass<info>(idl, implementation);
+            printRuntimeClass<info>(idl, implementation, implementationCpp);
         }
         else if constexpr (type == WinRtEntityType::Interface)
         {
@@ -1707,13 +1714,17 @@ consteval GenResult gen_idl_impl()
             printAttribute(idl, info);
         }
     }
-    return { idl, implementation };
+    return { idl, implementation, implementationCpp };
 }
 
 consteval auto gen_idl()
 {
     auto result = gen_idl_impl();
-    return std::pair(std::define_static_array(result.idl.data()), std::define_static_array(result.implementation.data()));
+    return std::tuple(
+        std::define_static_array(result.idl.data()), 
+        std::define_static_array(result.implementation.data()),
+        std::define_static_array(result.implementationCpp.data())
+    );
 }
 
 constexpr auto generated = gen_idl();
@@ -1727,20 +1738,27 @@ int main(int argc, char* argv[])
     }
     if (argc > 2)
     {
-        std::cerr << "unknown argument" << argv[2] <<  std::endl;
+        std::cerr << "unknown argument" << argv[2] << std::endl;
         return -1;
     }
     auto arg = std::string_view(argv[1]);
-    auto& [idl, implementation] = generated;
+    auto& [idl, implementation, implementationCpp] = generated;
     if (arg == "-idl")
     {
         std::cout << std::string(idl.data(), idl.size()) << std::endl;
     }
-    else if (arg == "-implementation")
+    else if (arg == "-implementation-header")
     {
+        std::cout << "#pragma once" << std::endl;
         std::cout << "#include \"pch.h\"" << std::endl;
         std::cout << "#include \"author_types.h\"" << std::endl;
         std::cout << std::string(implementation.data(), implementation.size()) << std::endl;
+    }
+    else if (arg == "-implementation-cpp")
+    {
+        std::cout << "#include \"pch.h\"" << std::endl;
+        std::cout << "#include \"idlgen.impl.h\"" << std::endl;
+        std::cout << std::string(implementationCpp.data(), implementationCpp.size()) << std::endl;
     }
     else
     {
