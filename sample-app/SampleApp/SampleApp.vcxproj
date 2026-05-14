@@ -167,7 +167,6 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-	<ClInclude Include="$(GeneratedFilesDir)idlgen.impl.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl">
