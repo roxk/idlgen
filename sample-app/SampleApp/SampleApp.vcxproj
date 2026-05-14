@@ -126,6 +126,7 @@
     </ClInclude>
     <ClInclude Include="SomeFolder\PageType.h" />
     <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h" />
+    <ClInclude Include="ViewModel.author.h" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -167,6 +168,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="ViewModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl">

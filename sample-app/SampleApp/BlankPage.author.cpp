@@ -7,18 +7,18 @@ using namespace Windows::UI::Xaml;
 
 namespace winrt::SampleApp::author
 {
-    Category BlankPage::Category(winrt::author::getter)
-    {
-        return Category::Literature;
-    }
-    Permission BlankPage::Permission(winrt::author::getter)
-    {
-        return Permission::Camera;
-    }
-    Point BlankPage::GetPoint()
-    {
-        return Point();
-    }
+    //Category BlankPage::Category(winrt::author::getter)
+    //{
+    //    return Category::Literature;
+    //}
+    //Permission BlankPage::Permission(winrt::author::getter)
+    //{
+    //    return Permission::Camera;
+    //}
+    //Point BlankPage::GetPoint()
+    //{
+    //    return Point();
+    //}
     void BlankPage::AssignHandler(winrt::SampleApp::BlankPageHandler const& handler)
     {}
     int32_t BlankPage::Property(winrt::author::getter)

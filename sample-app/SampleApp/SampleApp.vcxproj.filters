@@ -19,6 +19,7 @@
     <ClCompile Include="MainPage.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="$(OutputImplCpp)" />
+    <ClCompile Include="ViewModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -30,6 +31,7 @@
     </ClInclude>
     <ClInclude Include="BlankPage.author.h" />
     <ClInclude Include="MainPage.author.h" />
+    <ClInclude Include="ViewModel.author.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">

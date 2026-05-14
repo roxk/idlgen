@@ -1,0 +1,51 @@
+#include "pch.h"
+#include "idlgen.impl.h"
+#if __has_include("AuthorClass.g.cpp")
+#include "AuthorClass.g.cpp"
+#endif
+#if __has_include("AuthorClass.xaml.g.hpp")
+#include "AuthorClass.xaml.g.hpp"
+#endif
+#if __has_include("Area.g.cpp")
+#include "Area.g.cpp"
+#endif
+#if __has_include("Area.xaml.g.hpp")
+#include "Area.xaml.g.hpp"
+#endif
+#if __has_include("StaticArea.g.cpp")
+#include "StaticArea.g.cpp"
+#endif
+#if __has_include("StaticArea.xaml.g.hpp")
+#include "StaticArea.xaml.g.hpp"
+#endif
+#if __has_include("PartialClass.g.cpp")
+#include "PartialClass.g.cpp"
+#endif
+#if __has_include("PartialClass.xaml.g.hpp")
+#include "PartialClass.xaml.g.hpp"
+#endif
+#if __has_include("BookSku.g.cpp")
+#include "BookSku.g.cpp"
+#endif
+#if __has_include("BookSku.xaml.g.hpp")
+#include "BookSku.xaml.g.hpp"
+#endif
+#if __has_include("MyPanel.g.cpp")
+#include "MyPanel.g.cpp"
+#endif
+#if __has_include("MyPanel.xaml.g.hpp")
+#include "MyPanel.xaml.g.hpp"
+#endif
+#if __has_include("Area2.g.cpp")
+#include "Area2.g.cpp"
+#endif
+#if __has_include("Area2.xaml.g.hpp")
+#include "Area2.xaml.g.hpp"
+#endif
+#if __has_include("Sample.g.cpp")
+#include "Sample.g.cpp"
+#endif
+#if __has_include("Sample.xaml.g.hpp")
+#include "Sample.xaml.g.hpp"
+#endif
+

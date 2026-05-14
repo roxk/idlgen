@@ -31,9 +31,9 @@ namespace winrt::SampleApp::author
 
 	struct BlankPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page>, winrt::author::unsealed
 	{
-		Category Category(winrt::author::getter = {});
-		Permission Permission(winrt::author::getter = {});
-		Point GetPoint();
+		//Category Category(winrt::author::getter = {});
+		//Permission Permission(winrt::author::getter = {});
+		//Point GetPoint();
 		void AssignHandler(winrt::SampleApp::BlankPageHandler const& handler);
 		int32_t Property(winrt::author::getter = {});
 		winrt::author::setter Property(int32_t value);

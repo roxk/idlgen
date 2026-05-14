@@ -14,14 +14,14 @@ namespace winrt::SampleApp::author
     {
         throw hresult_not_implemented();
     }
-    Category MainPage::Category(winrt::author::getter)
-    {
-        return Category::Literature;
-    }
-    PageType MainPage::PageType(winrt::author::getter)
-    {
-        return PageType::Main;
-    }
+    //Category MainPage::Category(winrt::author::getter)
+    //{
+    //    return Category::Literature;
+    //}
+    //PageType MainPage::PageType(winrt::author::getter)
+    //{
+    //    return PageType::Main;
+    //}
     int32_t MainPage::Getter(winrt::author::getter)
     {
         return 0;
@@ -30,5 +30,9 @@ namespace winrt::SampleApp::author
     {}
     void MainPage::ClickHandler(IInspectable const&, RoutedEventArgs const&, winrt::author::ignore)
     {
+    }
+    int MainPage::SomeStaticMethod()
+    {
+        return 0;
     }
 }
