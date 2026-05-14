@@ -101,7 +101,7 @@ Console.WriteLine("Generating implementation...");
 var implp = Process.Start(new ProcessStartInfo
 {
     FileName = "powershell",
-    Arguments = $"-c \"{outputExePath}\" -implementation | Out-File {outputImplPath} -Encoding utf8",
+    Arguments = $"-c \"{outputExePath}\" -implementation-header | Out-File {outputImplPath} -Encoding utf8",
     UseShellExecute = false,
 });
 implp!.WaitForExit();

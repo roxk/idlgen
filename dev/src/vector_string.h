@@ -40,6 +40,9 @@ public:
     constexpr const std::vector<char>& data() const {
         return _data;
     }
-private:
+    constexpr const size_t size() const {
+        return _data.size();
+    }
+  private:
     std::vector<char> _data;
 };
