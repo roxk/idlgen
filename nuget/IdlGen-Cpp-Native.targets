@@ -19,12 +19,13 @@
 		<IdlgenCppIntDir>$(IntDir)idlgen\</IdlgenCppIntDir>
 		<IdlgenCppAuthorTypeFile>$(GeneratedFilesDir)author_types.h</IdlgenCppAuthorTypeFile>
 		<OutputIdl>$(GeneratedFilesDir)idlgen.idl</OutputIdl>
-		<OutputImpl>$(GeneratedFilesDir)idlgen.impl.h</OutputImpl>
+		<OutputImplHeader>$(GeneratedFilesDir)idlgen.impl.h</OutputImplHeader>
+		<OutputImplCpp>$(GeneratedFilesDir)idlgen.impl.cpp</OutputImplCpp>
 		<ExeFile>$(IntDir)idlgen\idlgen.exe</ExeFile>
 		<IdlGenCppGenerateIDLRspFile>$(IntDir)idlgen/idl.rsp</IdlGenCppGenerateIDLRspFile>
 		<!-- Take part in cppwinrt before midl targets -->
 		<BeforeMidlCompileTargets>
-			$(BeforeMidlCompileTargets);IdlGenCppGenerateIDL;
+			IdlGenCppGenerateIDL;$(BeforeMidlCompileTargets);
 		</BeforeMidlCompileTargets>
 	</PropertyGroup>
 	<ItemGroup Condition="'$(IdlGenCppInclude)' == ''">
@@ -40,6 +41,12 @@
 		<IdlGenCppPch Include="$(IdlGenCppPch)"/>
 		<IdlGenCppGetterTemplates Include="$(IdlGenCppGetterTemplate)"/>
 		<IdlGenCppPropertyTemplates Include="$(IdlGenCppPropertyTemplate)"/>
+		<ClCompile Include="$(OutputImplCpp)">
+			<CompilerIteration>XamlGenerated</CompilerIteration>
+		</ClCompile>
+		<ClInclude Include="$(OutputImplHeader)">
+			<DependentUpon>$(OutputIdl)</DependentUpon>
+		</ClInclude>
 	</ItemGroup>
 	<ItemDefinitionGroup>
 		<ClCompile>
@@ -91,7 +98,7 @@
 		<WriteLinesToFile File="$(IdlgenCppAuthorTypeFile)" Overwrite="true" Lines="@(IdlGenCppInclude->'#include &quot;%(Identity)&quot;')" />
 	</Target>
 	<Target Name="IdlGenCppGenerateIDL" DependsOnTargets="ComputeAdditionalIncludeDirectories;IdlgenCppMakeDependencyProjection" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="$(IdlGenCppGenerateIDLRspFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-		<Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static -v -fmax-errors=100 -include &quot;$(IdlGenCppPch)&quot; &quot;$(MSBuildThisFileDirectory)..\..\src\main.cpp&quot; @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;$(ExeFile)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -idl > &quot;$(OutputIdl)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -implementation > &quot;$(OutputImpl)&quot;" />
+		<Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static -v -fmax-errors=100 -include &quot;$(IdlGenCppPch)&quot; &quot;$(MSBuildThisFileDirectory)..\..\src\main.cpp&quot; @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;$(ExeFile)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -idl > &quot;$(OutputIdl)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -implementation-header > &quot;$(OutputImplHeader)&quot; &amp;&amp; &quot;$(ExeFile)&quot; -implementation-cpp > &quot;$(OutputImplCpp)&quot;" />
 		<WriteLinesToFile
             File="$(IdlGenCppGenerateIDLRspFile)" Lines="Done"
             Overwrite="true" />
