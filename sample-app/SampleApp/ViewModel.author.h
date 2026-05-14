@@ -10,5 +10,6 @@ namespace winrt::SampleApp::author
 		static void StaticMethod2();
 	private:
 		static void PrivateStaticMethod();
+		int PrivateInstanceMethod();
 	};
 }

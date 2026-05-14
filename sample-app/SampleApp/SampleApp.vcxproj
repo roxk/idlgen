@@ -154,7 +154,7 @@
     <Image Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BlankPage.author.cpp">
+    <ClCompile Include="BlankPage.cpp">
       <DependentUpon>BlankPage.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>

@@ -13,3 +13,8 @@ void winrt::SampleApp::author::ViewModel::StaticMethod2()
 
 void winrt::SampleApp::author::ViewModel::PrivateStaticMethod()
 {}
+
+int winrt::SampleApp::author::ViewModel::PrivateInstanceMethod()
+{
+	return 0;
+}

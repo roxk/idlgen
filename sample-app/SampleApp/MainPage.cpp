@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "MainPage.author.h"
+#include "winrt/SampleApp.h"
 
 using namespace winrt;
 using namespace Windows::UI::Xaml;
@@ -8,11 +9,11 @@ namespace winrt::SampleApp::author
 {
     int32_t MainPage::MyProperty(winrt::author::getter)
     {
-        throw hresult_not_implemented();
+        return 0;
     }
     winrt::author::setter MainPage::MyProperty(int32_t /* value */)
     {
-        throw hresult_not_implemented();
+        return {};
     }
     //Category MainPage::Category(winrt::author::getter)
     //{
@@ -30,6 +31,10 @@ namespace winrt::SampleApp::author
     {}
     void MainPage::ClickHandler(IInspectable const&, RoutedEventArgs const&, winrt::author::ignore)
     {
+        SampleApp::MainPage::SomeStaticMethod();
+        SampleApp::MainPage mainPage;
+        auto i = mainPage.MyProperty();
+        mainPage.MyProperty(i);
     }
     int MainPage::SomeStaticMethod()
     {
