@@ -1303,6 +1303,10 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         {
             continue;
         }
+        else if (std::meta::is_private(member))
+        {
+            continue;
+        }
         else if (isConstructor(member) && !isStaticClassValue)
         {
             hasCtor = true;
@@ -1330,9 +1334,16 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         }
         else if (isFunction(member))
         {
-            if (std::meta::is_protected(member) && isUnsealedValue)
+            if (std::meta::is_protected(member))
             {
-                hasProtected = true;
+                if (isUnsealedValue)
+                {
+                    hasProtected = true;
+                }
+                else
+                {
+                    continue;
+                }
             }
             insertOrThrow(infos, member).method = member;
         }
@@ -1426,7 +1437,7 @@ void* operator new(std::size_t) {
     }
     implementation += "};\n";
     implementation += "}\n";
-    if (hasCtor)
+    if (hasCtor || isStaticClassValue)
     {
         implementation += "namespace winrt::";
         printNamespaceOnly(type, implementation);

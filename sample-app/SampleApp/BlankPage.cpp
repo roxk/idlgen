@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "BlankPage.author.h"
+#include "winrt/SampleApp.h"
 
 using namespace winrt;
 using namespace author;
@@ -20,19 +21,22 @@ namespace winrt::SampleApp::author
     //    return Point();
     //}
     void BlankPage::AssignHandler(winrt::SampleApp::BlankPageHandler const& handler)
-    {}
+    {
+    }
     int32_t BlankPage::Property(winrt::author::getter)
     {
-        throw hresult_not_implemented();
+        return 0;
     }
-
     winrt::author::setter BlankPage::Property(int32_t /* value */)
     {
-        throw hresult_not_implemented();
+        return {};
     }
-
     void BlankPage::ClickHandler(IInspectable const&, RoutedEventArgs const&)
     {
+        SampleApp::BlankPage blankPage;
+        auto i = blankPage.Property();
+        blankPage.Property(i);
+        blankPage.AssignHandler([](auto, auto) {});
     }
     bool BlankPage::ProtectedGetter()
     {
