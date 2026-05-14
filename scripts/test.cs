@@ -41,7 +41,8 @@ else
 var input = $"{devDirPath}/main.cpp";
 var outputExePath = $"{outDirPath}/main.exe";
 var outputIdlPath = $"{outDirPath}/outputIdl.txt";
-var outputImplPath = $"{outDirPath}/outputImpl.txt";
+var outputImplHeaderPath = $"{outDirPath}/outputImplHeader.txt";
+var outputImplCppPath = $"{outDirPath}/outputImplCpp.txt";
 var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -include pch.h -ftime-report {input} -o {outputExePath}";
 Directory.CreateDirectory(outDirPath);
 var cp = Process.Start(new ProcessStartInfo
@@ -72,42 +73,72 @@ if (idlp.ExitCode != 0)
     Console.WriteLine("Failed to generate idl");
     return -1;
 }
-Console.WriteLine("Testing output...");
-const string expectedOutputPath = "test-data/src/ExpectedOutput.txt";
-using var reader1 = new StreamReader(outputIdlPath);
-using var reader2 = new StreamReader(expectedOutputPath);
-string? line1;
-string? line2;
-int lineIndex = 0;
-while (true)
+static bool IsFileTheSame(string path1, string path2)
 {
-    ++lineIndex;
-    line1 = reader1.ReadLine();
-    line2 = reader2.ReadLine();
-    if (line1 == null && line2 == null)
+    using var reader1 = new StreamReader(path1);
+    using var reader2 = new StreamReader(path2);
+    string? line1;
+    string? line2;
+    int lineIndex = 0;
+    while (true)
     {
-        Console.WriteLine("Test passed");
-        break;
-    }
-    if (line1 == null ||  line2 == null || !line1.Equals(line2))
-    {
-        Console.WriteLine($"Test failed at line {lineIndex}.");
-        Console.WriteLine($"Received: {line1}");
-        Console.WriteLine($"Expected: {line2}");
-        return -1;
+        ++lineIndex;
+        line1 = reader1.ReadLine();
+        line2 = reader2.ReadLine();
+        if (line1 == null && line2 == null)
+        {
+            Console.WriteLine("Test passed");
+            return true;
+        }
+        if (line1 == null || line2 == null || !line1.Equals(line2))
+        {
+            Console.WriteLine($"Test failed at line {lineIndex}.");
+            Console.WriteLine($"Received: {line1}");
+            Console.WriteLine($"Expected: {line2}");
+            return false;
+        }
     }
 }
+Console.WriteLine("Testing idl output...");
+const string expectedOutputIdlPath = "test-data/src/ExpectedIdlOutput.txt";
+bool isIdlPassed = IsFileTheSame(outputIdlPath, expectedOutputIdlPath);
+if (!isIdlPassed)
+{
+    return -1;
+}
 Console.WriteLine("Generating implementation...");
-var implp = Process.Start(new ProcessStartInfo
+var implHp = Process.Start(new ProcessStartInfo
 {
     FileName = "powershell",
-    Arguments = $"-c \"{outputExePath}\" -implementation-header | Out-File {outputImplPath} -Encoding utf8",
+    Arguments = $"-c \"{outputExePath}\" -implementation-header | Out-File {outputImplHeaderPath} -Encoding utf8",
     UseShellExecute = false,
 });
-implp!.WaitForExit();
-if (implp.ExitCode != 0)
+implHp!.WaitForExit();
+if (implHp.ExitCode != 0)
 {
     Console.WriteLine("Failed to generate implementation");
+    return -1;
+}
+var implCppP = Process.Start(new ProcessStartInfo
+{
+    FileName = "powershell",
+    Arguments = $"-c \"{outputExePath}\" -implementation-cpp | Out-File {outputImplCppPath} -Encoding utf8",
+    UseShellExecute = false,
+});
+implCppP!.WaitForExit();
+if (implCppP.ExitCode != 0)
+{
+    Console.WriteLine("Failed to generate implementation");
+    return -1;
+}
+const string expectedOutputImplHeaderPath = "test-data/src/ExpectedImplHeaderOutput.txt";
+const string expectedOutputImplCppPath = "test-data/src/ExpectedImplCppOutput.txt";
+Console.WriteLine("Testing implementation header...");
+bool isHeaderTheSame = IsFileTheSame(outputImplHeaderPath, expectedOutputImplHeaderPath);
+Console.WriteLine("Testing implementation cpp...");
+bool isCppTheSame = IsFileTheSame(outputImplCppPath, expectedOutputImplCppPath);
+if (!isHeaderTheSame ||  !isCppTheSame)
+{
     return -1;
 }
 return 0;

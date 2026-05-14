@@ -1215,7 +1215,8 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     printBaseAttributes<type>(idl);
     idl += "[default_interface]\n";
     constexpr auto isStaticClassValue = isStaticClass(type);
-    if constexpr (isUnsealed(type))
+    constexpr auto isUnsealedValue = isUnsealed(type);
+    if constexpr (isUnsealedValue)
     {
         idl += "unsealed ";
     }
@@ -1295,6 +1296,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     auto members = std::meta::members_of(type, ctx);
     std::vector<ClassMemberInfo> infos;
     bool hasCtor = false;
+    bool hasProtected = false;
     for (auto member : members)
     {
         if (isIgnored(member))
@@ -1328,6 +1330,10 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         }
         else if (isFunction(member))
         {
+            if (std::meta::is_protected(member) && isUnsealedValue)
+            {
+                hasProtected = true;
+            }
             insertOrThrow(infos, member).method = member;
         }
     }
@@ -1399,6 +1405,24 @@ void* operator new(std::size_t) {
     return mem;
 })"";
         implementation += "\n";
+    }
+    implementation += "friend struct winrt::impl::produce<";
+    implementation += typeName;
+    implementation += ", winrt::";
+    printNamespaceOnly(type, implementation);
+    implementation += "::I";
+    implementation += typeName;
+    implementation += ">;\n";
+    if (hasProtected)
+    {
+
+        implementation += "friend struct winrt::impl::produce<";
+        implementation += typeName;
+        implementation += ", winrt::";
+        printNamespaceOnly(type, implementation);
+        implementation += "::I";
+        implementation += typeName;
+        implementation += "Protected>;\n";
     }
     implementation += "};\n";
     implementation += "}\n";
