@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "BlankPage.author.h"
 #include "winrt/SampleApp.h"
+#include "idlgen.impl.h"
 
 using namespace winrt;
 using namespace author;
@@ -22,6 +23,10 @@ namespace winrt::SampleApp::author
     //}
     void BlankPage::AssignHandler(winrt::SampleApp::BlankPageHandler const& handler)
     {
+        auto button = self(this)->Button();
+        auto existingContent = button.Content();
+        auto str = winrt::unbox_value<winrt::hstring>(existingContent);
+        button.Content(winrt::box_value(L"hi"));
     }
     int32_t BlankPage::Property(winrt::author::getter)
     {
@@ -36,7 +41,7 @@ namespace winrt::SampleApp::author
         SampleApp::BlankPage blankPage;
         auto i = blankPage.Property();
         blankPage.Property(i);
-        blankPage.AssignHandler([](auto, auto) {});
+        AssignHandler([](auto, auto) {});
     }
     bool BlankPage::ProtectedGetter()
     {

@@ -1354,7 +1354,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     // heap implements
     tryInclude(implementation, typeName + ".g.h"s);
     implementation += "namespace winrt::";
-    printNamespaceOnly(type, implementation);
+    printNamespaceOnly(type, implementation, "::");
     implementation += "::implementation {\n";
     implementation += "struct ";
     implementation += typeName;
@@ -1420,7 +1420,7 @@ void* operator new(std::size_t) {
     implementation += "friend struct winrt::impl::produce<";
     implementation += typeName;
     implementation += ", winrt::";
-    printNamespaceOnly(type, implementation);
+    printNamespaceOnly(type, implementation, "::");
     implementation += "::I";
     implementation += typeName;
     implementation += ">;\n";
@@ -1430,7 +1430,7 @@ void* operator new(std::size_t) {
         implementation += "friend struct winrt::impl::produce<";
         implementation += typeName;
         implementation += ", winrt::";
-        printNamespaceOnly(type, implementation);
+        printNamespaceOnly(type, implementation, "::");
         implementation += "::I";
         implementation += typeName;
         implementation += "Protected>;\n";
@@ -1440,7 +1440,7 @@ void* operator new(std::size_t) {
     if (hasCtor || isStaticClassValue)
     {
         implementation += "namespace winrt::";
-        printNamespaceOnly(type, implementation);
+        printNamespaceOnly(type, implementation, "::");
         implementation += "::factory_implementation {\n";
         implementation += "struct ";
         implementation += typeName;
@@ -1453,6 +1453,20 @@ void* operator new(std::size_t) {
         implementation += "> {};\n";
         implementation += "}\n";
     }
+    implementation += "namespace winrt::";
+    printNamespaceOnly(type, implementation, "::");
+    implementation += "::";
+    implementation += "author {\n";
+    implementation += "inline auto self(winrt::";
+    printNamespaceOnly(type, implementation, "::");
+    implementation += "::author::";
+    implementation += typeName;
+    implementation += "* self) {\n";
+    implementation += "return static_cast<implementation::";
+    implementation += typeName;
+    implementation += "*>(self);\n";
+    implementation += "}\n";
+    implementation += "}\n";
     tryInclude(implementationCpp, typeName + ".g.cpp"s);
     tryInclude(implementationCpp, typeName + ".xaml.g.hpp"s);
 }
