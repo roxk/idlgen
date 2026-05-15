@@ -39,10 +39,20 @@ consteval bool isAuthorNamespace(std::meta::info ns)
     return (std::meta::has_identifier(ns) && std::meta::identifier_of(ns) == "author");
 }
 
-consteval vector_string fqn(std::meta::info info, bool isParameter = false);
+enum class NameFormat
+{
+    Idl,
+    Cpp,
+    CppProjected,
+    CppImplementation
+};
+
+consteval vector_string fqn(std::meta::info info, bool isParameter = false, NameFormat format = NameFormat::Idl);
 
 template <typename Func = std::nullptr_t>
-consteval vector_string fqn(std::meta::info info, bool isParameter = false, Func&& identitiferMapper = Func());
+consteval vector_string fqn(std::meta::info info, bool isParameter = false, NameFormat format = NameFormat::Idl, Func&& identitiferMapper = Func());
+
+consteval vector_string fqnCpp(std::meta::info info, NameFormat format = NameFormat::Cpp);
 
 consteval void printParameters(std::vector<std::meta::info> const& params, vector_string& result)
 {
@@ -57,6 +67,39 @@ consteval void printParameters(std::vector<std::meta::info> const& params, vecto
         {
             result += " ";
             result += paramName;
+        }
+        if (paramIndex + 1 < paramCount)
+        {
+            result += ", ";
+        }
+        ++paramIndex;
+    }
+}
+
+consteval void printParametersCpp(std::vector<std::meta::info> const& params, vector_string& result, NameFormat format)
+{
+    if (format == NameFormat::Idl)
+    {
+        throw std::runtime_error("Cannot print idl format when printing cpp parameters");
+    }
+    auto paramCount = params.size();
+    auto paramIndex = 0;
+    for (auto param : params)
+    {
+        auto type = std::meta::is_type(param) ? param : std::meta::type_of(param);
+        if (type == ^^winrt::author::getter)
+        {
+            result += "winrt::author::getter = {}";
+        }
+        else
+        {
+            result += fqnCpp(type, format);
+            auto paramName = std::meta::has_identifier(param) ? std::meta::identifier_of(param) : "";
+            if (paramName.size() > 0)
+            {
+                result += " ";
+                result += paramName;
+            }
         }
         if (paramIndex + 1 < paramCount)
         {
@@ -85,14 +128,14 @@ consteval bool is_winrt_category(std::meta::info type, std::meta::info category)
 
 template <typename Func = decltype([](auto const& x) { return x; })>
 consteval void printSelfName(
-    std::meta::info candidate, vector_string& result, bool isParameter = false, Func&& identifierMapper = Func()
+    std::meta::info candidate, vector_string& result, bool isParameter = false, NameFormat format = NameFormat::Idl, Func&& identifierMapper = Func()
 )
 {
     if (std::meta::has_template_arguments(candidate))
     {
         auto templateType = std::meta::template_of(candidate);
         auto firstParam = std::meta::template_arguments_of(candidate)[0];
-        if (templateType == ^^winrt::array_view)
+        if (format == NameFormat::Idl && templateType == ^^winrt::array_view)
         {
             if (isParameter && !std::meta::is_const_type(firstParam))
             {
@@ -102,7 +145,7 @@ consteval void printSelfName(
             result += fqn(firstParam, isParameter);
             result += "[]";
         }
-        else if (templateType == ^^winrt::com_array)
+        else if (format == NameFormat::Idl && templateType == ^^winrt::com_array)
         {
             if (isParameter)
             {
@@ -137,11 +180,63 @@ consteval void printParentThenSelfName(
     std::meta::info candidate,
     vector_string& result,
     bool isParameter = false,
-    std::string_view separator = ".",
+    NameFormat nameFormat = NameFormat::Idl,
     Func&& identifierMapper = Func()
 )
 {
     auto isAuthorNamespaceValue = isAuthorNamespace(candidate);
+    if (nameFormat == NameFormat::Cpp)
+    {
+        if (std::meta::has_parent(candidate))
+        {
+            auto parent = std::meta::parent_of(candidate);
+            if (parent != ^^::)
+            {
+                printParentThenSelfName(parent, result, isParameter, nameFormat, identifierMapper);
+                result += "::";
+            }
+        }
+        printSelfName(candidate, result, isParameter, nameFormat, identifierMapper);
+        return;
+    }
+    if (nameFormat == NameFormat::CppProjected || nameFormat == NameFormat::CppImplementation)
+    {
+        if (std::meta::has_parent(candidate))
+        {
+            auto parent = std::meta::parent_of(candidate);
+            if (isAuthorNamespace(parent))
+            {
+                // skip author namespace coz it should NOT be reflected in winmd
+                if (std::meta::has_parent(parent))
+                {
+                    parent = std::meta::parent_of(parent);
+                }
+                else
+                {
+                    // something isn't right, should at least have a parent of global namespace, but
+                    // we can ignore this case for now
+                }
+            }
+            if (parent != ^^::)
+            {
+                printParentThenSelfName(parent, result, isParameter, nameFormat, identifierMapper);
+                if (!isAuthorNamespaceValue)
+                {
+                    result += "::";
+                }
+                else if (nameFormat == NameFormat::CppImplementation)
+                {
+                    result += "::implementation";
+                }
+            }
+        }
+        if (isAuthorNamespaceValue)
+        {
+            return;
+        }
+        printSelfName(candidate, result, isParameter, nameFormat, identifierMapper);
+        return;
+    }
     if (std::meta::has_parent(candidate))
     {
         auto parent = std::meta::parent_of(candidate);
@@ -158,12 +253,12 @@ consteval void printParentThenSelfName(
                 // we can ignore this case for now
             }
         }
-        if (parent != ^^::&&parent != ^^winrt)
+        if (parent != ^^:: && parent != ^^winrt)
         {
-            printParentThenSelfName(parent, result, isParameter, separator, identifierMapper);
+            printParentThenSelfName(parent, result, isParameter, nameFormat, identifierMapper);
             if (!isAuthorNamespaceValue)
             {
-                result += separator;
+                result += nameFormat == NameFormat::Idl ? "." : "::";
             }
         }
     }
@@ -171,7 +266,7 @@ consteval void printParentThenSelfName(
     {
         return;
     }
-    printSelfName(candidate, result, isParameter, identifierMapper);
+    printSelfName(candidate, result, isParameter, nameFormat, identifierMapper);
 }
 
 struct Int16
@@ -304,12 +399,12 @@ consteval std::meta::info toWinRtType(std::meta::info type)
 
 constexpr auto expectedNameCount = 1024;
 
-consteval vector_string fqn(std::meta::info info, bool isParameter)
+consteval vector_string fqn(std::meta::info info, bool isParameter, NameFormat format)
 {
-    return fqn(info, isParameter, [](auto const& x) { return x; });
+    return fqn(info, isParameter, format, [](auto const& x) { return x; });
 }
 
-template <typename Func> consteval vector_string fqn(std::meta::info info, bool isParameter, Func&& identifierMapper)
+template <typename Func> consteval vector_string fqn(std::meta::info info, bool isParameter, NameFormat format, Func&& identifierMapper)
 {
     vector_string result;
     result.reserve(expectedNameCount);
@@ -331,12 +426,24 @@ template <typename Func> consteval vector_string fqn(std::meta::info info, bool 
     if (std::meta::has_parent(winrtType) &&
         std::meta::parent_of(winrtType) == ^^winrt::Windows::Foundation::Collections)
     {
-        printSelfName(winrtType, result, isParameter, identifierMapper);
+        printSelfName(winrtType, result, isParameter, format, identifierMapper);
     }
     else
     {
-        printParentThenSelfName(winrtType, result, isParameter, ".", identifierMapper);
+        printParentThenSelfName(winrtType, result, isParameter, format, identifierMapper);
     }
+    return result;
+}
+
+consteval vector_string fqnCpp(std::meta::info info, NameFormat format)
+{
+    vector_string result;
+    result.reserve(expectedNameCount);
+    if (!std::meta::is_type(info))
+    {
+        throw std::runtime_error(std::meta::display_string_of(info) + " is not a type"s);
+    }
+    printParentThenSelfName(info, result, false, format);
     return result;
 }
 
@@ -344,6 +451,38 @@ consteval void printFunctionParameters(std::meta::info member, vector_string& re
 {
     result += "(";
     printParameters(std::meta::parameters_of(member), result);
+    result += ")";
+}
+
+consteval void printFunctionParametersCpp(std::meta::info member, vector_string& result, NameFormat format)
+{
+    result += "(";
+    printParametersCpp(std::meta::parameters_of(member), result, format);
+    result += ")";
+}
+
+template<typename Func>
+consteval void printCallFunctionCpp(std::meta::info member, vector_string& result, Func&& paramPrinter)
+{
+    result += "(";
+    auto params = std::meta::parameters_of(member);
+    const auto paramCount = params.size();
+    auto paramIndex = 0;
+    for (auto param : params)
+    {
+        auto type = std::meta::type_of(param);
+        if (type == ^^winrt::author::getter)
+        {
+            result += "winrt::author::getter{}";
+            continue;
+        }
+        paramPrinter(param);
+        if (paramIndex + 1 < paramCount)
+        {
+            result += ", ";
+        }
+        ++paramIndex;
+    }
     result += ")";
 }
 
@@ -920,16 +1059,16 @@ consteval void findWinRtEntities(std::meta::info ns, std::vector<WinRtEntity>& e
     }
 }
 
-consteval void printNamespaceScope(std::meta::info info, vector_string& result, std::string_view separator = ".")
+consteval void printNamespaceScope(std::meta::info info, vector_string& result, NameFormat format = NameFormat::Idl)
 {
     result += "namespace ";
-    printParentThenSelfName(std::meta::parent_of(info), result, false, separator);
+    printParentThenSelfName(std::meta::parent_of(info), result, false, format);
     result += " {\n";
 }
 
-consteval void printNamespaceOnly(std::meta::info info, vector_string& result, std::string_view separator = ".")
+consteval void printNamespaceOnly(std::meta::info info, vector_string& result, NameFormat format = NameFormat::Idl)
 {
-    printParentThenSelfName(std::meta::parent_of(info), result, false, separator);
+    printParentThenSelfName(std::meta::parent_of(info), result, false, format);
 }
 
 consteval bool isIgnored(std::meta::info member)
@@ -1098,6 +1237,7 @@ template <std::meta::info type> consteval void printApplyingAttribute(vector_str
     result +=
         fqn(attrParam,
             false,
+            NameFormat::Idl,
             [](std::string_view name) -> std::string_view
             {
                 constexpr auto attributeSuffix = "Attribute"sv;
@@ -1208,6 +1348,30 @@ consteval void tryInclude(vector_string& result, std::string_view what)
     result += "#endif\n";
 }
 
+consteval bool isAuthoredValueType(std::meta::info info)
+{
+    return std::meta::has_parent(info) && isAuthorNamespace(std::meta::parent_of(info)) && (isStruct(info) || isEnum(info));
+}
+
+consteval bool hasValueTypeParameter(std::meta::info info)
+{
+    auto params = std::meta::parameters_of(info);
+    auto returnType = std::meta::return_type_of(info);
+    if (isAuthoredValueType(returnType))
+    {
+        return true;
+    }
+    for (auto param : params)
+    {
+        auto paramType = std::meta::type_of(param);
+        if (isAuthoredValueType(paramType))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 template <std::meta::info info> consteval void printRuntimeClass(vector_string& idl, vector_string& implementation, vector_string& implementationCpp)
 {
     constexpr auto type = info;
@@ -1297,6 +1461,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     std::vector<ClassMemberInfo> infos;
     bool hasCtor = false;
     bool hasProtected = false;
+    std::vector<std::meta::info> functionsWithValueType;
     for (auto member : members)
     {
         if (isIgnored(member))
@@ -1311,12 +1476,24 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         {
             hasCtor = true;
             insertOrGet(infos, member).constructor = member;
+            continue;
         }
         else if (std::meta::is_special_member_function(member))
         {
             continue;
         }
-        else if (isGetter(member))
+        if (std::meta::is_protected(member))
+        {
+            if (isUnsealedValue)
+            {
+                hasProtected = true;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        if (isGetter(member))
         {
             insertOrGet(infos, member).getter = member;
         }
@@ -1334,18 +1511,15 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         }
         else if (isFunction(member))
         {
-            if (std::meta::is_protected(member))
-            {
-                if (isUnsealedValue)
-                {
-                    hasProtected = true;
-                }
-                else
-                {
-                    continue;
-                }
-            }
             insertOrThrow(infos, member).method = member;
+        }
+        else
+        {
+            continue;
+        }
+        if (hasValueTypeParameter(member))
+        {
+            functionsWithValueType.push_back(member);
         }
     }
     printMemberInfos(type, infos, idl);
@@ -1353,9 +1527,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
     idl += "}\n";
     // heap implements
     tryInclude(implementation, typeName + ".g.h"s);
-    implementation += "namespace winrt::";
-    printNamespaceOnly(type, implementation, "::");
-    implementation += "::implementation {\n";
+    printNamespaceScope(type, implementation, NameFormat::CppImplementation);
     implementation += "struct ";
     implementation += typeName;
     implementation += "Heap : author::";
@@ -1390,6 +1562,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         implementation += typeName;
         implementation += "Heap*>(this);\n";
     };
+    // Base type ctor and release override
     if (runtimeClassBase.has_value())
     {
         // TODO: Use AddRef or detect ctor?
@@ -1417,20 +1590,75 @@ void* operator new(std::size_t) {
 })"";
         implementation += "\n";
     }
+    // value types
+    for (auto member : functionsWithValueType)
+    {
+        auto returnType = std::meta::return_type_of(member);
+        if (returnType == ^^winrt::author::setter)
+        {
+            implementation += "void";
+        }
+        else
+        {
+            implementation += fqnCpp(returnType, NameFormat::CppProjected);
+        }
+        implementation += " ";
+        implementation += std::meta::identifier_of(member);
+        printFunctionParametersCpp(member, implementation, NameFormat::CppProjected);
+        implementation += " {\n";
+        bool isReturnTypeValueType = isAuthoredValueType(std::meta::remove_cvref(returnType));
+        if (isReturnTypeValueType)
+        {
+            implementation += "    return std::bit_cast<";
+            implementation += fqnCpp(returnType, NameFormat::CppProjected);
+            implementation += ">(";
+        }
+        else if (returnType != (^^void) && returnType != ^^winrt::author::setter)
+        {
+            implementation += "    return ";
+        }
+        else
+        {
+            implementation += "    ";
+        }
+        implementation += typeName;
+        implementation += "Heap::";
+        implementation += std::meta::identifier_of(member);
+        printCallFunctionCpp(member, implementation, [&](std::meta::info param)
+        {
+            auto paramType = std::meta::type_of(param);
+            if (isAuthoredValueType(std::meta::remove_cvref(paramType)))
+            {
+                implementation += "std::bit_cast<";
+                implementation += fqnCpp(paramType);
+                implementation += ">(";
+                implementation += std::meta::identifier_of(param);
+                implementation += ")";
+                return;
+            }
+            implementation += std::meta::identifier_of(param);
+        });
+        if (isReturnTypeValueType)
+        {
+            implementation += ")";
+        }
+        implementation += ";\n";
+        implementation += "}\n";
+    }
+    // friends
     implementation += "friend struct winrt::impl::produce<";
     implementation += typeName;
-    implementation += ", winrt::";
-    printNamespaceOnly(type, implementation, "::");
-    implementation += "::I";
+    implementation += ", ";
+    printNamespaceOnly(type, implementation, NameFormat::CppProjected);
+    implementation += "::";
     implementation += typeName;
     implementation += ">;\n";
     if (hasProtected)
     {
-
         implementation += "friend struct winrt::impl::produce<";
         implementation += typeName;
-        implementation += ", winrt::";
-        printNamespaceOnly(type, implementation, "::");
+        implementation += ", ";
+        printNamespaceOnly(type, implementation, NameFormat::CppProjected);
         implementation += "::I";
         implementation += typeName;
         implementation += "Protected>;\n";
@@ -1439,8 +1667,8 @@ void* operator new(std::size_t) {
     implementation += "}\n";
     if (hasCtor || isStaticClassValue)
     {
-        implementation += "namespace winrt::";
-        printNamespaceOnly(type, implementation, "::");
+        implementation += "namespace ";
+        printNamespaceOnly(type, implementation, NameFormat::CppProjected);
         implementation += "::factory_implementation {\n";
         implementation += "struct ";
         implementation += typeName;
@@ -1453,12 +1681,13 @@ void* operator new(std::size_t) {
         implementation += "> {};\n";
         implementation += "}\n";
     }
-    implementation += "namespace winrt::";
-    printNamespaceOnly(type, implementation, "::");
-    implementation += "::author {\n";
-    implementation += "inline auto self(winrt::";
-    printNamespaceOnly(type, implementation, "::");
-    implementation += "::author::";
+    // implementation type getter
+    implementation += "namespace ";
+    printNamespaceOnly(type, implementation, NameFormat::Cpp);
+    implementation += " {\n";
+    implementation += "inline auto self(";
+    printNamespaceOnly(type, implementation, NameFormat::Cpp);
+    implementation += "::";
     implementation += typeName;
     implementation += "* self) {\n";
     implementation += "return static_cast<implementation::";

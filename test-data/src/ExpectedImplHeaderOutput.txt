@@ -27,6 +27,9 @@ void* operator new(std::size_t) {
     void* mem = std::malloc(sizeof(AuthorClass));
     return mem;
 }
+winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
+    return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
+}
 friend struct winrt::impl::produce<AuthorClass, winrt::App1::AuthorClass>;
 friend struct winrt::impl::produce<AuthorClass, winrt::App1::IAuthorClassProtected>;
 };
@@ -154,6 +157,21 @@ void use_make_function_to_create_this_object() {}
 };
 struct Area2 : Area2T<Area2>, Area2Heap {
 using Area2Heap::Area2Heap;
+winrt::App1::Color Color(winrt::author::getter = {}) {
+    return std::bit_cast<winrt::App1::Color>(Area2Heap::Color(winrt::author::getter{}));
+}
+void Color(winrt::App1::Color value) {
+    Area2Heap::Color(std::bit_cast<winrt::App1::author::Color>(value));
+}
+winrt::App1::Color GetColor() {
+    return std::bit_cast<winrt::App1::Color>(Area2Heap::GetColor());
+}
+void SetValues(winrt::App1::SetOfBooleanValues values) {
+    Area2Heap::SetValues(std::bit_cast<winrt::App1::author::SetOfBooleanValues>(values));
+}
+void MethodWithMixed(winrt::App1::Color color, winrt::App1::SetOfBooleanValues value, const winrt::Windows::Foundation::IInspectable& ref) {
+    Area2Heap::MethodWithMixed(std::bit_cast<winrt::App1::author::Color>(color), std::bit_cast<winrt::App1::author::SetOfBooleanValues>(value), ref);
+}
 friend struct winrt::impl::produce<Area2, winrt::App1::Area2>;
 };
 }

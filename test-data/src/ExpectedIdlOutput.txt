@@ -19,6 +19,12 @@ void SetSelectedIndex(Int32 index);
 }
 }
 namespace App1 {
+struct Point {
+Int32 x;
+Int32 y;
+};
+}
+namespace App1 {
 [default_interface]
 unsealed runtimeclass AuthorClass : Microsoft.UI.Xaml.FrameworkElement, App1.ITest {
 UInt8 Byte { get; };
@@ -48,6 +54,7 @@ void ReceiveArray(out out Int32[] values);
 Int32[] ReturnComArray();
 void InputParameterRefConst(ref const Windows.Foundation.Point point);
 void OutParameterStruct(out Windows.Foundation.Point point);
+App1.Point UseAuthorStruct(App1.Point point);
 void OutParameterReferenceType(out Object object);
 Windows.Foundation.IReference<Int32> BoxedInt { get; };
 overridable void Paint();
@@ -90,12 +97,6 @@ PartialClass();
 }
 namespace App1 {
 delegate void AsyncActionCompletedHandler(Object sender, Windows.Foundation.AsyncStatus args);
-}
-namespace App1 {
-struct Point {
-Int32 x;
-Int32 y;
-};
 }
 namespace App1 {
 enum Color {
@@ -141,9 +142,12 @@ namespace App1 {
 [default_interface]
 runtimeclass Area2 {
 Area2(Int32 width, Int32 height);
+App1.Color Color;
 Int32 Height;
-Int32 Width;
 Int32 NumberOfAreas { get; };
+App1.Color GetColor();
+void SetValues(App1.SetOfBooleanValues values);
+void MethodWithMixed(App1.Color color, App1.SetOfBooleanValues value, Object ref);
 }
 }
 namespace App1 {

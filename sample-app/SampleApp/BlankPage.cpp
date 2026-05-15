@@ -9,18 +9,25 @@ using namespace Windows::UI::Xaml;
 
 namespace winrt::SampleApp::author
 {
-    //Category BlankPage::Category(winrt::author::getter)
-    //{
-    //    return Category::Literature;
-    //}
-    //Permission BlankPage::Permission(winrt::author::getter)
-    //{
-    //    return Permission::Camera;
-    //}
-    //Point BlankPage::GetPoint()
-    //{
-    //    return Point();
-    //}
+    Category BlankPage::Category(winrt::author::getter)
+    {
+        return Category::Literature;
+    }
+    Permission BlankPage::Permission(winrt::author::getter)
+    {
+        return Permission::Camera;
+    }
+    winrt::author::setter BlankPage::Permission(author::Permission permission)
+    {
+        return {};
+    }
+    Point BlankPage::GetPoint()
+    {
+        Point pt{};
+        pt.X = 42;
+        pt.Y = 0;
+        return pt;
+    }
     void BlankPage::AssignHandler(winrt::SampleApp::BlankPageHandler const& handler)
     {
         auto button = self(this)->Button();
@@ -41,6 +48,7 @@ namespace winrt::SampleApp::author
         SampleApp::BlankPage blankPage;
         auto i = blankPage.Property();
         blankPage.Property(i);
+        auto pt = blankPage.GetPoint();
         AssignHandler([](auto, auto) {});
     }
     bool BlankPage::ProtectedGetter()
