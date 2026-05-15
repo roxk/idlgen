@@ -29,6 +29,11 @@ namespace winrt::App1::author
     {
         virtual void SetSelectedIndex(int index) = 0;
     };
+    struct Point : winrt::author::winrt_struct
+    {
+        int x;
+        int y;
+    };
     struct AuthorClass : winrt::author::unsealed, winrt::author::runtimeclass<
         winrt::Microsoft::UI::Xaml::FrameworkElement
         // winrt::Microsoft::UI::Xaml::Data::INotifyPropertyChanged
@@ -74,6 +79,7 @@ namespace winrt::App1::author
         winrt::com_array<int>& ReturnComArray();
         void InputParameterRefConst(winrt::Windows::Foundation::Point const& point);
         void OutParameterStruct(winrt::Windows::Foundation::Point& point);
+        winrt::App1::author::Point UseAuthorStruct(winrt::App1::author::Point point);
         void OutParameterReferenceType(winrt::Windows::Foundation::IInspectable& object);
         winrt::Windows::Foundation::IReference<int> BoxedInt(winrt::author::getter = {});
 
@@ -132,12 +138,6 @@ namespace winrt::App1::author
     {
         AsyncActionCompletedHandler(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::AsyncStatus const& args);
     };
-    // TODO: How to use? Struct is passed by value, so we cannot forward declare in method
-    struct Point : winrt::author::winrt_struct
-    {
-        int x;
-        int y;
-    };
     enum class Color : int
     {
         Red,
@@ -170,12 +170,14 @@ namespace winrt::App1::author
     struct Area2 : winrt::author::runtimeclass<>
     {
         Area2(int width, int height);
+        author::Color Color(winrt::author::getter = {});
+        winrt::author::setter Color(author::Color value);
         int Height(winrt::author::getter = {});
-        winrt::author::setter Width(int value);
-        int Width(winrt::author::getter = {});
         winrt::author::setter Height(int value);
-        // TODO: Fix static not showing up
         static int NumberOfAreas(winrt::author::getter = {});
+        author::Color GetColor();
+        void SetValues(SetOfBooleanValues values);
+        void MethodWithMixed(author::Color color, SetOfBooleanValues value, winrt::Windows::Foundation::IInspectable const& ref);
     };
     struct Sample : winrt::author::runtimeclass<>,
         winrt::author::apply_attr<winrt::author::interface_name,
