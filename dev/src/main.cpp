@@ -109,7 +109,7 @@ consteval void printParametersCpp(std::vector<std::meta::info> const& params, ve
     }
 }
 
-consteval bool is_winrt_category(std::meta::info type, std::meta::info category)
+consteval bool isWinRtCategory(std::meta::info type, std::meta::info category)
 {
     if (!std::meta::is_type(type))
     {
@@ -412,7 +412,7 @@ template <typename Func> consteval vector_string fqn(std::meta::info info, bool 
     {
         throw std::runtime_error(std::meta::display_string_of(info) + " is not a type"s);
     }
-    if (isParameter && is_winrt_category(std::meta::remove_cvref(info), ^^winrt::impl::struct_category) &&
+    if (isParameter && isWinRtCategory(std::meta::remove_cvref(info), ^^winrt::impl::struct_category) &&
         std::meta::is_reference_type(info) && std::meta::is_const_type(std::meta::remove_reference(info)))
     {
         result += "ref const ";
@@ -786,7 +786,7 @@ consteval bool isEventAdder(std::meta::info member)
     }
     else
     {
-        auto isParamDelegate = is_winrt_category(firstParamType, ^^winrt::impl::delegate_category);
+        auto isParamDelegate = isWinRtCategory(firstParamType, ^^winrt::impl::delegate_category);
         if (!isParamDelegate)
         {
             // TODO: Throw error?
@@ -1436,7 +1436,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
             basesCount += args.size();
             for (auto arg : args)
             {
-                if (is_winrt_category(arg, ^^winrt::impl::class_category))
+                if (isWinRtCategory(arg, ^^winrt::impl::class_category))
                 {
                     runtimeClassBase = arg;
                 }
