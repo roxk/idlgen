@@ -102,10 +102,6 @@ static bool IsFileTheSame(string path1, string path2)
 Console.WriteLine("Testing idl output...");
 const string expectedOutputIdlPath = "test-data/src/ExpectedIdlOutput.txt";
 bool isIdlPassed = IsFileTheSame(outputIdlPath, expectedOutputIdlPath);
-if (!isIdlPassed)
-{
-    return -1;
-}
 Console.WriteLine("Generating implementation...");
 var implHp = Process.Start(new ProcessStartInfo
 {
@@ -137,7 +133,7 @@ Console.WriteLine("Testing implementation header...");
 bool isHeaderTheSame = IsFileTheSame(outputImplHeaderPath, expectedOutputImplHeaderPath);
 Console.WriteLine("Testing implementation cpp...");
 bool isCppTheSame = IsFileTheSame(outputImplCppPath, expectedOutputImplCppPath);
-if (!isHeaderTheSame ||  !isCppTheSame)
+if (!isIdlPassed || !isHeaderTheSame ||  !isCppTheSame)
 {
     return -1;
 }
