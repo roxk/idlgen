@@ -34,6 +34,11 @@ friend struct winrt::impl::produce<AuthorClass, winrt::App1::IAuthorClassProtect
 namespace winrt::App1::factory_implementation {
 struct AuthorClass : AuthorClassT<AuthorClass, implementation::AuthorClass> {};
 }
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::AuthorClass* self) {
+return static_cast<implementation::AuthorClass*>(self);
+}
+}
 #if __has_include("Area.g.h")
 #include "Area.g.h"
 #endif
@@ -50,6 +55,11 @@ friend struct winrt::impl::produce<Area, winrt::App1::Area>;
 namespace winrt::App1::factory_implementation {
 struct Area : AreaT<Area, implementation::Area> {};
 }
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::Area* self) {
+return static_cast<implementation::Area*>(self);
+}
+}
 #if __has_include("StaticArea.g.h")
 #include "StaticArea.g.h"
 #endif
@@ -62,6 +72,14 @@ struct StaticArea : StaticAreaT<StaticArea>, StaticAreaHeap {
 using StaticAreaHeap::StaticAreaHeap;
 friend struct winrt::impl::produce<StaticArea, winrt::App1::StaticArea>;
 };
+}
+namespace winrt::App1::factory_implementation {
+struct StaticArea : StaticAreaT<StaticArea, implementation::StaticArea> {};
+}
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::StaticArea* self) {
+return static_cast<implementation::StaticArea*>(self);
+}
 }
 #if __has_include("PartialClass.g.h")
 #include "PartialClass.g.h"
@@ -79,6 +97,11 @@ friend struct winrt::impl::produce<PartialClass, winrt::App1::PartialClass>;
 namespace winrt::App1::factory_implementation {
 struct PartialClass : PartialClassT<PartialClass, implementation::PartialClass> {};
 }
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::PartialClass* self) {
+return static_cast<implementation::PartialClass*>(self);
+}
+}
 #if __has_include("BookSku.g.h")
 #include "BookSku.g.h"
 #endif
@@ -94,6 +117,11 @@ friend struct winrt::impl::produce<BookSku, winrt::App1::BookSku>;
 }
 namespace winrt::App1::factory_implementation {
 struct BookSku : BookSkuT<BookSku, implementation::BookSku> {};
+}
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::BookSku* self) {
+return static_cast<implementation::BookSku*>(self);
+}
 }
 #if __has_include("MyPanel.g.h")
 #include "MyPanel.g.h"
@@ -111,6 +139,11 @@ friend struct winrt::impl::produce<MyPanel, winrt::App1::MyPanel>;
 namespace winrt::App1::factory_implementation {
 struct MyPanel : MyPanelT<MyPanel, implementation::MyPanel> {};
 }
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::MyPanel* self) {
+return static_cast<implementation::MyPanel*>(self);
+}
+}
 #if __has_include("Area2.g.h")
 #include "Area2.g.h"
 #endif
@@ -127,6 +160,11 @@ friend struct winrt::impl::produce<Area2, winrt::App1::Area2>;
 namespace winrt::App1::factory_implementation {
 struct Area2 : Area2T<Area2, implementation::Area2> {};
 }
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::Area2* self) {
+return static_cast<implementation::Area2*>(self);
+}
+}
 #if __has_include("Sample.g.h")
 #include "Sample.g.h"
 #endif
@@ -142,5 +180,10 @@ friend struct winrt::impl::produce<Sample, winrt::App1::Sample>;
 }
 namespace winrt::App1::factory_implementation {
 struct Sample : SampleT<Sample, implementation::Sample> {};
+}
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::Sample* self) {
+return static_cast<implementation::Sample*>(self);
+}
 }
 
