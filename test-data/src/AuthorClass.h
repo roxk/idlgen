@@ -9,6 +9,7 @@
 namespace winrt::App1
 {
     struct ITest;
+    struct Point;
 }
 
 namespace winrt::App1::author
@@ -77,12 +78,14 @@ namespace winrt::App1::author
         void FillArray(winrt::array_view<int> values);
         void ReceiveArray(winrt::com_array<int>& values);
         winrt::com_array<int>& ReturnComArray();
-        void PassArrayStruct(winrt::array_view<author::Point const> values);
-        void FillArrayStruct(winrt::array_view<author::Point> values);
-        void ReceiveArrayStruct(winrt::com_array<author::Point>& values);
+        void PassArrayStruct(winrt::array_view<App1::Point const> values);
+        void FillArrayStruct(winrt::array_view<App1::Point> values);
+        void ReceiveArrayStruct(winrt::com_array<App1::Point>& values);
         void InputParameterRefConst(winrt::Windows::Foundation::Point const& point);
         void OutParameterStruct(winrt::Windows::Foundation::Point& point);
         winrt::App1::author::Point UseAuthorStruct(winrt::App1::author::Point point);
+        void RefConstAuthoredStruct(App1::Point const& point);
+        void OutAuthoredStruct(App1::Point& point);
         void OutParameterReferenceType(winrt::Windows::Foundation::IInspectable& object);
         winrt::Windows::Foundation::IReference<int> BoxedInt(winrt::author::getter = {});
 

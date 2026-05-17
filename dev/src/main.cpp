@@ -440,6 +440,66 @@ consteval vector_string fqn(std::meta::info info, bool isParameter, NameFormat f
     return fqn(info, isParameter, format, [](auto const& x) { return x; });
 }
 
+template<typename Func>
+consteval std::meta::info findMembers(std::meta::info info, Func&& predicate)
+{
+    for (auto member : std::meta::members_of(info, std::meta::access_context::unchecked()))
+    {
+        if (predicate(member))
+        {
+            return member;
+        }
+    }
+    return std::meta::info();
+}
+
+consteval bool isStruct(std::meta::info type);
+
+consteval bool isStructOrForwardDeclaredStruct(std::meta::info info)
+{
+    if (isWinRtCategory(std::meta::remove_cvref(info), ^^winrt::impl::struct_category))
+    {
+        return true;
+    }
+    auto type = std::meta::remove_cvref(info);
+    if (std::meta::is_complete_type(type))
+    {
+        return false;
+    }
+    // Find the authored type from parent ns;
+    if (!std::meta::has_parent(type))
+    {
+        return false;
+    }
+    if (!std::meta::has_identifier(type))
+    {
+        return false;
+    }
+    auto typeName = std::meta::identifier_of(type);
+    auto parent = std::meta::parent_of(type);
+    auto authorNs = findMembers(
+        parent, 
+        [](auto member)
+    {
+        return std::meta::has_identifier(member) && std::meta::identifier_of(member) == "author";
+    });
+    if (authorNs == std::meta::info())
+    {
+        return false;
+    }
+    auto authoredType = findMembers(
+        authorNs,
+        [&](auto member)
+    {
+        return std::meta::has_identifier(member) && std::meta::identifier_of(member) == typeName;
+    });
+    if (authoredType == std::meta::info())
+    {
+        return false;
+    }
+    return isStruct(authoredType);
+}
+
 template <typename Func> consteval vector_string fqn(std::meta::info info, bool isParameter, NameFormat format, Func&& identifierMapper)
 {
     vector_string result;
@@ -448,8 +508,8 @@ template <typename Func> consteval vector_string fqn(std::meta::info info, bool 
     {
         throw std::runtime_error(std::meta::display_string_of(info) + " is not a type"s);
     }
-    if (isParameter && isWinRtCategory(std::meta::remove_cvref(info), ^^winrt::impl::struct_category) &&
-        std::meta::is_reference_type(info) && std::meta::is_const_type(std::meta::remove_reference(info)))
+    if (isParameter && std::meta::is_reference_type(info) &&
+        std::meta::is_const_type(std::meta::remove_reference(info)) && isStructOrForwardDeclaredStruct(info))
     {
         result += "ref const ";
     }
@@ -1402,7 +1462,7 @@ consteval bool isArrayWithAuthoredValueType(std::meta::info info)
     {
         if (isAuthoredValueType(arg))
         {
-            return true;
+            throw std::runtime_error("authored value types should not be used with arrays. Use forward-declared struct or enum class instead");
         }
     }
     return false;
@@ -1416,7 +1476,7 @@ consteval bool isAuthoredValueType(std::meta::info info)
            isArrayWithAuthoredValueType(type);
 }
 
-consteval bool hasValueTypeParameter(std::meta::info info)
+consteval bool hasAuthoredValueTypeParameter(std::meta::info info)
 {
     auto params = std::meta::parameters_of(info);
     auto returnType = std::meta::return_type_of(info);
@@ -1580,7 +1640,7 @@ template <std::meta::info info> consteval void printRuntimeClass(vector_string& 
         {
             continue;
         }
-        if (hasValueTypeParameter(member))
+        if (hasAuthoredValueTypeParameter(member))
         {
             functionsWithValueType.push_back(member);
         }
@@ -1669,39 +1729,9 @@ void* operator new(std::size_t) {
         implementation += std::meta::identifier_of(member);
         printFunctionParametersCpp(member, implementation, NameFormat::CppProjected);
         implementation += " {\n";
-        // Casting array input
-        auto paramIndex = 0;
-        for (auto param : std::meta::parameters_of(member))
-        {
-            auto decayedParamType = std::meta::remove_cvref(std::meta::type_of(param));
-            if (std::meta::has_template_arguments(decayedParamType))
-            {
-                auto paramName = std::meta::identifier_of(param);
-                auto firstArg = std::meta::template_arguments_of(decayedParamType)[0];
-                implementation += "    auto casted_";
-                implementation += paramName;
-                implementation += "_";
-                implementation += toString(paramIndex);
-                implementation += " = winrt::author::impl::array_cast<";
-                implementation += fqnCpp(firstArg);
-                implementation += ">(";
-                implementation += paramName;
-                implementation += ");\n";
-            }
-            ++paramIndex;
-        }
-        // Call + return
         auto decayedReturnType = std::meta::remove_cvref(returnType);
         bool isReturnTypeValueType = isAuthoredValueType(decayedReturnType);
-        bool isCastingReturnType = decayedReturnType == ^^winrt::com_array ||
-                                   isReturnTypeValueType;
-        if (decayedReturnType == ^^winrt::com_array)
-        {
-            implementation += "    return std::array_cast<";
-            implementation += fqnCpp(returnType, NameFormat::CppProjected);
-            implementation += ">(";
-        }
-        else if (isReturnTypeValueType)
+        if (isReturnTypeValueType)
         {
             implementation += "    return std::bit_cast<";
             implementation += fqnCpp(returnType, NameFormat::CppProjected);
@@ -1722,18 +1752,6 @@ void* operator new(std::size_t) {
         {
             auto paramType = std::meta::type_of(param);
             auto decayedParamType = std::meta::remove_cvref(paramType);
-            if (std::meta::has_template_arguments(decayedParamType))
-            {
-                auto templateType = std::meta::template_of(decayedParamType);
-                if (templateType == ^^winrt::array_view || templateType == ^^winrt::com_array)
-                {
-                    implementation += "casted_";
-                    implementation += std::meta::identifier_of(param);
-                    implementation += "_";
-                    implementation += toString(index);
-                    return;
-                }
-            }
             if (isAuthoredValueType(decayedParamType))
             {
                 implementation += "std::bit_cast<";
@@ -1745,7 +1763,7 @@ void* operator new(std::size_t) {
             }
             implementation += std::meta::identifier_of(param);
         });
-        if (isCastingReturnType)
+        if (isReturnTypeValueType)
         {
             implementation += ")";
         }
