@@ -77,6 +77,9 @@ namespace winrt::App1::author
         void FillArray(winrt::array_view<int> values);
         void ReceiveArray(winrt::com_array<int>& values);
         winrt::com_array<int>& ReturnComArray();
+        void PassArrayStruct(winrt::array_view<author::Point const> values);
+        void FillArrayStruct(winrt::array_view<author::Point> values);
+        void ReceiveArrayStruct(winrt::com_array<author::Point>& values);
         void InputParameterRefConst(winrt::Windows::Foundation::Point const& point);
         void OutParameterStruct(winrt::Windows::Foundation::Point& point);
         winrt::App1::author::Point UseAuthorStruct(winrt::App1::author::Point point);
