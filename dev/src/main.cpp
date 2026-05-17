@@ -147,10 +147,7 @@ consteval void printSelfName(
         }
         else if (format == NameFormat::Idl && templateType == ^^winrt::com_array)
         {
-            if (isParameter)
-            {
-                result += "out ";
-            }
+            // Note: com_array as input is already handled by the out pipeline in fqn
             // Intentionally not applying mapper to template arguments. The mapper is only for the type itself
             result += fqn(firstParam, isParameter);
             result += "[]";
@@ -1350,7 +1347,9 @@ consteval void tryInclude(vector_string& result, std::string_view what)
 
 consteval bool isAuthoredValueType(std::meta::info info)
 {
-    return std::meta::has_parent(info) && isAuthorNamespace(std::meta::parent_of(info)) && (isStruct(info) || isEnum(info));
+    auto type = std::meta::remove_cvref(info);
+    return std::meta::has_parent(info) && isAuthorNamespace(std::meta::parent_of(info)) &&
+           (isStruct(type) || isEnum(type));
 }
 
 consteval bool hasValueTypeParameter(std::meta::info info)
