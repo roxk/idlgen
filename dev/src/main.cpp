@@ -95,7 +95,7 @@ consteval void printParametersCpp(std::vector<std::meta::info> const& params, ve
         {
             result += fqnCpp(type, format);
             auto paramName = std::meta::has_identifier(param) ? std::meta::identifier_of(param) : "";
-            if (paramName.size() > 0)
+            if (std::meta::is_function_parameter(param) && paramName.size() > 0)
             {
                 result += " ";
                 result += paramName;
@@ -126,15 +126,32 @@ consteval bool isWinRtCategory(std::meta::info type, std::meta::info category)
     return isCategoryTemplate ? std::meta::template_of(categoryValue) == category : categoryValue == category;
 }
 
+consteval void tryPrintCvRef(std::meta::info candidate, vector_string& result, NameFormat format)
+{
+    if (format == NameFormat::Cpp || format == NameFormat::CppProjected || format == NameFormat::CppImplementation)
+    {
+        if (std::meta::is_const_type(std::meta::remove_reference(candidate)))
+        {
+            result += " const";
+        }
+        if (std::meta::is_reference_type(candidate))
+        {
+            result += "&";
+        }
+    }
+}
+
 template <typename Func = decltype([](auto const& x) { return x; })>
 consteval void printSelfName(
     std::meta::info candidate, vector_string& result, bool isParameter = false, NameFormat format = NameFormat::Idl, Func&& identifierMapper = Func()
 )
 {
-    if (std::meta::has_template_arguments(candidate))
+    auto decayedCandidate =
+        std::meta::is_type(candidate) ? std::meta::remove_cvref(candidate) : candidate;
+    if (std::meta::has_template_arguments(decayedCandidate))
     {
-        auto templateType = std::meta::template_of(candidate);
-        auto firstParam = std::meta::template_arguments_of(candidate)[0];
+        auto templateType = std::meta::template_of(decayedCandidate);
+        auto firstParam = std::meta::template_arguments_of(decayedCandidate)[0];
         if (format == NameFormat::Idl && templateType == ^^winrt::array_view)
         {
             if (isParameter && !std::meta::is_const_type(firstParam))
@@ -159,8 +176,16 @@ consteval void printSelfName(
                                                         : std::meta::display_string_of(candidate)
             );
             result += "<";
-            printParameters(std::meta::template_arguments_of(candidate), result);
+            if (format == NameFormat::Idl)
+            {
+                printParameters(std::meta::template_arguments_of(decayedCandidate), result);
+            }
+            else
+            {
+                printParametersCpp(std::meta::template_arguments_of(decayedCandidate), result, format);
+            }
             result += ">";
+            tryPrintCvRef(candidate, result, format);
         }
     }
     else
@@ -172,18 +197,7 @@ consteval void printSelfName(
                 std::meta::has_identifier(type) ? std::meta::identifier_of(type)
                                                      : std::meta::display_string_of(candidate)
             );
-            if (format == NameFormat::Cpp || format == NameFormat::CppProjected ||
-                format == NameFormat::CppImplementation)
-            {
-                if (std::meta::is_const_type(std::meta::remove_reference(candidate)))
-                {
-                    result += " const";
-                }
-                if (std::meta::is_reference_type(candidate))
-                {
-                    result += "&";
-                }
-            }
+            tryPrintCvRef(candidate, result, format);
         }
         else
         {
@@ -484,7 +498,7 @@ consteval void printFunctionParametersCpp(std::meta::info member, vector_string&
 }
 
 template<typename Func>
-consteval void printCallFunctionCpp(std::meta::info member, vector_string& result, Func&& paramPrinter)
+consteval void printCallFunctionParametersCpp(std::meta::info member, vector_string& result, Func&& paramPrinter)
 {
     result += "(";
     auto params = std::meta::parameters_of(member);
@@ -498,7 +512,7 @@ consteval void printCallFunctionCpp(std::meta::info member, vector_string& resul
             result += "winrt::author::getter{}";
             continue;
         }
-        paramPrinter(param);
+        paramPrinter(param, paramIndex);
         if (paramIndex + 1 < paramCount)
         {
             result += ", ";
@@ -1370,11 +1384,36 @@ consteval void tryInclude(vector_string& result, std::string_view what)
     result += "#endif\n";
 }
 
+consteval bool isAuthoredValueType(std::meta::info info);
+
+consteval bool isArrayWithAuthoredValueType(std::meta::info info)
+{
+    if (!std::meta::has_template_arguments(info))
+    {
+        return false;
+    }
+    auto templateType = std::meta::template_of(info);
+    if (!(templateType == ^^winrt::array_view || templateType == ^^winrt::com_array))
+    {
+        return false;
+    }
+    auto args = std::meta::template_arguments_of(info);
+    for (auto arg : args)
+    {
+        if (isAuthoredValueType(arg))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 consteval bool isAuthoredValueType(std::meta::info info)
 {
     auto type = std::meta::remove_cvref(info);
-    return std::meta::has_parent(info) && isAuthorNamespace(std::meta::parent_of(info)) &&
-           (isStruct(type) || isEnum(type));
+    return (std::meta::has_parent(info) && isAuthorNamespace(std::meta::parent_of(info)) &&
+               (isStruct(type) || isEnum(type))) ||
+           isArrayWithAuthoredValueType(type);
 }
 
 consteval bool hasValueTypeParameter(std::meta::info info)
@@ -1630,8 +1669,39 @@ void* operator new(std::size_t) {
         implementation += std::meta::identifier_of(member);
         printFunctionParametersCpp(member, implementation, NameFormat::CppProjected);
         implementation += " {\n";
-        bool isReturnTypeValueType = isAuthoredValueType(std::meta::remove_cvref(returnType));
-        if (isReturnTypeValueType)
+        // Casting array input
+        auto paramIndex = 0;
+        for (auto param : std::meta::parameters_of(member))
+        {
+            auto decayedParamType = std::meta::remove_cvref(std::meta::type_of(param));
+            if (std::meta::has_template_arguments(decayedParamType))
+            {
+                auto paramName = std::meta::identifier_of(param);
+                auto firstArg = std::meta::template_arguments_of(decayedParamType)[0];
+                implementation += "    auto casted_";
+                implementation += paramName;
+                implementation += "_";
+                implementation += toString(paramIndex);
+                implementation += " = winrt::author::impl::array_cast<";
+                implementation += fqnCpp(firstArg);
+                implementation += ">(";
+                implementation += paramName;
+                implementation += ");\n";
+            }
+            ++paramIndex;
+        }
+        // Call + return
+        auto decayedReturnType = std::meta::remove_cvref(returnType);
+        bool isReturnTypeValueType = isAuthoredValueType(decayedReturnType);
+        bool isCastingReturnType = decayedReturnType == ^^winrt::com_array ||
+                                   isReturnTypeValueType;
+        if (decayedReturnType == ^^winrt::com_array)
+        {
+            implementation += "    return std::array_cast<";
+            implementation += fqnCpp(returnType, NameFormat::CppProjected);
+            implementation += ">(";
+        }
+        else if (isReturnTypeValueType)
         {
             implementation += "    return std::bit_cast<";
             implementation += fqnCpp(returnType, NameFormat::CppProjected);
@@ -1648,10 +1718,23 @@ void* operator new(std::size_t) {
         implementation += typeName;
         implementation += "Heap::";
         implementation += std::meta::identifier_of(member);
-        printCallFunctionCpp(member, implementation, [&](std::meta::info param)
+        printCallFunctionParametersCpp(member, implementation, [&](std::meta::info param, auto index)
         {
             auto paramType = std::meta::type_of(param);
-            if (isAuthoredValueType(std::meta::remove_cvref(paramType)))
+            auto decayedParamType = std::meta::remove_cvref(paramType);
+            if (std::meta::has_template_arguments(decayedParamType))
+            {
+                auto templateType = std::meta::template_of(decayedParamType);
+                if (templateType == ^^winrt::array_view || templateType == ^^winrt::com_array)
+                {
+                    implementation += "casted_";
+                    implementation += std::meta::identifier_of(param);
+                    implementation += "_";
+                    implementation += toString(index);
+                    return;
+                }
+            }
+            if (isAuthoredValueType(decayedParamType))
             {
                 implementation += "std::bit_cast<";
                 implementation += fqnCpp(paramType);
@@ -1662,7 +1745,7 @@ void* operator new(std::size_t) {
             }
             implementation += std::meta::identifier_of(param);
         });
-        if (isReturnTypeValueType)
+        if (isCastingReturnType)
         {
             implementation += ")";
         }

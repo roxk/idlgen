@@ -27,6 +27,18 @@ void* operator new(std::size_t) {
     void* mem = std::malloc(sizeof(AuthorClass));
     return mem;
 }
+void PassArrayStruct(winrt::array_view<winrt::App1::Point const> values) {
+    auto casted_values_0 = winrt::author::impl::array_cast<winrt::App1::author::Point const>(values);
+    AuthorClassHeap::PassArrayStruct(casted_values_0);
+}
+void FillArrayStruct(winrt::array_view<winrt::App1::Point> values) {
+    auto casted_values_0 = winrt::author::impl::array_cast<winrt::App1::author::Point>(values);
+    AuthorClassHeap::FillArrayStruct(casted_values_0);
+}
+void ReceiveArrayStruct(winrt::com_array<winrt::App1::Point>& values) {
+    auto casted_values_0 = winrt::author::impl::array_cast<winrt::App1::author::Point>(values);
+    AuthorClassHeap::ReceiveArrayStruct(casted_values_0);
+}
 winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
     return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
 }
