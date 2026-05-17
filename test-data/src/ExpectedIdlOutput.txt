@@ -58,6 +58,8 @@ void ReceiveArrayStruct(out App1.Point[] values);
 void InputParameterRefConst(ref const Windows.Foundation.Point point);
 void OutParameterStruct(out Windows.Foundation.Point point);
 App1.Point UseAuthorStruct(App1.Point point);
+void RefConstAuthoredStruct(ref const App1.Point point);
+void OutAuthoredStruct(out App1.Point point);
 void OutParameterReferenceType(out Object object);
 Windows.Foundation.IReference<Int32> BoxedInt { get; };
 overridable void Paint();
