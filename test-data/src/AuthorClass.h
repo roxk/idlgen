@@ -175,10 +175,7 @@ namespace winrt::App1::author
         Area2(int width, int height);
         author::Color Color(winrt::author::getter = {});
         winrt::author::setter Color(author::Color value);
-        int Height(winrt::author::getter = {});
-        winrt::author::setter Height(int value);
-        static int NumberOfAreas(winrt::author::getter = {});
-        author::Color GetColor();
+        author::Color GetColor(winrt::author::getter = {});
         void SetValues(SetOfBooleanValues values);
         void MethodWithMixed(author::Color color, SetOfBooleanValues value, winrt::Windows::Foundation::IInspectable const& ref);
     };
