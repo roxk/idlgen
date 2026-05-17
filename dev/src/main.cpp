@@ -165,10 +165,33 @@ consteval void printSelfName(
     }
     else
     {
-        result += identifierMapper(
-            std::meta::has_identifier(candidate) ? std::meta::identifier_of(candidate)
-                                                 : std::meta::display_string_of(candidate)
-        );
+        if (std::meta::is_type(candidate))
+        {
+            auto type = std::meta::remove_cvref(candidate);
+            result += identifierMapper(
+                std::meta::has_identifier(type) ? std::meta::identifier_of(type)
+                                                     : std::meta::display_string_of(candidate)
+            );
+            if (format == NameFormat::Cpp || format == NameFormat::CppProjected ||
+                format == NameFormat::CppImplementation)
+            {
+                if (std::meta::is_const_type(std::meta::remove_reference(candidate)))
+                {
+                    result += " const";
+                }
+                if (std::meta::is_reference_type(candidate))
+                {
+                    result += "&";
+                }
+            }
+        }
+        else
+        {
+            result += identifierMapper(
+                std::meta::has_identifier(candidate) ? std::meta::identifier_of(candidate)
+                                                     : std::meta::display_string_of(candidate)
+            );
+        }
     }
 }
 
@@ -184,9 +207,10 @@ consteval void printParentThenSelfName(
     auto isAuthorNamespaceValue = isAuthorNamespace(candidate);
     if (nameFormat == NameFormat::Cpp)
     {
-        if (std::meta::has_parent(candidate))
+        auto type = std::meta::is_type(candidate) ? std::meta::remove_cvref(candidate) : candidate;
+        if (std::meta::has_parent(type))
         {
-            auto parent = std::meta::parent_of(candidate);
+            auto parent = std::meta::parent_of(type);
             if (parent != ^^::)
             {
                 printParentThenSelfName(parent, result, isParameter, nameFormat, identifierMapper);
@@ -198,9 +222,10 @@ consteval void printParentThenSelfName(
     }
     if (nameFormat == NameFormat::CppProjected || nameFormat == NameFormat::CppImplementation)
     {
-        if (std::meta::has_parent(candidate))
+        auto type = std::meta::is_type(candidate) ? std::meta::remove_cvref(candidate) : candidate;
+        if (std::meta::has_parent(type))
         {
-            auto parent = std::meta::parent_of(candidate);
+            auto parent = std::meta::parent_of(type);
             if (isAuthorNamespace(parent))
             {
                 // skip author namespace coz it should NOT be reflected in winmd
