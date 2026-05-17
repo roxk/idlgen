@@ -28,6 +28,17 @@ namespace winrt::SampleApp::author
         pt.Y = 0;
         return pt;
     }
+    void BlankPage::RefConstStruct(const SampleApp::Permission& permission)
+    {
+    }
+    void BlankPage::RefStruct(SampleApp::Permission & permission)
+    {}
+    void BlankPage::PassArrayStruct(array_view<SampleApp::Permission const> permissions)
+    {}
+    void BlankPage::ReceiveArrayStruct(array_view<SampleApp::Permission> permissions)
+    {}
+    void BlankPage::FillArrayStruct(com_array<SampleApp::Permission>& permissions)
+    {}
     void BlankPage::AssignHandler(winrt::SampleApp::BlankPageHandler const& handler)
     {
         auto button = self(this)->Button();
