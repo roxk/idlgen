@@ -175,8 +175,8 @@ winrt::App1::Color Color(winrt::author::getter = {}) {
 void Color(winrt::App1::Color value) {
     Area2Heap::Color(std::bit_cast<winrt::App1::author::Color>(value));
 }
-winrt::App1::Color GetColor() {
-    return std::bit_cast<winrt::App1::Color>(Area2Heap::GetColor());
+winrt::App1::Color GetColor(winrt::author::getter = {}) {
+    return std::bit_cast<winrt::App1::Color>(Area2Heap::GetColor(winrt::author::getter{}));
 }
 void SetValues(winrt::App1::SetOfBooleanValues values) {
     Area2Heap::SetValues(std::bit_cast<winrt::App1::author::SetOfBooleanValues>(values));
