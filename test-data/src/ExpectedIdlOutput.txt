@@ -50,7 +50,7 @@ Windows.Foundation.IAsyncAction AsyncAction();
 Windows.Foundation.IAsyncOperation<Int32> AsyncOperation();
 void PassArray(Int32[] values);
 void FillArray(ref Int32[] values);
-void ReceiveArray(out out Int32[] values);
+void ReceiveArray(out Int32[] values);
 Int32[] ReturnComArray();
 void InputParameterRefConst(ref const Windows.Foundation.Point point);
 void OutParameterStruct(out Windows.Foundation.Point point);
