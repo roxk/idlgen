@@ -126,22 +126,4 @@ namespace winrt::author
     {};
     struct interface_name
     {};
-    namespace impl
-    {
-        template<class U, class T>
-        winrt::array_view<U const> array_cast(winrt::array_view<T const> s) {
-            const auto data = reinterpret_cast<U const*>(s.data());
-            return array_view<U const>(data, data + s.size());
-        }
-        template<class U, class T>
-        winrt::array_view<U> array_cast(winrt::array_view<T> s) {
-            const auto data = reinterpret_cast<U*>(s.data());
-            return array_view<U>(data, data + s.size());
-        }
-        template<class U, class T>
-        winrt::com_array<U> array_cast(winrt::com_array<T>& s) {
-            const auto data = reinterpret_cast<U*>(s.data());
-            return com_array<U>(data, data + s.size());
-        }
-    }
 }
