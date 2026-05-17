@@ -7,6 +7,7 @@ namespace winrt::SampleApp
 {
 	struct BlankPage;
 	struct BlankPageHandler;
+	enum class Permission : unsigned int;
 }
 
 namespace winrt::SampleApp::author
@@ -35,6 +36,11 @@ namespace winrt::SampleApp::author
 		Permission Permission(winrt::author::getter = {});
 		winrt::author::setter Permission(author::Permission permission);
 		Point GetPoint();
+		void RefConstStruct(const SampleApp::Permission& permission);
+		void RefStruct(SampleApp::Permission& permission);
+		void PassArrayStruct(array_view<SampleApp::Permission const> permissions);
+		void ReceiveArrayStruct(array_view<SampleApp::Permission> permissions);
+		void FillArrayStruct(com_array<SampleApp::Permission>& permissions);
 		void AssignHandler(winrt::SampleApp::BlankPageHandler const& handler);
 		int32_t Property(winrt::author::getter = {});
 		winrt::author::setter Property(int32_t value);
