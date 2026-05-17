@@ -99,10 +99,7 @@ static bool IsFileTheSame(string path1, string path2)
         }
     }
 }
-Console.WriteLine("Testing idl output...");
-const string expectedOutputIdlPath = "test-data/src/ExpectedIdlOutput.txt";
-bool isIdlPassed = IsFileTheSame(outputIdlPath, expectedOutputIdlPath);
-Console.WriteLine("Generating implementation...");
+Console.WriteLine("Generating implementation header...");
 var implHp = Process.Start(new ProcessStartInfo
 {
     FileName = "powershell",
@@ -115,6 +112,7 @@ if (implHp.ExitCode != 0)
     Console.WriteLine("Failed to generate implementation");
     return -1;
 }
+Console.WriteLine("Generating implementation cpp...");
 var implCppP = Process.Start(new ProcessStartInfo
 {
     FileName = "powershell",
@@ -127,6 +125,9 @@ if (implCppP.ExitCode != 0)
     Console.WriteLine("Failed to generate implementation");
     return -1;
 }
+const string expectedOutputIdlPath = "test-data/src/ExpectedIdlOutput.txt";
+Console.WriteLine("Testing idl output...");
+bool isIdlPassed = IsFileTheSame(outputIdlPath, expectedOutputIdlPath);
 const string expectedOutputImplHeaderPath = "test-data/src/ExpectedImplHeaderOutput.txt";
 const string expectedOutputImplCppPath = "test-data/src/ExpectedImplCppOutput.txt";
 Console.WriteLine("Testing implementation header...");
