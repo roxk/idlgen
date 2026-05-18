@@ -50,7 +50,12 @@ enum class NameFormat
 consteval vector_string fqn(std::meta::info info, bool isParameter = false, NameFormat format = NameFormat::Idl);
 
 template <typename Func = std::nullptr_t>
-consteval vector_string fqn(std::meta::info info, bool isParameter = false, NameFormat format = NameFormat::Idl, Func&& identitiferMapper = Func());
+consteval vector_string fqn(
+    std::meta::info info,
+    bool isParameter = false,
+    NameFormat format = NameFormat::Idl,
+    Func&& identitiferMapper = Func()
+);
 
 consteval vector_string fqnCpp(std::meta::info info, NameFormat format = NameFormat::Cpp);
 
@@ -118,8 +123,7 @@ consteval bool isWinRtCategory(std::meta::info type, std::meta::info category)
     auto instantiatedCategoryT = std::meta::substitute(
         ^^winrt::impl::category_t,
         std::vector{
-            type
-        }
+            type}
     );
     auto categoryValue = std::meta::dealias(instantiatedCategoryT);
     auto isCategoryTemplate = std::meta::has_template_arguments(categoryValue);
@@ -143,11 +147,14 @@ consteval void tryPrintCvRef(std::meta::info candidate, vector_string& result, N
 
 template <typename Func = decltype([](auto const& x) { return x; })>
 consteval void printSelfName(
-    std::meta::info candidate, vector_string& result, bool isParameter = false, NameFormat format = NameFormat::Idl, Func&& identifierMapper = Func()
+    std::meta::info candidate,
+    vector_string& result,
+    bool isParameter = false,
+    NameFormat format = NameFormat::Idl,
+    Func&& identifierMapper = Func()
 )
 {
-    auto decayedCandidate =
-        std::meta::is_type(candidate) ? std::meta::remove_cvref(candidate) : candidate;
+    auto decayedCandidate = std::meta::is_type(candidate) ? std::meta::remove_cvref(candidate) : candidate;
     if (std::meta::has_template_arguments(decayedCandidate))
     {
         auto templateType = std::meta::template_of(decayedCandidate);
@@ -195,7 +202,7 @@ consteval void printSelfName(
             auto type = std::meta::remove_cvref(candidate);
             result += identifierMapper(
                 std::meta::has_identifier(type) ? std::meta::identifier_of(type)
-                                                     : std::meta::display_string_of(candidate)
+                                                : std::meta::display_string_of(candidate)
             );
             tryPrintCvRef(candidate, result, format);
         }
@@ -289,7 +296,7 @@ consteval void printParentThenSelfName(
                 // we can ignore this case for now
             }
         }
-        if (parent != ^^:: && parent != ^^winrt)
+        if (parent != ^^::&&parent != ^^winrt)
         {
             printParentThenSelfName(parent, result, isParameter, nameFormat, identifierMapper);
             if (!isAuthorNamespaceValue)
@@ -440,8 +447,7 @@ consteval vector_string fqn(std::meta::info info, bool isParameter, NameFormat f
     return fqn(info, isParameter, format, [](auto const& x) { return x; });
 }
 
-template<typename Func>
-consteval std::meta::info findMembers(std::meta::info info, Func&& predicate)
+template <typename Func> consteval std::meta::info findMembers(std::meta::info info, Func&& predicate)
 {
     for (auto member : std::meta::members_of(info, std::meta::access_context::unchecked()))
     {
@@ -478,21 +484,17 @@ consteval bool isStructOrForwardDeclaredStruct(std::meta::info info)
     auto typeName = std::meta::identifier_of(type);
     auto parent = std::meta::parent_of(type);
     auto authorNs = findMembers(
-        parent, 
-        [](auto member)
-    {
-        return std::meta::has_identifier(member) && std::meta::identifier_of(member) == "author";
-    });
+        parent,
+        [](auto member) { return std::meta::has_identifier(member) && std::meta::identifier_of(member) == "author"; }
+    );
     if (authorNs == std::meta::info())
     {
         return false;
     }
     auto authoredType = findMembers(
         authorNs,
-        [&](auto member)
-    {
-        return std::meta::has_identifier(member) && std::meta::identifier_of(member) == typeName;
-    });
+        [&](auto member) { return std::meta::has_identifier(member) && std::meta::identifier_of(member) == typeName; }
+    );
     if (authoredType == std::meta::info())
     {
         return false;
@@ -500,7 +502,8 @@ consteval bool isStructOrForwardDeclaredStruct(std::meta::info info)
     return isStruct(authoredType);
 }
 
-template <typename Func> consteval vector_string fqn(std::meta::info info, bool isParameter, NameFormat format, Func&& identifierMapper)
+template <typename Func>
+consteval vector_string fqn(std::meta::info info, bool isParameter, NameFormat format, Func&& identifierMapper)
 {
     vector_string result;
     result.reserve(expectedNameCount);
@@ -557,7 +560,7 @@ consteval void printFunctionParametersCpp(std::meta::info member, vector_string&
     result += ")";
 }
 
-template<typename Func>
+template <typename Func>
 consteval void printCallFunctionParametersCpp(std::meta::info member, vector_string& result, Func&& paramPrinter)
 {
     result += "(";
@@ -1364,15 +1367,13 @@ template <std::meta::info type> consteval void printApplyingAttribute(vector_str
             {
                 result += toString([:param:]);
             }
-            else if constexpr (std::meta::has_template_arguments(paramType) &&
-                               std::meta::template_of(paramType) == ^^winrt::author::attr_string)
+            else if constexpr (std::meta::has_template_arguments(paramType) && std::meta::template_of(paramType) == ^^winrt::author::attr_string)
             {
                 result += "\"";
                 result += [:param:].data;
                 result += "\"";
             }
-            else if constexpr (std::meta::has_template_arguments(paramType) &&
-                               std::meta::template_of(paramType) == ^^winrt::author::attr_type)
+            else if constexpr (std::meta::has_template_arguments(paramType) && std::meta::template_of(paramType) == ^^winrt::author::attr_type)
             {
                 result += [:param:].data;
             }
@@ -1462,7 +1463,9 @@ consteval bool isArrayWithAuthoredValueType(std::meta::info info)
     {
         if (isAuthoredValueType(arg))
         {
-            throw std::runtime_error("authored value types should not be used with arrays. Use forward-declared struct or enum class instead");
+            throw std::runtime_error(
+                "authored value types should not be used with arrays. Use forward-declared struct or enum class instead"
+            );
         }
     }
     return false;
@@ -1472,7 +1475,7 @@ consteval bool isAuthoredValueType(std::meta::info info)
 {
     auto type = std::meta::remove_cvref(info);
     return (std::meta::has_parent(info) && isAuthorNamespace(std::meta::parent_of(info)) &&
-               (isStruct(type) || isEnum(type))) ||
+            (isStruct(type) || isEnum(type))) ||
            isArrayWithAuthoredValueType(type);
 }
 
@@ -1495,7 +1498,8 @@ consteval bool hasAuthoredValueTypeParameter(std::meta::info info)
     return false;
 }
 
-template <std::meta::info info> consteval void printRuntimeClass(vector_string& idl, vector_string& implementation, vector_string& implementationCpp)
+template <std::meta::info info>
+consteval void printRuntimeClass(vector_string& idl, vector_string& implementation, vector_string& implementationCpp)
 {
     constexpr auto type = info;
     printNamespaceScope(type, idl);
@@ -1737,7 +1741,7 @@ void* operator new(std::size_t) {
             implementation += fqnCpp(returnType, NameFormat::CppProjected);
             implementation += ">(";
         }
-        else if (returnType != (^^void) && returnType != ^^winrt::author::setter)
+        else if (returnType != (^^void)&&returnType != ^^winrt::author::setter)
         {
             implementation += "    return ";
         }
@@ -1748,21 +1752,25 @@ void* operator new(std::size_t) {
         implementation += typeName;
         implementation += "Heap::";
         implementation += std::meta::identifier_of(member);
-        printCallFunctionParametersCpp(member, implementation, [&](std::meta::info param, auto index)
-        {
-            auto paramType = std::meta::type_of(param);
-            auto decayedParamType = std::meta::remove_cvref(paramType);
-            if (isAuthoredValueType(decayedParamType))
+        printCallFunctionParametersCpp(
+            member,
+            implementation,
+            [&](std::meta::info param, auto index)
             {
-                implementation += "std::bit_cast<";
-                implementation += fqnCpp(paramType);
-                implementation += ">(";
+                auto paramType = std::meta::type_of(param);
+                auto decayedParamType = std::meta::remove_cvref(paramType);
+                if (isAuthoredValueType(decayedParamType))
+                {
+                    implementation += "std::bit_cast<";
+                    implementation += fqnCpp(paramType);
+                    implementation += ">(";
+                    implementation += std::meta::identifier_of(param);
+                    implementation += ")";
+                    return;
+                }
                 implementation += std::meta::identifier_of(param);
-                implementation += ")";
-                return;
             }
-            implementation += std::meta::identifier_of(param);
-        });
+        );
         if (isReturnTypeValueType)
         {
             implementation += ")";
@@ -2003,8 +2011,7 @@ consteval void printAttribute(vector_string& result, std::meta::info info)
             {
                 result += "[allowmultiple]\n";
             }
-            else if (std::meta::has_template_arguments(attrArg) &&
-                     std::meta::template_of(attrArg) == ^^winrt::author::attributeusage)
+            else if (std::meta::has_template_arguments(attrArg) && std::meta::template_of(attrArg) == ^^winrt::author::attributeusage)
             {
                 auto args = std::meta::template_arguments_of(attrArg);
                 if (args.size() != 0)
@@ -2116,14 +2123,14 @@ consteval GenResult gen_idl_impl()
             printAttribute(idl, info);
         }
     }
-    return { idl, implementation, implementationCpp };
+    return {idl, implementation, implementationCpp};
 }
 
 consteval auto gen_idl()
 {
     auto result = gen_idl_impl();
     return std::tuple(
-        std::define_static_array(result.idl.data()), 
+        std::define_static_array(result.idl.data()),
         std::define_static_array(result.implementation.data()),
         std::define_static_array(result.implementationCpp.data())
     );
