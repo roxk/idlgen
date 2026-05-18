@@ -4,8 +4,6 @@
 
 namespace winrt::author
 {
-    struct marker_type
-    {};
     struct winrt_interface
     {};
     template <typename Base, typename Enable = void>
@@ -44,8 +42,6 @@ namespace winrt::author
     struct delegate
     {};
     struct winrt_struct
-    {};
-    struct winrt_enum
     {};
     struct attribute_target
     {
