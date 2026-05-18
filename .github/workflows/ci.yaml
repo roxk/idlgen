@@ -29,7 +29,5 @@ jobs:
       - uses: actions/checkout@v3
       - uses: microsoft/setup-msbuild@v1.1
       - run: |
-          ./scripts/clone-llvm
-          ./scripts/download-clang-lib
-          ./scripts/build-nuget -version $env:VERSION
+          dotnet run ./scripts/build-nuget.cs --version $env:VERSION
           ./scripts/publish-nuget -version $env:VERSION
