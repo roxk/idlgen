@@ -123,7 +123,8 @@ consteval bool isWinRtCategory(std::meta::info type, std::meta::info category)
     auto instantiatedCategoryT = std::meta::substitute(
         ^^winrt::impl::category_t,
         std::vector{
-            type}
+            type
+        }
     );
     auto categoryValue = std::meta::dealias(instantiatedCategoryT);
     auto isCategoryTemplate = std::meta::has_template_arguments(categoryValue);
@@ -1367,13 +1368,15 @@ template <std::meta::info type> consteval void printApplyingAttribute(vector_str
             {
                 result += toString([:param:]);
             }
-            else if constexpr (std::meta::has_template_arguments(paramType) && std::meta::template_of(paramType) == ^^winrt::author::attr_string)
+            else if constexpr (std::meta::has_template_arguments(paramType) &&
+                               std::meta::template_of(paramType) == ^^winrt::author::attr_string)
             {
                 result += "\"";
                 result += [:param:].data;
                 result += "\"";
             }
-            else if constexpr (std::meta::has_template_arguments(paramType) && std::meta::template_of(paramType) == ^^winrt::author::attr_type)
+            else if constexpr (std::meta::has_template_arguments(paramType) &&
+                               std::meta::template_of(paramType) == ^^winrt::author::attr_type)
             {
                 result += [:param:].data;
             }
@@ -2011,7 +2014,8 @@ consteval void printAttribute(vector_string& result, std::meta::info info)
             {
                 result += "[allowmultiple]\n";
             }
-            else if (std::meta::has_template_arguments(attrArg) && std::meta::template_of(attrArg) == ^^winrt::author::attributeusage)
+            else if (std::meta::has_template_arguments(attrArg) &&
+                     std::meta::template_of(attrArg) == ^^winrt::author::attributeusage)
             {
                 auto args = std::meta::template_arguments_of(attrArg);
                 if (args.size() != 0)
