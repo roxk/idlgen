@@ -21,8 +21,8 @@
 		<OutputIdl>$(GeneratedFilesDir)idlgen.idl</OutputIdl>
 		<OutputImplHeader>$(GeneratedFilesDir)idlgen.impl.h</OutputImplHeader>
 		<OutputImplCpp>$(GeneratedFilesDir)idlgen.impl.cpp</OutputImplCpp>
-		<ExeFile>$(IntDir)idlgen\idlgen.exe</ExeFile>
-		<IdlGenCppGenerateIDLRspFile>$(IntDir)idlgen/idl.rsp</IdlGenCppGenerateIDLRspFile>
+		<ExeFile>$(IdlgenCppIntDir)idlgen.exe</ExeFile>
+		<IdlGenCppGenerateIDLRspFile>$(IdlgenCppIntDir)idl.rsp</IdlGenCppGenerateIDLRspFile>
 		<!-- Take part in cppwinrt before midl targets -->
 		<BeforeMidlCompileTargets>
 			IdlGenCppGenerateIDL;$(BeforeMidlCompileTargets);
@@ -59,7 +59,7 @@
 	<Target Name="IdlgenCppClean">
 		<ItemGroup>
 			<_FilesToDelete Remove="@(_FilesToDelete)"/>
-			<_FilesToDelete Include="$(IntDir)idlgen\**"/>
+			<_FilesToDelete Include="$(IdlgenCppIntDir)**"/>
 			<_FilesToDelete Include="$(IdlgenCppAuthorTypeFile)"/>
 			<_FilesToDelete Include="$(OutputIdl)"/>
 		</ItemGroup>
@@ -96,6 +96,9 @@
 	<Target Name="IdlGenCppGenerateAuthorTypeFile" BeforeTargets="IdlGenCppGenerateIDL" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="$(IdlgenCppAuthorTypeFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
 		<WriteLinesToFile File="$(IdlgenCppAuthorTypeFile)" Overwrite="true" Lines="@(IdlGenCppInclude->'#include &quot;%(Identity)&quot;')" />
+	</Target>
+	<Target Name="IdlGenCppGenerateIntDir" BeforeTargets="IdlGenCppGenerateIDL" Condition="'$(IdlGenCppGenerateIDL)' == 'true' AND !Exists($(IdlgenCppIntDir))">
+		<MakeDir Directories="$(IdlgenCppIntDir)" />
 	</Target>
 	<Target Name="IdlGenCppGenerateIDL" DependsOnTargets="ComputeAdditionalIncludeDirectories;IdlgenCppMakeDependencyProjection" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="$(IdlGenCppGenerateIDLRspFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static -v -fmax-errors=100 -include &quot;$(IdlGenCppPch)&quot; &quot;$(MSBuildThisFileDirectory)..\..\src\main.cpp&quot; @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;$(ExeFile)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -idl > &quot;$(OutputIdl)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -implementation-header > &quot;$(OutputImplHeader)&quot; &amp;&amp; &quot;$(ExeFile)&quot; -implementation-cpp > &quot;$(OutputImplCpp)&quot;" />
