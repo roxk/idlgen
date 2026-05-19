@@ -37,3 +37,49 @@ else
     ZipFile.ExtractToDirectory(outputFilePath, outputDirPath);
     Console.WriteLine($"Unacrhived to {outputDirPath}");
 }
+Console.WriteLine("Deleting unused mingw64 files/folders...");
+string[] victim = [
+    "share",
+    "bin/lto-dump.exe",
+    "bin/libhogweed-6.dll",
+    "bin/libnettle-8.dll",
+    "bin/ctest.exe",
+    "bin/cpack.exe",
+    "bin/cmake.exe",
+    "bin/cppcheck.exe",
+    "bin/libgfortran-5.dll",
+    "bin/libpython3.9.dll",
+    "bin/doxygen.exe",
+    "bin/gfortran.exe",
+    "bin/gdb.exe",
+    "bin/gprof.exe",
+    "lib/libgfortran.a",
+    "lib/libpython3.9.a",
+    "lib/python3.9",
+    "libexec/gcc/x86_64-w64-mingw32/16.1.0/cc1obj.exe",
+    "libexec/gcc/x86_64-w64-mingw32/16.1.0/cc1objplus.exe",
+    "libexec/gcc/x86_64-w64-mingw32/16.1.0/f951.exe",
+];
+foreach (var v in victim)
+{
+    var path = $"{mingwDirPath}/{v}";
+    var isDeleted = false;
+    if (Directory.Exists(path))
+    {
+        Directory.Delete(path, true);
+        isDeleted = true;
+    }
+    else if (File.Exists(path))
+    {
+        File.Delete(path);
+        isDeleted = true;
+    }
+    if (isDeleted)
+    {
+        Console.WriteLine($"Deleted {v}");
+    }
+    else 
+    {
+        Console.WriteLine($"{v} likely already removed");
+    }
+}
