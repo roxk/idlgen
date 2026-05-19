@@ -150,6 +150,7 @@ Idlgen ouputs build logs to Output -> Build window. Look at what is failing and 
 1. Know that your existing idl can coexist with idlgen, by simply not touching the relevant .idl and .h files.
 2. Make use of `IdlGenCppInclude` and `IdlGenCppInclude` to selectively include new authored type files
 3. Migrate old idl + .h files to author types one by one. Remove existing idl if it has been migrated.
+4. Note that your author types can NOT reference any other implementation type as per the rules. Therefore, it's best if you convert your leaf types to author types first.
 
 ## CI/CD Consideration
 
