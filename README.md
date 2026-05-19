@@ -17,7 +17,8 @@ idlgen is a C\+\+20 library that helps you get rid of idl and implementation typ
 
 ### Nuget
 
-Use your preferred way (cli/GUI) to install nuget package `IdlGen.IdlGen.Cpp`, which can be found on [nuget gallery](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/).
+1. Use your preferred way (cli/GUI) to install nuget package `IdlGen.IdlGen.Cpp`, which can be found on [nuget gallery](https://www.nuget.org/packages/IdlGen.IdlGen.Cpp/).
+2. Add `#undef GetCurrentTime` after your `#include <unknwn.h>` and `#include <windows.h>`
 
 ## Usage
 
