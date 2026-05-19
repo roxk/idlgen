@@ -10,6 +10,7 @@ namespace winrt::App1
 {
     struct ITest;
     struct Point;
+    struct AuthorClass;
 }
 
 namespace winrt::App1::author
@@ -110,6 +111,8 @@ namespace winrt::App1::author
         void UntypedEvent(winrt::event_token token);
         winrt::event_token TypedEvent(winrt::Windows::Foundation::TypedEventHandler<int, float> const& handler);
         void TypedEvent(winrt::event_token token);
+        winrt::event_token SelfReferenceEvent(winrt::Windows::Foundation::TypedEventHandler<App1::AuthorClass, App1::ITest> const& handler);
+        void SelfReferenceEvent(winrt::event_token token);
         winrt::event_token AsyncActionCompleted(winrt::Windows::Foundation::AsyncActionCompletedHandler const& handler);
         void AsyncActionCompleted(winrt::event_token token);
         winrt::event_token AsyncActionProgress(winrt::Windows::Foundation::AsyncActionProgressHandler<int> const& handler);
