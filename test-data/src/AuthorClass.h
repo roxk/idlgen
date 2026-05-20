@@ -11,6 +11,7 @@ namespace winrt::App1
     struct ITest;
     struct Point;
     struct AuthorClass;
+    struct AsyncActionCompletedHandler;
 }
 
 namespace winrt::App1::author
@@ -184,6 +185,8 @@ namespace winrt::App1::author
         author::Color GetColor(winrt::author::getter = {});
         void SetValues(SetOfBooleanValues values);
         void MethodWithMixed(author::Color color, SetOfBooleanValues value, winrt::Windows::Foundation::IInspectable const& ref);
+        winrt::event_token AsyncActionCompleted(winrt::App1::AsyncActionCompletedHandler const& handler);
+        void AsyncActionCompleted(winrt::event_token token);
     };
     struct Sample : winrt::author::runtimeclass<>,
         winrt::author::apply_attr<winrt::author::interface_name,
