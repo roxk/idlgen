@@ -66,7 +66,9 @@ consteval void printParameters(std::vector<std::meta::info> const& params, vecto
     for (auto param : params)
     {
         auto type = std::meta::is_type(param) ? param : std::meta::type_of(param);
-        auto paramName = std::meta::has_identifier(param) ? std::meta::identifier_of(param) : "";
+        auto paramName = std::meta::is_function_parameter(param) && std::meta::has_identifier(param)
+                             ? std::meta::identifier_of(param)
+                             : "";
         result += fqn(type, true);
         if (paramName.size() > 0)
         {
@@ -99,8 +101,10 @@ consteval void printParametersCpp(std::vector<std::meta::info> const& params, ve
         else
         {
             result += fqnCpp(type, format);
-            auto paramName = std::meta::has_identifier(param) ? std::meta::identifier_of(param) : "";
-            if (std::meta::is_function_parameter(param) && paramName.size() > 0)
+            auto paramName = std::meta::is_function_parameter(param) && std::meta::has_identifier(param)
+                                 ? std::meta::identifier_of(param)
+                                 : "";
+            if (paramName.size() > 0)
             {
                 result += " ";
                 result += paramName;

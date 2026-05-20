@@ -74,7 +74,7 @@ Int32 Getter { get; };
 Int32 Property;
 event Windows.Foundation.EventHandler<Int32> UntypedEvent;
 event Windows.Foundation.TypedEventHandler<Int32, Single> TypedEvent;
-event Windows.Foundation.TypedEventHandler<App1.AuthorClass AuthorClass, App1.ITest ITest> SelfReferenceEvent;
+event Windows.Foundation.TypedEventHandler<App1.AuthorClass, App1.ITest> SelfReferenceEvent;
 event Windows.Foundation.AsyncActionCompletedHandler AsyncActionCompleted;
 event Windows.Foundation.AsyncActionProgressHandler<Int32> AsyncActionProgress;
 AuthorClass();
