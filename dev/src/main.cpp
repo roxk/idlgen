@@ -460,7 +460,6 @@ template <typename Func> consteval std::meta::info findMembers(std::meta::info i
     return std::meta::info();
 }
 
-
 consteval std::meta::info tryGetAuthoredType(std::meta::info type)
 {
     if (!std::meta::is_type(type))
