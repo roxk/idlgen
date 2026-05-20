@@ -460,6 +460,38 @@ template <typename Func> consteval std::meta::info findMembers(std::meta::info i
     return std::meta::info();
 }
 
+
+consteval std::meta::info tryGetAuthoredType(std::meta::info type)
+{
+    if (!std::meta::is_type(type))
+    {
+        return std::meta::info();
+    }
+    if (!std::meta::has_parent(type))
+    {
+        return std::meta::info();
+    }
+    if (!std::meta::has_identifier(type))
+    {
+        return std::meta::info();
+    }
+    auto typeName = std::meta::identifier_of(type);
+    auto parent = std::meta::parent_of(type);
+    auto authorNs = findMembers(
+        parent,
+        [](auto member) { return std::meta::has_identifier(member) && std::meta::identifier_of(member) == "author"; }
+    );
+    if (authorNs == std::meta::info())
+    {
+        return std::meta::info();
+    }
+    auto authoredType = findMembers(
+        authorNs,
+        [&](auto member) { return std::meta::has_identifier(member) && std::meta::identifier_of(member) == typeName; }
+    );
+    return authoredType;
+}
+
 consteval bool isStruct(std::meta::info type);
 
 consteval bool isStructOrForwardDeclaredStruct(std::meta::info info)
@@ -473,29 +505,7 @@ consteval bool isStructOrForwardDeclaredStruct(std::meta::info info)
     {
         return false;
     }
-    // Find the authored type from parent ns;
-    if (!std::meta::has_parent(type))
-    {
-        return false;
-    }
-    if (!std::meta::has_identifier(type))
-    {
-        return false;
-    }
-    auto typeName = std::meta::identifier_of(type);
-    auto parent = std::meta::parent_of(type);
-    auto authorNs = findMembers(
-        parent,
-        [](auto member) { return std::meta::has_identifier(member) && std::meta::identifier_of(member) == "author"; }
-    );
-    if (authorNs == std::meta::info())
-    {
-        return false;
-    }
-    auto authoredType = findMembers(
-        authorNs,
-        [&](auto member) { return std::meta::has_identifier(member) && std::meta::identifier_of(member) == typeName; }
-    );
+    auto authoredType = tryGetAuthoredType(type);
     if (authoredType == std::meta::info())
     {
         return false;
@@ -881,11 +891,46 @@ consteval bool isEventAdder(std::meta::info member)
     auto firstParamType = std::meta::remove_cvref(std::meta::type_of(firstParam));
     if (std::meta::has_template_arguments(firstParamType))
     {
-        // It's found that all built in generic delegate extends IUnknown
-        return findBase(firstParamType, ^^winrt::Windows::Foundation::IUnknown);
+        // Note: It's found that all built in generic delegate extends IUnknown, but reflecting the type
+        // to find whether it extends IUnknown would instantiate the template TypedEventHandler and friends
+        // would complain the foward-declared types are not WinRT types.
+        // There is this workaround where, we grab the template, and substitue all parameters with built-in types
+        // to check, as built-in types are always WinRT types.
+        // This workaround works for our case since other than built-in delegates, there is no way to author
+        // other generic delegates so it's safe to NOT support authored (forward-declared) generic delegates.
+        // TODO: Should we check param type as well?
+        auto templateType = std::meta::template_of(firstParamType);
+        auto params = std::meta::template_arguments_of(firstParamType);
+        auto fakeParams = std::vector<std::meta::info>();
+        for (auto param : params)
+        {
+            if (std::meta::is_type(param))
+            {
+                fakeParams.push_back(^^int);
+            }
+            else
+            {
+                return false;
+            }
+        }
+        if (!std::meta::can_substitute(templateType, fakeParams))
+        {
+            return false;
+        }
+        auto instantiatedTemplate = std::meta::substitute(templateType, fakeParams);
+        return findBase(instantiatedTemplate, ^^winrt::Windows::Foundation::IUnknown);
     }
     else
     {
+        if (!std::meta::is_complete_type(firstParamType))
+        {
+            auto authoredType = tryGetAuthoredType(firstParamType);
+            if (authoredType == std::meta::info())
+            {
+                return false;
+            }
+            return isDelegate(authoredType);
+        }
         auto isParamDelegate = isWinRtCategory(firstParamType, ^^winrt::impl::delegate_category);
         if (!isParamDelegate)
         {

@@ -45,7 +45,7 @@ void Test()
     var outputIdlPath = $"{outDirPath}/outputIdl.txt";
     var outputImplHeaderPath = $"{outDirPath}/outputImplHeader.txt";
     var outputImplCppPath = $"{outDirPath}/outputImplCpp.txt";
-    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -include pch.h -ftime-report {input} -o {outputExePath}";
+    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -include pch.h -ftime-report {input} -DIDLGEN_ALLOW_ALL_TYPE_AS_WINRT_TYPE -o {outputExePath}";
     Directory.CreateDirectory(outDirPath);
     var cp = Process.Start(new ProcessStartInfo
     {

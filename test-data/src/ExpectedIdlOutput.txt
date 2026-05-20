@@ -72,7 +72,11 @@ Int32 Foo(Int32 value);
 Int32 Foo(Int32 value, Single value2);
 Int32 Getter { get; };
 Int32 Property;
+event Windows.Foundation.EventHandler<Int32> UntypedEvent;
+event Windows.Foundation.TypedEventHandler<Int32, Single> TypedEvent;
+event Windows.Foundation.TypedEventHandler<App1.AuthorClass AuthorClass, App1.ITest ITest> SelfReferenceEvent;
 event Windows.Foundation.AsyncActionCompletedHandler AsyncActionCompleted;
+event Windows.Foundation.AsyncActionProgressHandler<Int32> AsyncActionProgress;
 AuthorClass();
 }
 }
@@ -151,6 +155,7 @@ App1.Color Color;
 App1.Color GetColor { get; };
 void SetValues(App1.SetOfBooleanValues values);
 void MethodWithMixed(App1.Color color, App1.SetOfBooleanValues value, Object ref);
+event App1.AsyncActionCompletedHandler AsyncActionCompleted;
 }
 }
 namespace App1 {
