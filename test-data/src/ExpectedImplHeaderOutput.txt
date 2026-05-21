@@ -30,6 +30,7 @@ void* operator new(std::size_t) {
 winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
     return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
 }
+friend struct author::AuthorClass;
 friend struct winrt::impl::produce<AuthorClass, winrt::App1::AuthorClass>;
 friend struct winrt::impl::produce<AuthorClass, winrt::App1::IAuthorClassProtected>;
 };
@@ -52,6 +53,7 @@ void use_make_function_to_create_this_object() {}
 };
 struct Area : AreaT<Area>, AreaHeap {
 using AreaHeap::AreaHeap;
+friend struct author::Area;
 friend struct winrt::impl::produce<Area, winrt::App1::Area>;
 };
 }
@@ -73,6 +75,7 @@ void use_make_function_to_create_this_object() {}
 };
 struct StaticArea : StaticAreaT<StaticArea>, StaticAreaHeap {
 using StaticAreaHeap::StaticAreaHeap;
+friend struct author::StaticArea;
 friend struct winrt::impl::produce<StaticArea, winrt::App1::StaticArea>;
 };
 }
@@ -94,6 +97,7 @@ void use_make_function_to_create_this_object() {}
 };
 struct PartialClass : PartialClassT<PartialClass>, PartialClassHeap {
 using PartialClassHeap::PartialClassHeap;
+friend struct author::PartialClass;
 friend struct winrt::impl::produce<PartialClass, winrt::App1::PartialClass>;
 };
 }
@@ -115,6 +119,7 @@ void use_make_function_to_create_this_object() {}
 };
 struct BookSku : BookSkuT<BookSku>, BookSkuHeap {
 using BookSkuHeap::BookSkuHeap;
+friend struct author::BookSku;
 friend struct winrt::impl::produce<BookSku, winrt::App1::BookSku>;
 };
 }
@@ -136,6 +141,7 @@ void use_make_function_to_create_this_object() {}
 };
 struct MyPanel : MyPanelT<MyPanel>, MyPanelHeap {
 using MyPanelHeap::MyPanelHeap;
+friend struct author::MyPanel;
 friend struct winrt::impl::produce<MyPanel, winrt::App1::MyPanel>;
 };
 }
@@ -172,6 +178,7 @@ void SetValues(winrt::App1::SetOfBooleanValues values) {
 void MethodWithMixed(winrt::App1::Color color, winrt::App1::SetOfBooleanValues value, winrt::Windows::Foundation::IInspectable const& ref) {
     Area2Heap::MethodWithMixed(std::bit_cast<winrt::App1::author::Color>(color), std::bit_cast<winrt::App1::author::SetOfBooleanValues>(value), ref);
 }
+friend struct author::Area2;
 friend struct winrt::impl::produce<Area2, winrt::App1::Area2>;
 };
 }
@@ -193,6 +200,7 @@ void use_make_function_to_create_this_object() {}
 };
 struct Sample : SampleT<Sample>, SampleHeap {
 using SampleHeap::SampleHeap;
+friend struct author::Sample;
 friend struct winrt::impl::produce<Sample, winrt::App1::Sample>;
 };
 }
