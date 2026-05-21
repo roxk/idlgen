@@ -29,7 +29,7 @@ namespace winrt::SampleApp::author
     }
     void MainPage::Method()
     {}
-    void MainPage::ClickHandler(IInspectable const&, RoutedEventArgs const&, winrt::author::ignore)
+    void MainPage::ClickHandler(Windows::Foundation::IInspectable const&, Windows::UI::Xaml::RoutedEventArgs const&, winrt::author::ignore)
     {
         SampleApp::MainPage::SomeStaticMethod();
         SampleApp::MainPage mainPage;

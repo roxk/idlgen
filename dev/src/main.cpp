@@ -1602,7 +1602,6 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     }
     auto basesCount = bases.size();
     auto baseIndex = 0;
-    std::optional<std::meta::info> runtimeClassBase;
     for (auto base : bases)
     {
         auto baseType = std::meta::type_of(base);
@@ -1614,10 +1613,6 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
             basesCount += args.size();
             for (auto arg : args)
             {
-                if (isWinRtCategory(arg, ^^winrt::impl::class_category))
-                {
-                    runtimeClassBase = arg;
-                }
                 idl += fqn(arg);
                 if (baseIndex + 1 < basesCount)
                 {
@@ -1733,41 +1728,6 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     implementation += "Heap::";
     implementation += typeName;
     implementation += "Heap;\n";
-    auto printDeclareBaseFromThis = [&]()
-    {
-        implementation += std::meta::display_string_of(*runtimeClassBase);
-        implementation += "& base = *static_cast<";
-        implementation += typeName;
-        implementation += "Heap*>(this);\n";
-    };
-    // Base type ctor and release override
-    if (runtimeClassBase.has_value())
-    {
-        // TODO: Use AddRef or detect ctor?
-        implementation += typeName;
-        implementation += "() {\n    ";
-        printDeclareBaseFromThis();
-        implementation += "    base = m_inner.try_as<";
-        implementation += std::meta::display_string_of(*runtimeClassBase);
-        implementation += ">();\n";
-        implementation += "}\n";
-        implementation += R""(uint32_t __stdcall Release() {
-    auto const count = this->implements::Release();
-    if (count == 1) {
-        )"";
-        printDeclareBaseFromThis();
-        implementation += R""(        base = nullptr;
-    }
-    return count;
-}
-void* operator new(std::size_t) {
-    void* mem = std::malloc(sizeof()"";
-        implementation += typeName;
-        implementation += R""());
-    return mem;
-})"";
-        implementation += "\n";
-    }
     // value types
     for (auto member : functionsWithValueType)
     {
