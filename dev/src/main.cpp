@@ -1602,6 +1602,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     }
     auto basesCount = bases.size();
     auto baseIndex = 0;
+    std::vector<std::meta::info> internalInterfaces;
     for (auto base : bases)
     {
         auto baseType = std::meta::type_of(base);
@@ -1613,6 +1614,17 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
             basesCount += args.size();
             for (auto arg : args)
             {
+                if (std::meta::has_template_arguments(arg) &&
+                    std::meta::template_of(arg) == ^^winrt::author::internal)
+                {
+                    basesCount -= 1;
+                    auto internalInterfacesArgs = std::meta::template_arguments_of(arg);
+                    for (auto internalInterface : internalInterfacesArgs)
+                    {
+                        internalInterfaces.push_back(internalInterface);
+                    }
+                    continue;
+                }
                 idl += fqn(arg);
                 if (baseIndex + 1 < basesCount)
                 {
@@ -1720,6 +1732,12 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     implementation += typeName;
     implementation += "T<";
     implementation += typeName;
+    // Internal interfaces
+    for (auto internalInterface : internalInterfaces)
+    {
+        implementation += ", ";
+        implementation += fqnCpp(internalInterface, NameFormat::CppProjected);
+    }
     implementation += ">, ";
     implementation += typeName;
     implementation += "Heap {\n";

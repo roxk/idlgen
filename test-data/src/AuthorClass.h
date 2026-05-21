@@ -38,7 +38,8 @@ namespace winrt::App1::author
         int y;
     };
     struct AuthorClass : winrt::author::unsealed, winrt::author::runtimeclass<
-        winrt::Microsoft::UI::Xaml::FrameworkElement
+        winrt::Microsoft::UI::Xaml::FrameworkElement,
+        winrt::author::internal<winrt::Windows::Foundation::IStringable>
         // winrt::Microsoft::UI::Xaml::Data::INotifyPropertyChanged
     >,
         ITest

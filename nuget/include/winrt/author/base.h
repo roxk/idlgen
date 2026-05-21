@@ -111,4 +111,7 @@ namespace winrt::author
     {};
     struct interface_name
     {};
+    template <typename... T>
+    struct internal
+    {};
 }
