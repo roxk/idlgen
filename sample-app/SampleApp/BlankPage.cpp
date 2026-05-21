@@ -55,7 +55,7 @@ namespace winrt::SampleApp::author
     {
         return {};
     }
-    void BlankPage::ClickHandler(IInspectable const&, RoutedEventArgs const&)
+    void BlankPage::ClickHandler(winrt::Windows::Foundation::IInspectable const&, winrt::Windows::UI::Xaml::RoutedEventArgs const&)
     {
         SampleApp::BlankPage blankPage;
         auto i = blankPage.Property();

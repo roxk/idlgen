@@ -6,20 +6,9 @@ namespace winrt::author
 {
     struct winrt_interface
     {};
-    template <typename Base, typename Enable = void>
-    struct exclude_interface_base : Base
-    {
-        using Base::Base;
-    };
-    template <typename Base>
-    struct exclude_interface_base<Base, std::enable_if_t<std::is_same_v<winrt::impl::category_t<Base>, winrt::impl::interface_category>>>
-    {
-        exclude_interface_base(std::nullptr_t) {}
-    };
     template <typename... Base>
-    struct runtimeclass : exclude_interface_base<Base>...
+    struct runtimeclass
     {
-        runtimeclass() : exclude_interface_base<Base>(nullptr)... {}
         virtual void use_make_function_to_create_this_object() = 0;
     };
     template <>

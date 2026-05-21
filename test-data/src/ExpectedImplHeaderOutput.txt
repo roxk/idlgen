@@ -11,22 +11,6 @@ void use_make_function_to_create_this_object() {}
 };
 struct AuthorClass : AuthorClassT<AuthorClass>, AuthorClassHeap {
 using AuthorClassHeap::AuthorClassHeap;
-AuthorClass() {
-    winrt::Microsoft::UI::Xaml::FrameworkElement& base = *static_cast<AuthorClassHeap*>(this);
-    base = m_inner.try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
-}
-uint32_t __stdcall Release() {
-    auto const count = this->implements::Release();
-    if (count == 1) {
-        winrt::Microsoft::UI::Xaml::FrameworkElement& base = *static_cast<AuthorClassHeap*>(this);
-        base = nullptr;
-    }
-    return count;
-}
-void* operator new(std::size_t) {
-    void* mem = std::malloc(sizeof(AuthorClass));
-    return mem;
-}
 winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
     return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
 }
