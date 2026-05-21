@@ -45,6 +45,7 @@ namespace winrt::SampleApp::author
         auto existingContent = button.Content();
         auto str = winrt::unbox_value<winrt::hstring>(existingContent);
         button.Content(winrt::box_value(L"hi"));
+        self(this)->GetTemplateChild(L"");
     }
     int32_t BlankPage::Property(winrt::author::getter)
     {

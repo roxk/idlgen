@@ -1830,6 +1830,9 @@ void* operator new(std::size_t) {
         implementation += "}\n";
     }
     // friends
+    implementation += "friend struct author::";
+    implementation += typeName;
+    implementation += ";\n";
     implementation += "friend struct winrt::impl::produce<";
     implementation += typeName;
     implementation += ", ";
