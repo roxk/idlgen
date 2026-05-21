@@ -9,7 +9,7 @@ struct AuthorClassHeap : author::AuthorClass {
 using author::AuthorClass::AuthorClass;
 void use_make_function_to_create_this_object() {}
 };
-struct AuthorClass : AuthorClassT<AuthorClass>, AuthorClassHeap {
+struct AuthorClass : AuthorClassT<AuthorClass, winrt::Windows::Foundation::IStringable>, AuthorClassHeap {
 using AuthorClassHeap::AuthorClassHeap;
 winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
     return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
