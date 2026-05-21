@@ -83,16 +83,6 @@
 			<IdlGenCppDistinctIncludeDirs Include="@(_ClIncludeDirectories->Distinct())"/>
 		</ItemGroup>
 	</Target>
-	<Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="IdlgenCppCheckPchCount;ComputeAdditionalIncludeDirectories" Inputs="$(MSBuildAllProjects);@(IdlGenCppPch)" Outputs="@(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-		<Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
-		<!-- TODO: handle define. Do we still need them in 2.0? -->
-		<!-- @(IdlGenCppAdditionalDefines->'define=&quot;%(Identity)&quot;', ' ') -->
-		<Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -v -x c++-header -fmax-errors=100 &quot;%(IdlGenCppPch.Identity)&quot; @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
-		<OnError ExecuteTargets="IdlGenCppCleanupPCH"/>
-	</Target>
-	<Target Name="IdlGenCppCleanupPCH">
-		<Delete Files="$(PchOutput)"/>
-	</Target>
 	<Target Name="IdlGenCppGenerateAuthorTypeFile" BeforeTargets="IdlGenCppGenerateIDL" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="$(IdlgenCppAuthorTypeFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
 		<Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
 		<WriteLinesToFile File="$(IdlgenCppAuthorTypeFile)" Overwrite="true" Lines="@(IdlGenCppInclude->'#include &quot;%(Identity)&quot;')" />
