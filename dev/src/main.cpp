@@ -1576,32 +1576,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     constexpr auto ctx = std::meta::access_context::unchecked();
     auto bases = std::meta::bases_of(type, ctx);
     trimIgnoredBaseType(bases);
-    bool hasBases = false;
-    for (auto base : bases)
-    {
-        auto baseType = std::meta::type_of(base);
-        if (std::meta::has_template_arguments(baseType) &&
-            std::meta::template_of(baseType) == ^^winrt::author::runtimeclass)
-        {
-            if (std::meta::template_arguments_of(baseType).size() > 0)
-            {
-                hasBases = true;
-            }
-            break;
-        }
-        else
-        {
-            // has to be interface
-            hasBases = true;
-            break;
-        }
-    }
-    if (hasBases)
-    {
-        idl += " : ";
-    }
-    auto basesCount = bases.size();
-    auto baseIndex = 0;
+    std::vector<std::meta::info> exposedBaseTypes;
     std::vector<std::meta::info> internalInterfaces;
     for (auto base : bases)
     {
@@ -1609,14 +1584,10 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         if (std::meta::has_template_arguments(baseType) &&
             std::meta::template_of(baseType) == ^^winrt::author::runtimeclass)
         {
-            basesCount -= 1; // remove the runtimeclass base itself, we will add its template args as bases
-            auto args = std::meta::template_arguments_of(baseType);
-            basesCount += args.size();
-            for (auto arg : args)
+            for (auto arg : std::meta::template_arguments_of(baseType))
             {
                 if (std::meta::has_template_arguments(arg) && std::meta::template_of(arg) == ^^winrt::author::internal)
                 {
-                    basesCount -= 1;
                     auto internalInterfacesArgs = std::meta::template_arguments_of(arg);
                     for (auto internalInterface : internalInterfacesArgs)
                     {
@@ -1624,15 +1595,24 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
                     }
                     continue;
                 }
-                idl += fqn(arg);
-                if (baseIndex + 1 < basesCount)
+                if (!std::meta::is_type(arg))
                 {
-                    idl += ", ";
+                    throw std::runtime_error(std::meta::display_string_of(arg) + ""s);
                 }
-                ++baseIndex;
+                exposedBaseTypes.push_back(arg);
             }
             continue;
         }
+        exposedBaseTypes.push_back(baseType);
+    }
+    if (!exposedBaseTypes.empty())
+    {
+        idl += " : ";
+    }
+    auto basesCount = exposedBaseTypes.size();
+    auto baseIndex = 0;
+    for (auto baseType : exposedBaseTypes)
+    {
         idl += fqn(baseType);
         if (baseIndex + 1 < basesCount)
         {

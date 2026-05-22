@@ -178,7 +178,10 @@ namespace winrt::App1::author
     {
         winrt::Windows::Foundation::IInspectable Children();
     };
-    struct Area2 : winrt::author::runtimeclass<>
+    struct Area2 : winrt::author::runtimeclass<
+        winrt::Microsoft::UI::Xaml::FrameworkElement,
+        winrt::author::internal<winrt::Windows::Foundation::IStringable>
+    >
     {
         Area2(int width, int height);
         author::Color Color(winrt::author::getter = {});

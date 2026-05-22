@@ -145,7 +145,7 @@ struct Area2Heap : author::Area2 {
 using author::Area2::Area2;
 void use_make_function_to_create_this_object() {}
 };
-struct Area2 : Area2T<Area2>, Area2Heap {
+struct Area2 : Area2T<Area2, winrt::Windows::Foundation::IStringable>, Area2Heap {
 using Area2Heap::Area2Heap;
 winrt::App1::Color Color(winrt::author::getter = {}) {
     return std::bit_cast<winrt::App1::Color>(Area2Heap::Color(winrt::author::getter{}));
