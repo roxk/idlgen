@@ -1614,8 +1614,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
             basesCount += args.size();
             for (auto arg : args)
             {
-                if (std::meta::has_template_arguments(arg) &&
-                    std::meta::template_of(arg) == ^^winrt::author::internal)
+                if (std::meta::has_template_arguments(arg) && std::meta::template_of(arg) == ^^winrt::author::internal)
                 {
                     basesCount -= 1;
                     auto internalInterfacesArgs = std::meta::template_arguments_of(arg);
