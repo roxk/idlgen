@@ -1943,13 +1943,13 @@ consteval void printDelegate(vector_string& result, std::meta::info info)
     result += "}\n";
 }
 
-consteval void printStruct(vector_string& result, std::meta::info info)
+consteval void printStruct(vector_string& idl, vector_string& implementation, std::meta::info info)
 {
     auto type = info;
-    printNamespaceScope(type, result);
-    result += "struct ";
-    result += std::meta::identifier_of(type);
-    result += " {\n";
+    printNamespaceScope(type, idl);
+    idl += "struct ";
+    idl += std::meta::identifier_of(type);
+    idl += " {\n";
     auto ctx = std::meta::access_context::unchecked();
     auto members = std::meta::members_of(type, ctx);
     for (auto member : members)
@@ -1964,45 +1964,53 @@ consteval void printStruct(vector_string& result, std::meta::info info)
             continue;
         }
         auto memberType = std::meta::type_of(member);
-        result += fqn(memberType);
-        result += " ";
-        result += std::meta::identifier_of(member);
-        result += ";\n";
+        idl += fqn(memberType);
+        idl += " ";
+        idl += std::meta::identifier_of(member);
+        idl += ";\n";
     }
-    result += "};\n";
-    result += "}\n";
+    idl += "};\n";
+    idl += "}\n";
+    // Declare category_t
+    implementation += "namespace winrt::impl { template <> struct category<";
+    implementation += fqnCpp(info, NameFormat::Cpp);
+    implementation += ">{ using type = struct_category; }; } \n";
 }
 
-template <std::meta::info info> consteval void printEnum(vector_string& result)
+template <std::meta::info info> consteval void printEnum(vector_string& idl, vector_string& implementation)
 {
     constexpr auto type = info;
-    printNamespaceScope(type, result);
+    printNamespaceScope(type, idl);
     auto isFlags = std::meta::underlying_type(type) == ^^unsigned int;
     if (isFlags)
     {
-        result += "[flags]\n";
+        idl += "[flags]\n";
     }
-    result += "enum ";
-    result += std::meta::identifier_of(type);
-    result += " {\n";
+    idl += "enum ";
+    idl += std::meta::identifier_of(type);
+    idl += " {\n";
     constexpr static auto members = std::define_static_array(std::meta::enumerators_of(type));
     auto memberCount = members.size();
     auto memberIndex = 0;
     template for (constexpr auto member : members)
     {
-        result += std::meta::identifier_of(member);
-        result += " = ";
+        idl += std::meta::identifier_of(member);
+        idl += " = ";
         auto enumValue = [:std::meta::constant_of(member):];
-        result += toString(static_cast<std::underlying_type_t<decltype(enumValue)>>(enumValue));
+        idl += toString(static_cast<std::underlying_type_t<decltype(enumValue)>>(enumValue));
         if (memberIndex + 1 < memberCount)
         {
-            result += ",";
+            idl += ",";
         }
-        result += "\n";
+        idl += "\n";
         ++memberIndex;
     }
-    result += "};\n";
-    result += "}\n";
+    idl += "};\n";
+    idl += "}\n";
+    // Declare category_t
+    implementation += "namespace winrt::impl { template <> struct category<";
+    implementation += fqnCpp(info, NameFormat::Cpp);
+    implementation += ">{ using type = enum_category; }; }\n";
 }
 
 consteval void printAttribute(vector_string& result, std::meta::info info)
@@ -2128,11 +2136,11 @@ consteval GenResult gen_idl_impl()
         }
         else if constexpr (type == WinRtEntityType::Struct)
         {
-            printStruct(idl, info);
+            printStruct(idl, implementation, info);
         }
         else if constexpr (type == WinRtEntityType::Enum)
         {
-            printEnum<info>(idl);
+            printEnum<info>(idl, implementation);
         }
         else if constexpr (type == WinRtEntityType::Attribute)
         {
