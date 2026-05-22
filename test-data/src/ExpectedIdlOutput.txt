@@ -149,7 +149,7 @@ MyPanel();
 }
 namespace App1 {
 [default_interface]
-runtimeclass Area2 {
+runtimeclass Area2 : Microsoft.UI.Xaml.FrameworkElement {
 Area2(Int32 width, Int32 height);
 App1.Color Color;
 App1.Color GetColor { get; };
