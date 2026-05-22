@@ -188,6 +188,7 @@ namespace winrt::App1::author
         winrt::author::setter Color(author::Color value);
         author::Color GetColor(winrt::author::getter = {});
         void SetValues(SetOfBooleanValues values);
+        static void StaticSetValues(SetOfBooleanValues values);
         void MethodWithMixed(author::Color color, SetOfBooleanValues value, winrt::Windows::Foundation::IInspectable const& ref);
         winrt::event_token AsyncActionCompleted(winrt::App1::AsyncActionCompletedHandler const& handler);
         void AsyncActionCompleted(winrt::event_token token);

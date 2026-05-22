@@ -159,6 +159,9 @@ winrt::App1::Color GetColor(winrt::author::getter = {}) {
 void SetValues(winrt::App1::SetOfBooleanValues values) {
     Area2Heap::SetValues(std::bit_cast<winrt::App1::author::SetOfBooleanValues>(values));
 }
+static void StaticSetValues(winrt::App1::SetOfBooleanValues values) {
+    Area2Heap::StaticSetValues(std::bit_cast<winrt::App1::author::SetOfBooleanValues>(values));
+}
 void MethodWithMixed(winrt::App1::Color color, winrt::App1::SetOfBooleanValues value, winrt::Windows::Foundation::IInspectable const& ref) {
     Area2Heap::MethodWithMixed(std::bit_cast<winrt::App1::author::Color>(color), std::bit_cast<winrt::App1::author::SetOfBooleanValues>(value), ref);
 }
