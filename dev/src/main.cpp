@@ -1729,6 +1729,10 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     for (auto member : functionsWithValueType)
     {
         auto returnType = std::meta::return_type_of(member);
+        if (std::meta::is_static_member(member))
+        {
+            implementation += "static ";
+        }
         if (returnType == ^^winrt::author::setter)
         {
             implementation += "void";
