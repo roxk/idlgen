@@ -86,7 +86,7 @@ runtimeclass Area {
 Area(Int32 width, Int32 height);
 Int32 Height;
 Int32 Width;
-Int32 NumberOfAreas { get; };
+static Int32 NumberOfAreas { get; };
 }
 }
 namespace App1 {

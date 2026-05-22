@@ -825,6 +825,10 @@ consteval bool isGetter(std::meta::info member)
 
 consteval void handleAsGetter(std::meta::info member, vector_string& result)
 {
+    if (std::meta::is_static_member(member))
+    {
+        result += "static ";
+    }
     auto returnType = std::meta::return_type_of(member);
     result += fqn(returnType);
     result += " ";
