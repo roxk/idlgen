@@ -46,6 +46,7 @@ namespace winrt::SampleApp::author
         auto str = winrt::unbox_value<winrt::hstring>(existingContent);
         button.Content(winrt::box_value(L"hi"));
         self(this)->GetTemplateChild(L"");
+        winrt::Windows::Foundation::IStringable stringable = *self(this);
     }
     int32_t BlankPage::Property(winrt::author::getter)
     {
