@@ -1,7 +1,10 @@
 #pragma once
 #include "pch.h"
 #include "author_types.h"
-namespace winrt::impl { template <> struct category<winrt::App1::author::Point>{ using type = struct_category; }; } 
+namespace winrt::impl {
+template <> struct category<winrt::App1::author::Point>{ using type = struct_category; };
+template <> inline constexpr auto& name_v<winrt::App1::author::Point> = L"App1.Point";
+}
 #if __has_include("AuthorClass.g.h")
 #include "AuthorClass.g.h"
 #endif
@@ -94,8 +97,14 @@ inline auto self(winrt::App1::author::PartialClass* self) {
 return static_cast<implementation::PartialClass*>(self);
 }
 }
-namespace winrt::impl { template <> struct category<winrt::App1::author::Color>{ using type = enum_category; }; }
-namespace winrt::impl { template <> struct category<winrt::App1::author::SetOfBooleanValues>{ using type = enum_category; }; }
+namespace winrt::impl {
+template <> struct category<winrt::App1::author::Color>{ using type = enum_category; };
+template <> inline constexpr auto& name_v<winrt::App1::author::Color> = L"App1.Color";
+}
+namespace winrt::impl {
+template <> struct category<winrt::App1::author::SetOfBooleanValues>{ using type = enum_category; };
+template <> inline constexpr auto& name_v<winrt::App1::author::SetOfBooleanValues> = L"App1.SetOfBooleanValues";
+}
 #if __has_include("BookSku.g.h")
 #include "BookSku.g.h"
 #endif

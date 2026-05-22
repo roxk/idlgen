@@ -45,6 +45,7 @@ namespace winrt::SampleApp::author
 		int32_t Property(winrt::author::getter = {});
 		winrt::author::setter Property(int32_t value);
 		void ClickHandler(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::UI::Xaml::RoutedEventArgs const& args);
+		winrt::hstring ToString();
 	protected:
 		bool ProtectedGetter();
 	};

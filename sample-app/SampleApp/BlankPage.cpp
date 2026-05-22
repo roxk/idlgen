@@ -47,6 +47,7 @@ namespace winrt::SampleApp::author
         button.Content(winrt::box_value(L"hi"));
         self(this)->GetTemplateChild(L"");
         winrt::Windows::Foundation::IStringable stringable = *self(this);
+        auto boxedCategory = box_value(author::Permission::Camera);
     }
     int32_t BlankPage::Property(winrt::author::getter)
     {
@@ -63,6 +64,10 @@ namespace winrt::SampleApp::author
         blankPage.Property(i);
         auto pt = blankPage.GetPoint();
         AssignHandler([](auto, auto) {});
+    }
+    winrt::hstring BlankPage::ToString()
+    {
+        return L"Hello World";
     }
     bool BlankPage::ProtectedGetter()
     {

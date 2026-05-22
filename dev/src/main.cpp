@@ -1972,9 +1972,17 @@ consteval void printStruct(vector_string& idl, vector_string& implementation, st
     idl += "};\n";
     idl += "}\n";
     // Declare category_t
-    implementation += "namespace winrt::impl { template <> struct category<";
-    implementation += fqnCpp(info, NameFormat::Cpp);
-    implementation += ">{ using type = struct_category; }; } \n";
+    auto typeName = fqnCpp(info, NameFormat::Cpp);
+    implementation += "namespace winrt::impl {\n";
+    implementation += "template <> struct category<";
+    implementation += typeName;
+    implementation += ">{ using type = struct_category; };\n";
+    implementation += "template <> inline constexpr auto& name_v<";
+    implementation += typeName;
+    implementation += "> = L\"";
+    implementation += fqn(info);
+    implementation += "\";\n";
+    implementation += "}\n";
 }
 
 template <std::meta::info info> consteval void printEnum(vector_string& idl, vector_string& implementation)
@@ -2008,9 +2016,17 @@ template <std::meta::info info> consteval void printEnum(vector_string& idl, vec
     idl += "};\n";
     idl += "}\n";
     // Declare category_t
-    implementation += "namespace winrt::impl { template <> struct category<";
-    implementation += fqnCpp(info, NameFormat::Cpp);
-    implementation += ">{ using type = enum_category; }; }\n";
+    auto typeName = fqnCpp(info, NameFormat::Cpp);
+    implementation += "namespace winrt::impl {\n";
+    implementation += "template <> struct category<";
+    implementation += typeName;
+    implementation += ">{ using type = enum_category; };\n";
+    implementation += "template <> inline constexpr auto& name_v<";
+    implementation += typeName;
+    implementation += "> = L\"";
+    implementation += fqn(info);
+    implementation += "\";\n";
+    implementation += "}\n";
 }
 
 consteval void printAttribute(vector_string& result, std::meta::info info)
