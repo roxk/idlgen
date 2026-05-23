@@ -5,6 +5,11 @@
 // #include <winrt/Microsoft.UI.Xaml.Data.h>
 #include "winrt/author/base.h"
 
+namespace winrt::Microsoft::UI::Xaml::Input
+{
+    struct KeyboardAcceleratorInvokedEventArgs;
+}
+
 // Forward declare projected type produced from this file
 namespace winrt::App1
 {
@@ -96,6 +101,7 @@ namespace winrt::App1::author
         void Paint() override;
         void SetText(winrt::hstring const& value) override;
         static void StaticMethod();
+        void OnKeyboardAcceleratorInvoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override = {});
     protected:
         void ProtectedMethod();
     public:

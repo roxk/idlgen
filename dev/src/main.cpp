@@ -59,13 +59,36 @@ consteval vector_string fqn(
 
 consteval vector_string fqnCpp(std::meta::info info, NameFormat format = NameFormat::Cpp);
 
-consteval void printParameters(std::vector<std::meta::info> const& params, vector_string& result)
+consteval void trimParams(std::vector<std::meta::info>& params)
 {
+    params.erase(
+        std::remove_if(
+            params.begin(),
+            params.end(),
+            [](std::meta::info param)
+            {
+                auto type = std::meta::is_type(param) ? param : std::meta::type_of(param);
+                return type == ^^winrt::author::override;
+            }
+        ),
+        params.end()
+    );
+}
+
+consteval void printParameters(std::vector<std::meta::info> const& paramsRaw, vector_string& result)
+{
+    auto params = std::vector<std::meta::info>(paramsRaw);
+    trimParams(params);
     auto paramCount = params.size();
     auto paramIndex = 0;
     for (auto param : params)
     {
         auto type = std::meta::is_type(param) ? param : std::meta::type_of(param);
+        if (type == ^^winrt::author::override)
+        {
+            ++paramIndex;
+            continue;
+        }
         auto paramName = std::meta::is_function_parameter(param) && std::meta::has_identifier(param)
                              ? std::meta::identifier_of(param)
                              : "";
@@ -97,6 +120,10 @@ consteval void printParametersCpp(std::vector<std::meta::info> const& params, ve
         if (type == ^^winrt::author::getter)
         {
             result += "winrt::author::getter = {}";
+        }
+        else if (type == ^^winrt::author::override)
+        {
+            result += "winrt::author::override = {}";
         }
         else
         {
@@ -587,6 +614,11 @@ consteval void printCallFunctionParametersCpp(std::meta::info member, vector_str
         if (type == ^^winrt::author::getter)
         {
             result += "winrt::author::getter{}";
+            continue;
+        }
+        else if (type == ^^winrt::author::override)
+        {
+            result += "winrt::author::override{}";
             continue;
         }
         paramPrinter(param, paramIndex);
@@ -1553,6 +1585,19 @@ consteval bool hasAuthoredValueTypeParameter(std::meta::info info)
     return false;
 }
 
+consteval bool isOverrideMethod(std::meta::info info)
+{
+    for (auto param : std::meta::parameters_of(info))
+    {
+        auto paramType = std::meta::type_of(param);
+        if (paramType == ^^winrt::author::override)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 template <std::meta::info info>
 consteval void printRuntimeClass(vector_string& idl, vector_string& implementation, vector_string& implementationCpp)
 {
@@ -1630,6 +1675,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     bool hasCtor = false;
     bool hasProtected = false;
     std::vector<std::meta::info> functionsWithValueType;
+    std::vector<std::meta::info> overrideMethods;
     for (auto member : members)
     {
         if (isIgnored(member))
@@ -1688,6 +1734,10 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         if (hasAuthoredValueTypeParameter(member))
         {
             functionsWithValueType.push_back(member);
+        }
+        else if (isOverrideMethod(member))
+        {
+            overrideMethods.push_back(member);
         }
     }
     printMemberInfos(type, infos, idl);
@@ -1791,6 +1841,37 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         {
             implementation += ")";
         }
+        implementation += ";\n";
+        implementation += "}\n";
+    }
+    // Override method dispatch to heap always
+    for (auto member : overrideMethods)
+    {
+        auto returnType = std::meta::return_type_of(member);
+        implementation += fqnCpp(returnType, NameFormat::CppProjected);
+        implementation += " ";
+        implementation += std::meta::identifier_of(member);
+        printFunctionParametersCpp(member, implementation, NameFormat::CppProjected);
+        implementation += " {\n";
+        if (returnType != (^^void))
+        {
+            implementation += "    return ";
+        }
+        else
+        {
+            implementation += "    ";
+        }
+        implementation += typeName;
+        implementation += "Heap::";
+        implementation += std::meta::identifier_of(member);
+        printCallFunctionParametersCpp(
+            member,
+            implementation,
+            [&](std::meta::info param, auto index)
+            {
+                implementation += std::meta::identifier_of(param);
+            }
+        );
         implementation += ";\n";
         implementation += "}\n";
     }
