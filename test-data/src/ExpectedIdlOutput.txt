@@ -141,6 +141,12 @@ BookSku();
 }
 }
 namespace App1 {
+[default_interface]
+runtimeclass DerivedBookSku : App1.BookSku {
+DerivedBookSku();
+}
+}
+namespace App1 {
 [contentproperty("Children")]
 [default_interface]
 runtimeclass MyPanel {

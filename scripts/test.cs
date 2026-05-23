@@ -45,7 +45,7 @@ void Test()
     var outputIdlPath = $"{outDirPath}/outputIdl.txt";
     var outputImplHeaderPath = $"{outDirPath}/outputImplHeader.txt";
     var outputImplCppPath = $"{outDirPath}/outputImplCpp.txt";
-    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -include pch.h -ftime-report {input} -o {outputExePath}";
+    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -include pch.h -ftime-report {input} -fconstexpr-ops-limit=500000000 -o {outputExePath}";
     Directory.CreateDirectory(outDirPath);
     var cp = Process.Start(new ProcessStartInfo
     {

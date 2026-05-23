@@ -177,6 +177,8 @@ namespace winrt::App1::author
     struct BookSku : winrt::author::runtimeclass<>, winrt::author::apply_attr<HelpAttribute,
         winrt::author::attr_string("htts://booksku"), winrt::author::attr_string("BookSku class"), 0>
     {};
+    struct DerivedBookSku : winrt::author::runtimeclass<BookSku>
+	{};
     struct MyPanel : winrt::author::runtimeclass<
         // winrt::Microsoft::UI::Xaml::Controls::Panel
     >, winrt::author::apply_attr<

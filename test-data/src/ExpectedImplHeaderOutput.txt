@@ -130,6 +130,28 @@ inline auto self(winrt::App1::author::BookSku* self) {
 return static_cast<implementation::BookSku*>(self);
 }
 }
+#if __has_include("DerivedBookSku.g.h")
+#include "DerivedBookSku.g.h"
+#endif
+namespace winrt::App1::implementation {
+struct DerivedBookSkuHeap : author::DerivedBookSku {
+using author::DerivedBookSku::DerivedBookSku;
+void use_make_function_to_create_this_object() {}
+};
+struct DerivedBookSku : DerivedBookSkuT<DerivedBookSku, winrt::App1::implementation::BookSku>, DerivedBookSkuHeap {
+using DerivedBookSkuHeap::DerivedBookSkuHeap;
+friend struct author::DerivedBookSku;
+friend struct winrt::impl::produce<DerivedBookSku, winrt::App1::DerivedBookSku>;
+};
+}
+namespace winrt::App1::factory_implementation {
+struct DerivedBookSku : DerivedBookSkuT<DerivedBookSku, implementation::DerivedBookSku> {};
+}
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::DerivedBookSku* self) {
+return static_cast<implementation::DerivedBookSku*>(self);
+}
+}
 #if __has_include("MyPanel.g.h")
 #include "MyPanel.g.h"
 #endif

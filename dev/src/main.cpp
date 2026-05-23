@@ -279,34 +279,24 @@ consteval void printParentThenSelfName(
         if (std::meta::has_parent(type))
         {
             auto parent = std::meta::parent_of(type);
-            if (isAuthorNamespace(parent))
-            {
-                // skip author namespace coz it should NOT be reflected in winmd
-                if (std::meta::has_parent(parent))
-                {
-                    parent = std::meta::parent_of(parent);
-                }
-                else
-                {
-                    // something isn't right, should at least have a parent of global namespace, but
-                    // we can ignore this case for now
-                }
-            }
             if (parent != ^^::)
             {
                 printParentThenSelfName(parent, result, isParameter, nameFormat, identifierMapper);
-                if (!isAuthorNamespaceValue)
+                if (nameFormat == NameFormat::CppImplementation || !isAuthorNamespaceValue)
                 {
                     result += "::";
-                }
-                else if (nameFormat == NameFormat::CppImplementation)
-                {
-                    result += "::implementation";
                 }
             }
         }
         if (isAuthorNamespaceValue)
         {
+            if (nameFormat == NameFormat::CppProjected)
+            {
+                // No-op. Pretend this namespace doesn't exist
+                return;
+            }
+            // NameFormat is CppImplementation
+            result += "implementation";
             return;
         }
         printSelfName(candidate, result, isParameter, nameFormat, identifierMapper);
@@ -1656,8 +1646,16 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     }
     auto basesCount = exposedBaseTypes.size();
     auto baseIndex = 0;
+    std::meta::info authoredBase;
     for (auto baseType : exposedBaseTypes)
     {
+        if (baseIndex == 0)
+        {
+            if (std::meta::has_parent(baseType) && isAuthorNamespace(std::meta::parent_of(baseType)))
+            {
+                authoredBase = baseType;
+            }
+        }
         idl += fqn(baseType);
         if (baseIndex + 1 < basesCount)
         {
@@ -1739,7 +1737,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     printMemberInfos(type, infos, idl);
     idl += "}\n";
     idl += "}\n";
-    // heap implements
+    // Heap implements
     tryInclude(implementation, typeName + ".g.h"s);
     printNamespaceScope(type, implementation, NameFormat::CppImplementation);
     implementation += "struct ";
@@ -1761,6 +1759,12 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     implementation += typeName;
     implementation += "T<";
     implementation += typeName;
+    // Authored base
+    if (authoredBase != std::meta::info())
+    {
+        implementation += ", ";
+        implementation += fqnCpp(authoredBase, NameFormat::CppImplementation);
+    }
     // Internal interfaces
     for (auto internalInterface : internalInterfaces)
     {
@@ -1775,7 +1779,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     implementation += "Heap::";
     implementation += typeName;
     implementation += "Heap;\n";
-    // value types
+    // Value types
     for (auto member : functionsWithValueType)
     {
         auto returnType = std::meta::return_type_of(member);
@@ -1871,7 +1875,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         implementation += ";\n";
         implementation += "}\n";
     }
-    // friends
+    // Friends
     implementation += "friend struct author::";
     implementation += typeName;
     implementation += ";\n";
@@ -1910,7 +1914,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         implementation += "> {};\n";
         implementation += "}\n";
     }
-    // implementation type getter
+    // Implementation type getter
     implementation += "namespace ";
     printNamespaceOnly(type, implementation, NameFormat::Cpp);
     implementation += " {\n";
@@ -2196,7 +2200,7 @@ consteval std::vector<WinRtEntity> getEntites()
     return entities;
 }
 
-constexpr auto expectedOutputSize = 8096;
+constexpr auto expectedOutputSize = 1024 * 1024;
 constexpr auto expectedImplementationFileSize = expectedOutputSize;
 
 struct GenResult
