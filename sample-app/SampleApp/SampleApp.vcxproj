@@ -174,7 +174,6 @@
     <Midl Include="App.idl">
       <DependentUpon>App.xaml</DependentUpon>
     </Midl>
-    <Midl Include="SomeFolder\PageType.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
