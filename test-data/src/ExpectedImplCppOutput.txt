@@ -30,6 +30,12 @@
 #if __has_include("BookSku.xaml.g.hpp")
 #include "BookSku.xaml.g.hpp"
 #endif
+#if __has_include("DerivedBookSku.g.cpp")
+#include "DerivedBookSku.g.cpp"
+#endif
+#if __has_include("DerivedBookSku.xaml.g.hpp")
+#include "DerivedBookSku.xaml.g.hpp"
+#endif
 #if __has_include("MyPanel.g.cpp")
 #include "MyPanel.g.cpp"
 #endif

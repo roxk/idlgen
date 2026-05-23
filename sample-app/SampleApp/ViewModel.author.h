@@ -14,9 +14,13 @@ namespace winrt::SampleApp::author
 		int PrivateInstanceMethod();
 	};
 
-	struct ViewModelWithInternalInterface : winrt::author::runtimeclass<winrt::author::internal<winrt::Windows::Foundation::IStringable>>
+	struct ViewModelWithInternalInterface : winrt::author::runtimeclass<winrt::author::internal<winrt::Windows::Foundation::IStringable>>, winrt::author::unsealed
 	{
 		void SomeMethod();
 		winrt::hstring ToString(winrt::author::ignore = {});
+	};
+
+	struct DerivedViewModel : winrt::author::runtimeclass<ViewModelWithInternalInterface>
+	{
 	};
 }
