@@ -1577,6 +1577,10 @@ consteval bool hasAuthoredValueTypeParameter(std::meta::info info)
 
 consteval bool isOverrideMethod(std::meta::info info)
 {
+    if (!std::meta::is_function(info))
+    {
+        return false;
+    }
     for (auto param : std::meta::parameters_of(info))
     {
         auto paramType = std::meta::type_of(param);
