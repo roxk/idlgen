@@ -5,10 +5,6 @@
 ### Core
 - dotnet 6+
 
-### Extensions
-- Visual Studio 2022/2026
-- C# Workload
-
 ### Sample Apps
 - Visual Studio 2022/2026
 - C++ Workload
