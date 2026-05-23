@@ -65,7 +65,6 @@ Windows.Foundation.IReference<Int32> BoxedInt { get; };
 overridable void Paint();
 overridable void SetText(String value);
 static void StaticMethod();
-void OnKeyboardAcceleratorInvoked(Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args);
 protected void ProtectedMethod();
 void UsingAuthoredType(App1.ITest test);
 Int32 Foo();

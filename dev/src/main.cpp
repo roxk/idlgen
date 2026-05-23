@@ -1701,37 +1701,40 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
                 continue;
             }
         }
-        if (isGetter(member))
+        if (isOverrideMethod(member))
         {
-            insertOrGet(infos, member).getter = member;
-        }
-        else if (isSetter(member))
-        {
-            insertOrGet(infos, member).setter = member;
-        }
-        else if (isEventAdder(member))
-        {
-            insertOrGet(infos, member).eventAdder = member;
-        }
-        else if (isEventRemover(member))
-        {
-            insertOrGet(infos, member).eventRemover = member;
-        }
-        else if (isFunction(member))
-        {
-            insertOrThrow(infos, member).method = member;
+            overrideMethods.push_back(member);
         }
         else
         {
-            continue;
+            if (isGetter(member))
+            {
+                insertOrGet(infos, member).getter = member;
+            }
+            else if (isSetter(member))
+            {
+                insertOrGet(infos, member).setter = member;
+            }
+            else if (isEventAdder(member))
+            {
+                insertOrGet(infos, member).eventAdder = member;
+            }
+            else if (isEventRemover(member))
+            {
+                insertOrGet(infos, member).eventRemover = member;
+            }
+            else if (isFunction(member))
+            {
+                insertOrThrow(infos, member).method = member;
+            }
+            else
+            {
+                continue;
+            }
         }
         if (hasAuthoredValueTypeParameter(member))
         {
             functionsWithValueType.push_back(member);
-        }
-        else if (isOverrideMethod(member))
-        {
-            overrideMethods.push_back(member);
         }
     }
     printMemberInfos(type, infos, idl);
