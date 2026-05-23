@@ -1867,10 +1867,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         printCallFunctionParametersCpp(
             member,
             implementation,
-            [&](std::meta::info param, auto index)
-            {
-                implementation += std::meta::identifier_of(param);
-            }
+            [&](std::meta::info param, auto index) { implementation += std::meta::identifier_of(param); }
         );
         implementation += ";\n";
         implementation += "}\n";
