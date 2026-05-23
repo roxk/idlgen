@@ -114,4 +114,7 @@ namespace winrt::author
     template <typename... T>
     struct internal
     {};
+    struct override
+    {
+    };
 }

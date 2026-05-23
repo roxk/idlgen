@@ -2,6 +2,7 @@
 
 #include "winrt/author/base.h"
 #include <winrt/Windows.UI.Xaml.Controls.h>
+#include <winrt/Windows.UI.Xaml.Input.h>
 
 namespace winrt::SampleApp
 {
@@ -42,6 +43,7 @@ namespace winrt::SampleApp::author
 		void ReceiveArrayStruct(array_view<SampleApp::Permission> permissions);
 		void FillArrayStruct(com_array<SampleApp::Permission>& permissions);
 		void AssignHandler(winrt::SampleApp::BlankPageHandler const& handler);
+		void OnKeyboardAcceleratorInvoked(winrt::Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override = {});
 		int32_t Property(winrt::author::getter = {});
 		winrt::author::setter Property(int32_t value);
 		void ClickHandler(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::UI::Xaml::RoutedEventArgs const& args);

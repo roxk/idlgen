@@ -46,9 +46,12 @@ namespace winrt::SampleApp::author
         auto str = winrt::unbox_value<winrt::hstring>(existingContent);
         button.Content(winrt::box_value(L"hi"));
         self(this)->GetTemplateChild(L"");
-        //winrt::Windows::Foundation::IStringable stringable = *self(this);
+        auto vmwi = winrt::make_self<implementation::ViewModelWithInternalInterface>();
+        winrt::Windows::Foundation::IStringable stringable = *vmwi;
         auto boxedCategory = box_value(author::Permission::Camera);
     }
+    void BlankPage::OnKeyboardAcceleratorInvoked(winrt::Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override)
+    {}
     int32_t BlankPage::Property(winrt::author::getter)
     {
         return 0;
