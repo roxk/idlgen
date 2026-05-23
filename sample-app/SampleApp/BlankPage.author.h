@@ -33,6 +33,11 @@ namespace winrt::SampleApp::author
 
 	struct BlankPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page>, winrt::author::unsealed
 	{
+		enum State
+		{
+			State1,
+			State2
+		};
 		Category Category(winrt::author::getter = {});
 		Permission Permission(winrt::author::getter = {});
 		winrt::author::setter Permission(author::Permission permission);

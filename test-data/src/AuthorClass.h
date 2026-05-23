@@ -49,6 +49,11 @@ namespace winrt::App1::author
     >,
         ITest
     {
+        enum State
+        {
+            State1,
+            State2
+        };
         unsigned char Byte(winrt::author::getter = {});
         short Short(winrt::author::getter = {});
         unsigned short UShort(winrt::author::getter = {});
