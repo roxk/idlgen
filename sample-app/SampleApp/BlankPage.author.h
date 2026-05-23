@@ -30,7 +30,7 @@ namespace winrt::SampleApp::author
 		int64_t Y;
 	};
 
-	struct BlankPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page, winrt::author::internal<winrt::Windows::Foundation::IStringable>>, winrt::author::unsealed
+	struct BlankPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page>, winrt::author::unsealed
 	{
 		Category Category(winrt::author::getter = {});
 		Permission Permission(winrt::author::getter = {});

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "winrt/author/base.h"
+#include "winrt/Windows.Foundation.h"
 
 namespace winrt::SampleApp::author
 {
@@ -11,5 +12,11 @@ namespace winrt::SampleApp::author
 	private:
 		static void PrivateStaticMethod();
 		int PrivateInstanceMethod();
+	};
+
+	struct ViewModelWithInternalInterface : winrt::author::runtimeclass<winrt::author::internal<winrt::Windows::Foundation::IStringable>>
+	{
+		void SomeMethod();
+		winrt::hstring ToString(winrt::author::ignore = {});
 	};
 }

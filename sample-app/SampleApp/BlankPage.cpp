@@ -46,7 +46,7 @@ namespace winrt::SampleApp::author
         auto str = winrt::unbox_value<winrt::hstring>(existingContent);
         button.Content(winrt::box_value(L"hi"));
         self(this)->GetTemplateChild(L"");
-        winrt::Windows::Foundation::IStringable stringable = *self(this);
+        //winrt::Windows::Foundation::IStringable stringable = *self(this);
         auto boxedCategory = box_value(author::Permission::Camera);
     }
     int32_t BlankPage::Property(winrt::author::getter)
