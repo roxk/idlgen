@@ -1644,10 +1644,6 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
                     }
                     continue;
                 }
-                if (!std::meta::is_type(arg))
-                {
-                    throw std::runtime_error(std::meta::display_string_of(arg) + ""s);
-                }
                 exposedBaseTypes.push_back(arg);
             }
             continue;
