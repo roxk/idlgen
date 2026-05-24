@@ -131,6 +131,10 @@ Idlgen is powered by C++26 static reflection and constexpr code generation. Befo
 3. Since static reflection is currently only supported in gcc, the library actually ships a complete gcc toolchain, which adds significantly to nuget size.
 4. We have to pay pch.h compilation penalty twice (once in msvc, once in gcc). This and the above limitation can be removed once MVSC supports static reflection and all required constexpr machinary.
 
+### XAML Related Limitation
+
+XAML Compiler can NOT work with header file that doesn't have ordinary `.h` extension. Do NOT in order to setup `IdlGenCppInclude=*.author.h` change extension to e.g.`.author.h`. If you want to use wildcard, you can put all your authored type in a specific folder and specify `IdlGenCppInclude=author\*.h`.
+
 ## Generate IDL for Only One Header
 
 Specify `MyClass.h` in VS -> right click project -> Properties -> Idlgen -> Include. Or, in cli: `msbuild -target:IdlGenCppGenerateIDL -p:IdlGenCppInclude=MyClass.h -p:IdlGenCppExclude="" -p:Platform=x64`.
