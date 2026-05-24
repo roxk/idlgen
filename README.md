@@ -46,6 +46,8 @@ For all other cases, authored type should forward declare relevant projected typ
 
 That's it. That's all the rules.
 
+**Note**: To speed up generation, idlgen does little to no check on whether what you write is correct. Most errors will only surface as idl error. 
+
 ### Example: Author a runtime class
 
 ```
@@ -125,8 +127,9 @@ Idlgen is powered by C++26 static reflection and constexpr code generation. Befo
 ## Limitation
 
 1. Authored type must define all of their methods in .cpp files, due to [bootstrapping](#Bootstrapping-idlgen).
-2. Since static reflection is currently only supported in gcc, the library actually ships a complete gcc toolchain, which adds significantly to nuget size.
-3. We have to pay pch.h compilation penalty twice (once in msvc, once in gcc). This and the above limitation can be removed once MVSC supports static reflection and all required constexpr machinary.
+2. To speed up generation, idlgen does little to no check on whether what you write is correct. Most errors will only surface as idl error.
+3. Since static reflection is currently only supported in gcc, the library actually ships a complete gcc toolchain, which adds significantly to nuget size.
+4. We have to pay pch.h compilation penalty twice (once in msvc, once in gcc). This and the above limitation can be removed once MVSC supports static reflection and all required constexpr machinary.
 
 ## Generate IDL for Only One Header
 
