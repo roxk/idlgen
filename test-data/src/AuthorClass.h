@@ -205,6 +205,8 @@ namespace winrt::App1::author
         void MethodWithMixed(author::Color color, SetOfBooleanValues value, winrt::Windows::Foundation::IInspectable const& ref);
         winrt::event_token AsyncActionCompleted(winrt::App1::AsyncActionCompletedHandler const& handler);
         void AsyncActionCompleted(winrt::event_token token);
+    protected:
+        void ThisShouldNotShowUpInIdl();
     };
     struct Sample : winrt::author::runtimeclass<>,
         winrt::author::apply_attr<winrt::author::interface_name,
