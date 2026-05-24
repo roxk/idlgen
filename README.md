@@ -106,7 +106,7 @@ For more details, see the table below:
 
 Only public, protected* members are reflected. Private members are never reflected. If you have member functions that should be pubic but not included in idl, add `wirnt::author::ignore = {}` in the parameter.
 
-*Protected members are only declared as protected in idl if the runtime class is `unsealed`.
+*Protected members are only declared as protected in idl if the runtime class is `unsealed`. Otherwise, it's ignore in idl.
 
 ### Notes
 
