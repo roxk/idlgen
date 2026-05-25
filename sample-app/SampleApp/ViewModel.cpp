@@ -22,7 +22,7 @@ int winrt::SampleApp::author::ViewModel::PrivateInstanceMethod()
 void winrt::SampleApp::author::ViewModelWithInternalInterface::SomeMethod()
 {}
 
-void winrt::SampleApp::author::ViewModelWithInternalInterface::OveriddableMethod()
+void winrt::SampleApp::author::ViewModelWithInternalInterface::OverridableMethod()
 {}
 
 winrt::hstring winrt::SampleApp::author::ViewModelWithInternalInterface::ToString(winrt::author::ignore)
