@@ -1694,6 +1694,11 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         {
             continue;
         }
+        if (std::meta::is_override(member))
+        {
+            // In the current idlgen model, only authored interface methods can be overriden
+            continue;
+        }
         if (std::meta::is_protected(member))
         {
             if (isUnsealedValue)

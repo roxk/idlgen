@@ -62,8 +62,6 @@ void RefConstAuthoredStruct(ref const App1.Point point);
 void OutAuthoredStruct(out App1.Point point);
 void OutParameterReferenceType(out Object object);
 Windows.Foundation.IReference<Int32> BoxedInt { get; };
-overridable void Paint();
-overridable void SetText(String value);
 static void StaticMethod();
 protected void ProtectedMethod();
 void UsingAuthoredType(App1.ITest test);
