@@ -9,9 +9,6 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
-    <Midl Include="SomeFolder\PageType.idl">
-      <Filter>SomeFolder</Filter>
-    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -20,6 +17,7 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="$(OutputImplCpp)" />
     <ClCompile Include="ViewModel.cpp" />
+    <ClCompile Include="$(OutputImplCpp)" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

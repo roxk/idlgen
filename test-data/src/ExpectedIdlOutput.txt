@@ -135,7 +135,9 @@ Int32 Version;
 namespace App1 {
 [App1.Help("htts://booksku", "BookSku class", 0)]
 [default_interface]
-runtimeclass BookSku {
+unsealed runtimeclass BookSku {
+overridable void SellOverride();
+overridable void BuyOverride();
 BookSku();
 }
 }

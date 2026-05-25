@@ -140,6 +140,9 @@ void use_make_function_to_create_this_object() {}
 };
 struct DerivedBookSku : DerivedBookSkuT<DerivedBookSku, winrt::App1::implementation::BookSku>, DerivedBookSkuHeap {
 using DerivedBookSkuHeap::DerivedBookSkuHeap;
+void SellOverride(winrt::author::override = {}) {
+    DerivedBookSkuHeap::SellOverride(winrt::author::override{});
+}
 friend struct author::DerivedBookSku;
 friend struct winrt::impl::produce<DerivedBookSku, winrt::App1::DerivedBookSku>;
 };
