@@ -5,6 +5,11 @@
 
 namespace winrt::SampleApp::author
 {
+	struct IAuthoredInterface : winrt::author::winrt_interface
+	{
+		virtual void Method() = 0;
+	};
+
 	struct ViewModel : winrt::author::runtimeclass<>, winrt::author::static_class
 	{
 		static void StaticMethod1();
@@ -17,12 +22,13 @@ namespace winrt::SampleApp::author
 	struct ViewModelWithInternalInterface : winrt::author::runtimeclass<winrt::author::internal<winrt::Windows::Foundation::IStringable>>, winrt::author::unsealed
 	{
 		void SomeMethod();
-		virtual void OveridableMethod();
+		virtual void OveriddableMethod();
 		winrt::hstring ToString(winrt::author::ignore = {});
 	};
 
-	struct DerivedViewModel : winrt::author::runtimeclass<ViewModelWithInternalInterface>
+	struct DerivedViewModel : winrt::author::runtimeclass<ViewModelWithInternalInterface>, IAuthoredInterface
 	{
 		void OverridableMethod(winrt::author::override = {});
+        void Method() override;
 	};
 }

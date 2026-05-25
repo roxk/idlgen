@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ViewModel.author.h"
 #include "winrt/SampleApp.h"
+#include "Generated Files/idlgen.impl.h"
 
 void winrt::SampleApp::author::ViewModel::StaticMethod1()
 {
@@ -21,7 +22,7 @@ int winrt::SampleApp::author::ViewModel::PrivateInstanceMethod()
 void winrt::SampleApp::author::ViewModelWithInternalInterface::SomeMethod()
 {}
 
-void winrt::SampleApp::author::ViewModelWithInternalInterface::OveridableMethod()
+void winrt::SampleApp::author::ViewModelWithInternalInterface::OveriddableMethod()
 {}
 
 winrt::hstring winrt::SampleApp::author::ViewModelWithInternalInterface::ToString(winrt::author::ignore)
@@ -31,3 +32,7 @@ winrt::hstring winrt::SampleApp::author::ViewModelWithInternalInterface::ToStrin
 
 void winrt::SampleApp::author::DerivedViewModel::OverridableMethod(winrt::author::override)
 {}
+
+void winrt::SampleApp::author::DerivedViewModel::Method()
+{
+}
