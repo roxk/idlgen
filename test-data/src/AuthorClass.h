@@ -180,10 +180,17 @@ namespace winrt::App1::author
         HelpAttribute(winrt::hstring ClassUri, winrt::hstring MemberTopic, int Version);
     };
     struct BookSku : winrt::author::runtimeclass<>, winrt::author::apply_attr<HelpAttribute,
-        winrt::author::attr_string("htts://booksku"), winrt::author::attr_string("BookSku class"), 0>
-    {};
+        winrt::author::attr_string("htts://booksku"), winrt::author::attr_string("BookSku class"), 0>,
+        winrt::author::unsealed
+    {
+        virtual void SellOverride();
+        virtual void BuyOverride();
+    };
     struct DerivedBookSku : winrt::author::runtimeclass<BookSku>
-	{};
+	{
+        void SellOverride(winrt::author::override = {});
+        // Not overriding BuyOverride = buy override adapter should be absent in generated implementation
+    };
     struct MyPanel : winrt::author::runtimeclass<
         // winrt::Microsoft::UI::Xaml::Controls::Panel
     >, winrt::author::apply_attr<

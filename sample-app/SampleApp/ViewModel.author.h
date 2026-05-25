@@ -17,10 +17,12 @@ namespace winrt::SampleApp::author
 	struct ViewModelWithInternalInterface : winrt::author::runtimeclass<winrt::author::internal<winrt::Windows::Foundation::IStringable>>, winrt::author::unsealed
 	{
 		void SomeMethod();
+		virtual void OveridableMethod();
 		winrt::hstring ToString(winrt::author::ignore = {});
 	};
 
 	struct DerivedViewModel : winrt::author::runtimeclass<ViewModelWithInternalInterface>
 	{
+		void OverridableMethod(winrt::author::override = {});
 	};
 }
