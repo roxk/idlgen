@@ -53,3 +53,8 @@ void winrt::SampleApp::author::DerivedViewModel::MethodWithValueType(Permission 
 void winrt::SampleApp::author::DerivedViewModel::Method()
 {
 }
+
+void winrt::SampleApp::author::ImplementingInternalAuthoredInterface::Method()
+{
+	int i = 0;
+}

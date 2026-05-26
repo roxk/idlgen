@@ -4,6 +4,11 @@
 #include "winrt/Windows.Foundation.h"
 #include "BlankPage.author.h"
 
+namespace winrt::SampleApp
+{
+	struct IAuthoredInterface;
+}
+
 namespace winrt::SampleApp::author
 {
 	struct IAuthoredInterface : winrt::author::winrt_interface
@@ -34,4 +39,9 @@ namespace winrt::SampleApp::author
 		void MethodWithValueType(Permission permission, winrt::author::override = {});
 		void Method() override;
 	};
+
+    struct ImplementingInternalAuthoredInterface : winrt::author::runtimeclass<winrt::author::internal<SampleApp::IAuthoredInterface>>
+    {
+        void Method(winrt::author::ignore = {});
+    };
 }
