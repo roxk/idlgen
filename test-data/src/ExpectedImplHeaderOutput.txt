@@ -18,7 +18,7 @@ using AuthorClassHeap::AuthorClassHeap;
 winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
     return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
 }
-void OnKeyboardAcceleratorInvoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override = {}) {
+void OnKeyboardAcceleratorInvoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args) {
     AuthorClassHeap::OnKeyboardAcceleratorInvoked(args, winrt::author::override{});
 }
 friend struct author::AuthorClass;
@@ -118,6 +118,9 @@ void use_make_function_to_create_this_object() {}
 };
 struct BookSku : BookSkuT<BookSku>, BookSkuHeap {
 using BookSkuHeap::BookSkuHeap;
+virtual void BuyInColor(winrt::App1::Color color) {
+    BookSkuHeap::BuyInColor(std::bit_cast<winrt::App1::author::Color>(color));
+}
 friend struct author::BookSku;
 friend struct winrt::impl::produce<BookSku, winrt::App1::BookSku>;
 };
@@ -140,8 +143,11 @@ void use_make_function_to_create_this_object() {}
 };
 struct DerivedBookSku : DerivedBookSkuT<DerivedBookSku, winrt::App1::implementation::BookSku>, DerivedBookSkuHeap {
 using DerivedBookSkuHeap::DerivedBookSkuHeap;
-void SellOverride(winrt::author::override = {}) {
+void SellOverride() {
     DerivedBookSkuHeap::SellOverride(winrt::author::override{});
+}
+void BuyInColor(winrt::App1::Color color) {
+    DerivedBookSkuHeap::BuyInColor(std::bit_cast<winrt::App1::author::Color>(color), winrt::author::override{});
 }
 friend struct author::DerivedBookSku;
 friend struct winrt::impl::produce<DerivedBookSku, winrt::App1::DerivedBookSku>;

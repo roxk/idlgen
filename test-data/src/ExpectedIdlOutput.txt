@@ -136,6 +136,7 @@ namespace App1 {
 unsealed runtimeclass BookSku {
 overridable void SellOverride();
 overridable void BuyOverride();
+overridable void BuyInColor(App1.Color color);
 BookSku();
 }
 }

@@ -185,11 +185,13 @@ namespace winrt::App1::author
     {
         virtual void SellOverride();
         virtual void BuyOverride();
+        virtual void BuyInColor(Color color);
     };
     struct DerivedBookSku : winrt::author::runtimeclass<BookSku>
 	{
         void SellOverride(winrt::author::override = {});
         // Not overriding BuyOverride = buy override adapter should be absent in generated implementation
+        void BuyInColor(Color color, winrt::author::override = {});
     };
     struct MyPanel : winrt::author::runtimeclass<
         // winrt::Microsoft::UI::Xaml::Controls::Panel
