@@ -58,6 +58,7 @@ namespace winrt::SampleApp::author
         auto boxedCategory = box_value(author::Permission::Camera);
         SampleApp::DerivedViewModel derivedVm;
         derivedVm.Method();
+        derivedVm.SomeMethod();
     }
     void BlankPage::OnKeyboardAcceleratorInvoked(winrt::Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override)
     {}

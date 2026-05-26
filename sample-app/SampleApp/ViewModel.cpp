@@ -20,10 +20,20 @@ int winrt::SampleApp::author::ViewModel::PrivateInstanceMethod()
 	return 0;
 }
 void winrt::SampleApp::author::ViewModelWithInternalInterface::SomeMethod()
-{}
+{
+    self(this)->overridable().MethodWithValueType(SampleApp::Permission::Camera);
+	self(this)->overridable().OverridableMethod();
+}
 
 void winrt::SampleApp::author::ViewModelWithInternalInterface::OverridableMethod()
-{}
+{
+	int i = 0;
+}
+
+void winrt::SampleApp::author::ViewModelWithInternalInterface::MethodWithValueType(Permission permission)
+{
+	int i = 0;
+}
 
 winrt::hstring winrt::SampleApp::author::ViewModelWithInternalInterface::ToString(winrt::author::ignore)
 {
@@ -31,7 +41,14 @@ winrt::hstring winrt::SampleApp::author::ViewModelWithInternalInterface::ToStrin
 }
 
 void winrt::SampleApp::author::DerivedViewModel::OverridableMethod(winrt::author::override)
-{}
+{
+	int i = 0;
+}
+
+void winrt::SampleApp::author::DerivedViewModel::MethodWithValueType(Permission permission, winrt::author::override)
+{
+	int i = 0;
+}
 
 void winrt::SampleApp::author::DerivedViewModel::Method()
 {

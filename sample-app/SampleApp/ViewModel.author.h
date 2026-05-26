@@ -2,6 +2,7 @@
 
 #include "winrt/author/base.h"
 #include "winrt/Windows.Foundation.h"
+#include "BlankPage.author.h"
 
 namespace winrt::SampleApp::author
 {
@@ -23,12 +24,14 @@ namespace winrt::SampleApp::author
 	{
 		void SomeMethod();
 		virtual void OverridableMethod();
+		virtual void MethodWithValueType(Permission permission);
 		winrt::hstring ToString(winrt::author::ignore = {});
 	};
 
 	struct DerivedViewModel : winrt::author::runtimeclass<ViewModelWithInternalInterface>, IAuthoredInterface
 	{
 		void OverridableMethod(winrt::author::override = {});
+		void MethodWithValueType(Permission permission, winrt::author::override = {});
 		void Method() override;
 	};
 }
