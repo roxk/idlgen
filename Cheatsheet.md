@@ -2,25 +2,43 @@
 
 This document omits `#include <winrt/author/base.h>` at the top for brevity. This document also assumes relevant namespaces are included in pch.h or at the top of the file.
 
+**Note**: All subsequent code snippets assume the class is declared in the `winrt::Contoso::author` namespace for brevity, unless otherwise specified.
+
+**Remember: You must declare you author types in author namespace!**
+
 ## Interface
+
+### Declare an interface
+```
+struct IShape : winrt::author::winrt_interface
+{
+    virtual void Draw() = 0;
+};
+```
+
+### Require (extend) an interface
+```
+struct IShape : winrt::author::winrt_interface
+{
+    virtual void Draw() = 0;
+};
+struct IColoredShape : IShape
+{
+    virtual winrt::hstring Color() = 0;
+};
+```
 
 ## Runtimeclass
 
 ### Declare a bare runtime class
 
 ```
-// Note: Must be in author namespace!
-namespace winrt::Contoso::author
+struct BookSku : winrt::author::runtimeclass<>
 {
-    struct BookSku : winrt::author::runtimeclass<>
-    {
-    };
-}
+};
 ```
 
-**Note**: All subsequent code snippets assume the class is declared in the `winrt::Contoso::author` namespace, so the namespace declaration is omitted for brevity.
-
-### Declare a XAML page
+### Declare a XAML page (Inherit another composable class)
 
 ```
 struct MainPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page>
@@ -28,7 +46,7 @@ struct MainPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls
 };
 ```
 
-### Override projected type methods
+### Override base methods
 ```
 struct MainPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page>
 {
@@ -49,11 +67,11 @@ struct MainPageViewModel : winrt::author::runtimeclass<>
 struct WithProperties : winrt::author::runtimeclass<>
 {
     int MyProperty(winrt::author::getter = {});
-    winrt::author:setter MyProperty(int32_t value);	// OK: int Property {get; set;};
+    winrt::author:setter MyProperty(int32_t value); // OK: property in winmd
 
-    int Getter(winrt::author::getter = {});			// OK: int Getter {get;};
+    int Getter(winrt::author::getter = {});         // OK: getter in winmd
 
-    winrt::author::setter Setter(int32_t value);	// ERROR: setter only property is not allowed
+    winrt::author::setter Setter(int32_t value);    // Error: setter only property is not allowed
 };
 ```
 
@@ -64,8 +82,8 @@ struct WithMethods : winrt::author::runtimeclass<>
 {
     void SomeMethod(int integer);
     void SomeMethod(int integer, float floatingPoint);  // OK: method overloading with different arity is supported
-    void SomeMethod(float floatingPoint);               // ERROR: Overload with the same arity not allowed (behavior is undefined)
-    void SomeMethodFp(float floatingPoint);             // OK: Give your methods unique names to avoid confusion with overloads if they have the same arity but differ only by parameter types
+    void SomeMethod(float floatingPoint);               // Error: overload with the same arity not allowed (behavior is undefined)
+    void SomeMethodFp(float floatingPoint);             // OK: Not overload. Use different method name if arity is the same
 };
 ```
 
@@ -83,12 +101,64 @@ struct WithEvents : winrt::author::runtimeclass<>
 };
 ```
 
+### Reference other WinRT types in method parameters or properties
+
+Only projected types are allowed. The only exceptions are authored enum and authored WinRT structs.
+
+```
+namespace winrt::Contoso
+{
+    struct ViewModel;
+}
+namespace winrt::Contoso::author
+{
+    struct Point : winrt::author::winrt_struct
+    {
+        float X;
+        float Y;
+    };
+    struct ViewModel : winrt::author::runtimeclass<>
+    {
+    };
+    struct MainPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page>
+    {
+        void Method(winrt::Windows::UI::Xaml::UIElement const& element);
+        winrt::Windows::Foundation::IInspectable Getter(winrt::author::getter = {});
+        void Draw(Point point);                                                         // OK: authored struct is allowed
+        void Bind(ViewModel viewModel);                                                 // Error: authored runtimeclass not allowed
+        void Bind(winrt::Contoso::ViewModel viewModel);                                 // OK: Contoso::ViewModel is projected type (forward declared)
+    }
+}
+```
+
+### Hide constructor in winmd
+```
+struct ViewModel : winrt::author::runtimeclass<>
+{
+    ViewModel(winrt::author::ignore = {});
+    ViewModel(int internalOnly, winrt::author::ignore = {});
+    ViewModel(int public, float constructor);                   // Only this shows up in winmd
+};
+```
+
+### Hide method in winmd
+```
+struct ViewModel : winrt::author::runtimeclass<>
+{
+    void ImplementationDetail(winrt::author::ignore = {});
+    void NotExposed(int details, winrt::author::ignore = {});
+    void InternalOnly(int super, float secret, winrt::author::ignore = {});
+    void PublicMethod();                                                        // Only this shows up in winmd
+}
+```
+
 ### Implement projected interface
 ```
 struct WithProjected : winrt::author::runtimeclass<winrt::Windows::Foundation::IStringable>
 {
-    winrt::hstring ToString(winrt::author::override = {});  // Ok: specify override
-    winrt::hstring ToString();                              // Error: Ambiguous method call
+    winrt::hstring ToString(winrt::author::override = {});  // OK: specify override
+    winrt::hstring ToString();                              // Error: define another method instead of implementing the interface -> ambiguous method call
+    winrt::hstring ToString(winrt::author::ignore = {});    // OK: also work - ignored in winmd, but recognized by idlgen
 };
 ```
 
@@ -96,60 +166,15 @@ struct WithProjected : winrt::author::runtimeclass<winrt::Windows::Foundation::I
 ```
 struct WithInternal : winrt::author::runtimeclass<winrt::author::internal<winrt::Windows::Foundation::IStringable>>
 {
-    winrt::hstring ToString(winrt::author::override = {});  // Ok: specify override
-    winrt::hstring ToString();                              // Error: Ambiguous method call
+    winrt::hstring ToString(winrt::author::override = {});  // OK: specify override
+    winrt::hstring ToString();                              // Error:define another method instead of implementing the interface -> ambiguous method call
+    winrt::hstring ToString(winrt::author::ignore = {});    // OK: also work - ignored in winmd, but recognized by idlgen
 };
 
 // resultant idl:
 runtimeclass WithInternal
 {
 }
-```
-
-### Unsealed Class (Composable Class)
-
-```
-struct ComposableClass : winrt::author::runtimeclass<>, winrt::author::unsealed
-{
-};
-```
-
-### Inherit from authored runtimeclass (the base must be unsealed)
-```
-struct Base : winrt::author::runtimeclass<>
-{
-    int Value(winrt::author::getter = {});
-};
-struct Derived : winrt::author::runtimeclass<Base>
-{
-    int DerivedValue(winrt::author::getter = {});
-};
-```
-
-### Declare Protected Methods (the base must be unsealed)
-```
-
-struct Base : winrt::author::runtimeclass<>
-{
-protected:
-    int Value(winrt::author::getter = {});
-};
-struct Derived : winrt::author::runtimeclass<Base>
-{
-    // Only Derived and other derived classes can call Value getter
-};
-```
-
-### Declare Overridable Methods (the base must be unsealed)
-```
-struct Base : winrt::author::runtimeclass<>
-{
-    virtual int Value(winrt::author::getter = {});
-};
-struct Derived : winrt::author::runtimeclass<Base>
-{
-    int Value(winrt::author::override = {}) override;
-};
 ```
 
 ### Implement authored interface
@@ -171,6 +196,80 @@ struct MultiInterface : winrt::author::runtimeclass<>, IControl, IListBox
 };
 ```
 
+### Implement internal authored interface
+```
+namespace winrt::Contoso
+{
+    struct IControl;
+};
+namespace winrt::Contoso::author
+{
+    struct IControl : winrt::author::winrt_interface
+    {
+        virtual void Paint() = 0;
+    };
+    // Note: the interface is projected type, not authored type
+    struct ImplementingInternalAuthoredInterface : winrt::author::runtimeclass<winrt::author::internal<winrt::Contoso::IControl>>
+    {
+        void Paint(winrt::author::override = {});
+    };
+}
+```
+
+### Implement authored interface without QI (i.e. not internal), without exposing in winmd
+
+Impossible.
+
+### Unsealed Class (Composable Class)
+
+```
+struct ComposableClass : winrt::author::runtimeclass<>, winrt::author::unsealed
+{
+};
+```
+
+### Inherit from authored runtimeclass (the base must be unsealed)
+```
+struct Base : winrt::author::runtimeclass<>, winrt::author::unsealed
+{
+    int Value(winrt::author::getter = {});
+};
+struct Derived : winrt::author::runtimeclass<Base>
+{
+    int DerivedValue(winrt::author::getter = {});
+};
+```
+
+### Declare Protected Methods (the base must be unsealed)
+
+```
+
+struct Base : winrt::author::runtimeclass<>, winrt::author::unsealed
+{
+protected:
+    int Value(winrt::author::getter = {});
+};
+struct Derived : winrt::author::runtimeclass<Base>
+{
+    // Only Derived and other derived classes can call Value getter
+};
+```
+
+### Declare Overridable Methods (the base must be unsealed)
+
+**Note**: Overridable methods in WinRT is protected, so only derived class can call them.
+
+```
+struct Base : winrt::author::runtimeclass<>
+{
+    virtual int ValueOverride();
+};
+struct Derived : winrt::author::runtimeclass<Base>
+{
+    int ValueOverride(winrt::author::override = {});
+};
+```
+
 ### Static class
 
 ```
@@ -188,7 +287,36 @@ struct PartialClass : winrt::author::runtimeclass<>, winrt::author::partial
 };
 ```
 
-
 ## Enum
 
+### Declare an enum
+
+```
+enum class Color : int
+{
+    Red,
+    Green,
+    Blue
+};
+```
+
+### Declare a flags enum
+```
+enum class FileAccess : unsigned int
+{
+    Read = 0x1,
+    Write = 0x2,
+    Execute = 0x4
+};
+```
+
 ## Struct
+
+### Declare struct
+```
+struct Point : winrt::author::winrt_struct
+{
+    float X;
+    float Y;
+};
+```
