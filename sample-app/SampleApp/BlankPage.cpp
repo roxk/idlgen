@@ -59,6 +59,8 @@ namespace winrt::SampleApp::author
         SampleApp::DerivedViewModel derivedVm;
         derivedVm.Method();
         derivedVm.SomeMethod();
+        SampleApp::ImplementingInternalAuthoredInterface iiai;
+        iiai.Method();
     }
     void BlankPage::OnKeyboardAcceleratorInvoked(winrt::Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override)
     {}

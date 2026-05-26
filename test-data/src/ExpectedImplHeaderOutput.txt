@@ -183,6 +183,28 @@ inline auto self(winrt::App1::author::MyPanel* self) {
 return static_cast<implementation::MyPanel*>(self);
 }
 }
+#if __has_include("ImplementingInternalInterface.g.h")
+#include "ImplementingInternalInterface.g.h"
+#endif
+namespace winrt::App1::implementation {
+struct ImplementingInternalInterfaceHeap : author::ImplementingInternalInterface {
+using author::ImplementingInternalInterface::ImplementingInternalInterface;
+void use_make_function_to_create_this_object() {}
+};
+struct ImplementingInternalInterface : ImplementingInternalInterfaceT<ImplementingInternalInterface, winrt::App1::IControl>, ImplementingInternalInterfaceHeap {
+using ImplementingInternalInterfaceHeap::ImplementingInternalInterfaceHeap;
+friend struct author::ImplementingInternalInterface;
+friend struct winrt::impl::produce<ImplementingInternalInterface, winrt::App1::ImplementingInternalInterface>;
+};
+}
+namespace winrt::App1::factory_implementation {
+struct ImplementingInternalInterface : ImplementingInternalInterfaceT<ImplementingInternalInterface, implementation::ImplementingInternalInterface> {};
+}
+namespace winrt::App1::author {
+inline auto self(winrt::App1::author::ImplementingInternalInterface* self) {
+return static_cast<implementation::ImplementingInternalInterface*>(self);
+}
+}
 #if __has_include("Area2.g.h")
 #include "Area2.g.h"
 #endif
