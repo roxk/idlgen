@@ -13,6 +13,7 @@ namespace winrt::Microsoft::UI::Xaml::Input
 // Forward declare projected type produced from this file
 namespace winrt::App1
 {
+    struct IControl;
     struct ITest;
     struct Point;
     struct AuthorClass;
@@ -199,6 +200,10 @@ namespace winrt::App1::author
         winrt::author::contentproperty, winrt::author::attr_string("Children")>
     {
         winrt::Windows::Foundation::IInspectable Children();
+    };
+    struct ImplementingInternalInterface : winrt::author::runtimeclass<winrt::author::internal<App1::IControl>>
+    {
+        void Paint(winrt::author::ignore = {});
     };
     struct Area2 : winrt::author::runtimeclass<
         winrt::Microsoft::UI::Xaml::FrameworkElement,
