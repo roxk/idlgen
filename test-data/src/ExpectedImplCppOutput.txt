@@ -42,6 +42,12 @@
 #if __has_include("MyPanel.xaml.g.hpp")
 #include "MyPanel.xaml.g.hpp"
 #endif
+#if __has_include("ImplementingInternalInterface.g.cpp")
+#include "ImplementingInternalInterface.g.cpp"
+#endif
+#if __has_include("ImplementingInternalInterface.xaml.g.hpp")
+#include "ImplementingInternalInterface.xaml.g.hpp"
+#endif
 #if __has_include("Area2.g.cpp")
 #include "Area2.g.cpp"
 #endif

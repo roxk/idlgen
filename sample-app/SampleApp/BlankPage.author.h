@@ -31,7 +31,7 @@ namespace winrt::SampleApp::author
 		int64_t Y;
 	};
 
-	struct BlankPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page>, winrt::author::unsealed
+	struct BlankPage : winrt::author::runtimeclass<winrt::Windows::UI::Xaml::Controls::Page, winrt::Windows::Foundation::IStringable>, winrt::author::unsealed
 	{
 		enum State
 		{
@@ -52,7 +52,7 @@ namespace winrt::SampleApp::author
 		int32_t Property(winrt::author::getter = {});
 		winrt::author::setter Property(int32_t value);
 		void ClickHandler(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::UI::Xaml::RoutedEventArgs const& args);
-		winrt::hstring ToString();
+		winrt::hstring ToString(winrt::author::override = {});
 	protected:
 		bool ProtectedGetter();
 	};

@@ -59,6 +59,9 @@ namespace winrt::SampleApp::author
         SampleApp::DerivedViewModel derivedVm;
         derivedVm.Method();
         derivedVm.SomeMethod();
+        SampleApp::ImplementingInternalAuthoredInterface iiai;
+        //iiai.Method();    // Cannot call - internal only
+        iiai.try_as<SampleApp::IAuthoredInterface>().Method();
     }
     void BlankPage::OnKeyboardAcceleratorInvoked(winrt::Windows::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override)
     {}
@@ -78,7 +81,7 @@ namespace winrt::SampleApp::author
         auto pt = blankPage.GetPoint();
         AssignHandler([](auto, auto) {});
     }
-    winrt::hstring BlankPage::ToString()
+    winrt::hstring BlankPage::ToString(winrt::author::override)
     {
         return L"Hello World";
     }

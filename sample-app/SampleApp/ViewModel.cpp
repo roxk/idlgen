@@ -35,7 +35,7 @@ void winrt::SampleApp::author::ViewModelWithInternalInterface::MethodWithValueTy
 	int i = 0;
 }
 
-winrt::hstring winrt::SampleApp::author::ViewModelWithInternalInterface::ToString(winrt::author::ignore)
+winrt::hstring winrt::SampleApp::author::ViewModelWithInternalInterface::ToString(winrt::author::override)
 {
 	return winrt::hstring();
 }
@@ -52,4 +52,9 @@ void winrt::SampleApp::author::DerivedViewModel::MethodWithValueType(Permission 
 
 void winrt::SampleApp::author::DerivedViewModel::Method()
 {
+}
+
+void winrt::SampleApp::author::ImplementingInternalAuthoredInterface::Method(winrt::author::override)
+{
+	int i = 0;
 }
