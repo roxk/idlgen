@@ -101,7 +101,9 @@ consteval void printParameters(std::vector<std::meta::info> const& paramsRaw, ve
     }
 }
 
-consteval void printParametersCpp(std::vector<std::meta::info> const& paramsRaw, vector_string& result, NameFormat format)
+consteval void printParametersCpp(
+    std::vector<std::meta::info> const& paramsRaw, vector_string& result, NameFormat format
+)
 {
     if (format == NameFormat::Idl)
     {
