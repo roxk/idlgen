@@ -26,7 +26,7 @@ Int32 y;
 }
 namespace App1 {
 [default_interface]
-unsealed runtimeclass AuthorClass : Microsoft.UI.Xaml.FrameworkElement, App1.ITest {
+unsealed runtimeclass AuthorClass : Microsoft.UI.Xaml.FrameworkElement, Windows.Foundation.IStringable, App1.ITest {
 UInt8 Byte { get; };
 Int16 Short { get; };
 UInt16 UShort { get; };

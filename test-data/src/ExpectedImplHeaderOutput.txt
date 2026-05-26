@@ -13,13 +13,16 @@ struct AuthorClassHeap : author::AuthorClass {
 using author::AuthorClass::AuthorClass;
 void use_make_function_to_create_this_object() {}
 };
-struct AuthorClass : AuthorClassT<AuthorClass, winrt::Windows::Foundation::IStringable>, AuthorClassHeap {
+struct AuthorClass : AuthorClassT<AuthorClass>, AuthorClassHeap {
 using AuthorClassHeap::AuthorClassHeap;
 winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
     return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
 }
 void OnKeyboardAcceleratorInvoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args) {
     AuthorClassHeap::OnKeyboardAcceleratorInvoked(args, winrt::author::override{});
+}
+winrt::hstring ToString() {
+    return AuthorClassHeap::ToString(winrt::author::override{});
 }
 friend struct author::AuthorClass;
 friend struct winrt::impl::produce<AuthorClass, winrt::App1::AuthorClass>;
