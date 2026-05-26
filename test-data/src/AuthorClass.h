@@ -45,7 +45,7 @@ namespace winrt::App1::author
     };
     struct AuthorClass : winrt::author::unsealed, winrt::author::runtimeclass<
         winrt::Microsoft::UI::Xaml::FrameworkElement,
-        winrt::author::internal<winrt::Windows::Foundation::IStringable>
+        winrt::Windows::Foundation::IStringable
         // winrt::Microsoft::UI::Xaml::Data::INotifyPropertyChanged
     >,
         ITest
@@ -108,6 +108,7 @@ namespace winrt::App1::author
         void SetText(winrt::hstring const& value) override;
         static void StaticMethod();
         void OnKeyboardAcceleratorInvoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override = {});
+        winrt::hstring ToString(winrt::author::override = {});
     protected:
         void ProtectedMethod();
     public:
