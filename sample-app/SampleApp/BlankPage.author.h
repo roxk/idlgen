@@ -67,4 +67,9 @@ namespace winrt::SampleApp::author
 	protected:
 		void Method();
 	};
+
+	inline void use_winrt_error_handling()
+	{
+		winrt::check_bool<bool>(false);
+	};
 }
