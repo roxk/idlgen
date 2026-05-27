@@ -120,6 +120,10 @@
   <ItemGroup>
     <ClInclude Include="BlankPage.author.h" />
     <ClInclude Include="MainPage.author.h" />
+    <ClInclude Include="OldSchoolImplementationType.h">
+      <DependentUpon>OldSchoolImplementationType.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -158,6 +162,10 @@
       <DependentUpon>BlankPage.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="OldSchoolImplementationType.cpp">
+      <DependentUpon>OldSchoolImplementationType.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -173,6 +181,9 @@
   <ItemGroup>
     <Midl Include="App.idl">
       <DependentUpon>App.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="OldSchoolImplementationType.idl">
+      <SubType>Designer</SubType>
     </Midl>
   </ItemGroup>
   <ItemGroup>

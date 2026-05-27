@@ -9,6 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
+    <Midl Include="OldSchoolImplementationType.idl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -17,6 +18,7 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="$(OutputImplCpp)" />
     <ClCompile Include="ViewModel.cpp" />
+    <ClCompile Include="$(OutputImplCpp)" />
     <ClCompile Include="$(OutputImplCpp)" />
     <ClCompile Include="$(OutputImplCpp)" />
   </ItemGroup>
