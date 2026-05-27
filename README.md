@@ -22,7 +22,8 @@ idlgen is a C\+\+20 library that helps you get rid of idl and implementation typ
 
 ## Usage
 
-1. Add `<winrt/Windows.Foundation.h>` to pch.h.*
+1. Add `<winrt/Windows.Foundation.h>` to pch.h*
+2. Add `<idlgen.impl.h>` to pch.h
 2. In your pch.h, only include existing implementation type header if `IDLGEN_CPP_STATIC_REFLECTION_PHASE` is NOT defined. i.e. add this block to your pch.h:
 ```
 #ifndef IDLGEN_CPP_STATIC_REFLECTION_PHASE
