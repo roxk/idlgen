@@ -1,0 +1,9 @@
+namespace SampleApp
+{
+    [default_interface]
+    runtimeclass OldSchoolImplementationType 
+    {
+        OldSchoolImplementationType();
+        Int32 MyProperty;
+    }
+}

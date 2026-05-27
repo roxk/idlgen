@@ -17,6 +17,11 @@
 #include <winrt/Windows.UI.Xaml.Interop.h>
 #include <winrt/Windows.UI.Xaml.Markup.h>
 #include <winrt/Windows.UI.Xaml.Navigation.h>
+
+#ifndef IDLGEN_CPP_STATIC_REFLECTION_PHASE
+#include "OldSchoolImplementationType.h"
+#endif
+
 //#include <wil/wistd_type_traits.h>
 //#include <wil/cppwinrt_authoring.h>
 //
