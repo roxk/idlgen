@@ -118,3 +118,36 @@ namespace winrt::author
     {
     };
 }
+
+#ifdef IDLGEN_CPP_STATIC_REFLECTION_PHASE
+// Workaround winlibs gcc not having WinRT library. These are the only functions that need to have a stub given the list of
+// function that winrt_base.h links to.
+// Using __attribute__((weak)) to allow violating ODR by "allowing multiple definition and pick one" to simplify build
+// Note that inline wouldn't work
+// Ref: https://github.com/roxk/idlgen/issues/135
+extern "C"
+{
+    __attribute__((weak)) HRESULT WINAPI RoGetActivationFactory(HSTRING classId, REFIID iid, void** factory)
+    {
+        return 0;
+    }
+    __attribute__((weak)) HRESULT WINAPI RoGetAgileReference(DWORD options, REFIID iid, IUnknown* object, void** reference)
+    {
+        return 0;
+    }
+    __attribute__((weak)) HRESULT WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknown* exception)
+    {
+        return 0;
+    }
+    __attribute__((weak)) HRESULT WINAPI RoCaptureErrorContext(HRESULT error)
+    {
+        return 0;
+    }
+    __attribute__((weak)) void WINAPI RoFailFastWithErrorContext(HRESULT error)
+    {}
+    __attribute__((weak)) HRESULT WINAPI RoTransformError(HRESULT oldError, HRESULT newError, HSTRING message)
+    {
+        return 0;
+    }
+}
+#endif
