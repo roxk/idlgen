@@ -22,21 +22,24 @@ idlgen is a C\+\+20 library that helps you get rid of idl and implementation typ
 
 ## Usage
 
-1. In your pch.h, only include existing implementation type header if `IDLGEN_CPP_STATIC_REFLECTION_PHASE` is not defined. i.e. add this block to your pch.h:
+1. Add `<winrt/Windows.Foundation.h>` to pch.h.*
+2. In your pch.h, only include existing implementation type header if `IDLGEN_CPP_STATIC_REFLECTION_PHASE` is NOT defined. i.e. add this block to your pch.h:
 ```
 #ifndef IDLGEN_CPP_STATIC_REFLECTION_PHASE
-#include "MyExistingIdlType.h"				// They cannot be included during reflection phase since .g.h is NOT generated yet
+#include "MyExistingIdlType.h"              // They cannot be included during reflection phase since .g.h is not generated yet
 #endif
 ```
-2. Write C++ code following the following rules
+3. Viola! Start writing authored type following rules below
 
-### Pre-requisite
+*If you do not want to do that, make sure anywhere you write author type you must include `<winrt/Windows.Foundation.h>`. If you do not include it in pch, and have not written any author type yet, disable generating idl via project property `IdlGenCppGenerateIDL`. 
+
+### Rules Pre-requisite
 
 - C++/WinRT terminology
 
 ### Cheatsheet
 
-For a "I want to do X, what do I write" cheatsheet, see [here](./Cheatsheet.md).
+For a "I want to do X, what do I write" kind of cheatsheet, see [here](./Cheatsheet.md).
 
 ### Rules
 
