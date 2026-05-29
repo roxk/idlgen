@@ -4,7 +4,11 @@
 
 namespace winrt::author
 {
+    template <typename... Base>
     struct winrt_interface
+    {};
+    template <>
+    struct winrt_interface<>
     {};
     template <typename... Base>
     struct runtimeclass

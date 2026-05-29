@@ -19,6 +19,11 @@ void SetSelectedIndex(Int32 index);
 }
 }
 namespace App1 {
+interface IDebugPrintable requires Windows.Foundation.IStringable {
+void DebugPrint();
+}
+}
+namespace App1 {
 struct Point {
 Int32 x;
 Int32 y;

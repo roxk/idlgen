@@ -16,7 +16,7 @@ struct IShape : winrt::author::winrt_interface
 };
 ```
 
-### Require (extend) an interface
+### Require (extend) an authored interface
 ```
 struct IShape : winrt::author::winrt_interface
 {
@@ -25,6 +25,14 @@ struct IShape : winrt::author::winrt_interface
 struct IColoredShape : IShape
 {
     virtual winrt::hstring Color() = 0;
+};
+```
+
+### Require (extend) a projected interface
+```
+struct IDebugPrintable : winrt::author::winrt_interface<winrt::Windows::Foundation::IStringable>
+{
+    virtual void DebugPrint() = 0;
 };
 ```
 

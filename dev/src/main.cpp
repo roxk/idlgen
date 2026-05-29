@@ -184,8 +184,13 @@ consteval void printSelfName(
     auto decayedCandidate = std::meta::is_type(candidate) ? std::meta::remove_cvref(candidate) : candidate;
     if (std::meta::has_template_arguments(decayedCandidate))
     {
+        auto templateArgs = std::meta::template_arguments_of(decayedCandidate);
         auto templateType = std::meta::template_of(decayedCandidate);
-        auto firstParam = std::meta::template_arguments_of(decayedCandidate)[0];
+        if (templateArgs.size() == 0)
+        {
+            throw std::runtime_error("Cannot print idl generic with 0 arguments");
+        }
+        auto firstParam = templateArgs[0];
         if (format == NameFormat::Idl && templateType == ^^winrt::array_view)
         {
             if (isParameter && !std::meta::is_const_type(firstParam))
@@ -641,11 +646,11 @@ consteval bool findBase(std::meta::info type, std::meta::info target, bool canTy
                 return true;
             }
         }
-        else if (baseType == target)
+        if (baseType == target)
         {
             return true;
         }
-        else if (findBase(baseType, target))
+        if (findBase(baseType, target))
         {
             return true;
         }
@@ -1039,8 +1044,10 @@ consteval bool isBaseTypeWinRtBase(std::meta::info type)
     }
     if (std::meta::has_template_arguments(type))
     {
-        return std::meta::template_of(type) == ^^winrt::author::runtimeclass;
+        auto templateType = std::meta::template_of(type);
+        return templateType == ^^winrt::author::runtimeclass || templateType == ^^winrt::author::winrt_interface;
     }
+    // Bases types that are interfaces or attributes (note: i.e. the type inherit winrt_interface, not that the type is winrt_interface)
     return isInterface(type) || isAttribute(type);
 }
 
@@ -1921,18 +1928,33 @@ template <std::meta::info type> consteval void printInterface(vector_string& idl
     idl += "interface ";
     idl += std::meta::identifier_of(type);
     auto ctx = std::meta::access_context::unchecked();
-    auto bases = std::meta::bases_of(type, ctx);
-    trimIgnoredBaseType(bases);
-    auto basesCount = bases.size();
+    auto rawBases = std::meta::bases_of(type, ctx);
+    trimIgnoredBaseType(rawBases);
+    std::vector<std::meta::info> baseTypes;
+    for (auto rawBase : rawBases)
+    {
+        auto baseType = std::meta::type_of(rawBase);
+        if (std::meta::has_template_arguments(baseType) &&
+            std::meta::template_of(baseType) == ^^winrt::author::winrt_interface)
+        {
+            auto templateArgs = std::meta::template_arguments_of(baseType);
+            for (auto arg : templateArgs)
+            {
+                baseTypes.push_back(arg);
+            }
+            continue;
+        }
+        baseTypes.push_back(baseType);
+    }
+    auto basesCount = baseTypes.size();
     if (basesCount > 0)
     {
         idl += " requires ";
     }
-    auto baseCount = bases.size();
+    auto baseCount = baseTypes.size();
     auto baseIndex = 0;
-    for (auto base : bases)
+    for (auto baseType : baseTypes)
     {
-        auto baseType = std::meta::type_of(base);
         idl += fqn(baseType);
         if (baseIndex + 1 < baseCount)
         {
