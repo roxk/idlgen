@@ -22,7 +22,7 @@ namespace winrt::App1
 
 namespace winrt::App1::author
 {
-    struct IControl : winrt::author::winrt_interface
+    struct IControl : winrt::author::winrt_interface<>
     {
         virtual void Paint() = 0;
     };
@@ -37,6 +37,10 @@ namespace winrt::App1::author
     struct IComboBox : ITest, IListBox
     {
         virtual void SetSelectedIndex(int index) = 0;
+    };
+    struct IDebugPrintable : winrt::author::winrt_interface<winrt::Windows::Foundation::IStringable>
+    {
+        virtual void DebugPrint() = 0;
     };
     struct Point : winrt::author::winrt_struct
     {
@@ -228,7 +232,7 @@ namespace winrt::App1::author
         winrt::author::attr_string("IMyName"), winrt::guid("ceb27355-f772-407c-9540-6467a7199bc7")>,
         winrt::author::apply_attr<winrt::author::contract, winrt::author::attr_type("Windows.Foundation.UniversalApiContract"), 1>
     {};
-    struct ISomethingMarker : winrt::author::winrt_interface,
+    struct ISomethingMarker : winrt::author::winrt_interface<>,
         winrt::author::apply_attr<winrt::author::uuid, winrt::author::attr_string("94569FA9-D3BB-4D01-BF7C-B8E1D8F8B30C")>,
         winrt::author::apply_attr<winrt::author::contract, winrt::author::attr_type("Windows.Foundation.UniversalApiContract"), 1>
     {};
