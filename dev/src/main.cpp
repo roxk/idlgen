@@ -1047,7 +1047,8 @@ consteval bool isBaseTypeWinRtBase(std::meta::info type)
         auto templateType = std::meta::template_of(type);
         return templateType == ^^winrt::author::runtimeclass || templateType == ^^winrt::author::winrt_interface;
     }
-    // Bases types that are interfaces or attributes (note: i.e. the type inherit winrt_interface, not that the type is winrt_interface)
+    // Bases types that are interfaces or attributes (note: i.e. the type inherit winrt_interface, not that the type is
+    // winrt_interface)
     return isInterface(type) || isAttribute(type);
 }
 
@@ -1657,7 +1658,8 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     {
         if (baseIndex == 0)
         {
-            if (std::meta::has_parent(baseType) && isAuthorNamespace(std::meta::parent_of(baseType)) && isRuntimeClass(baseType))
+            if (std::meta::has_parent(baseType) && isAuthorNamespace(std::meta::parent_of(baseType)) &&
+                isRuntimeClass(baseType))
             {
                 authoredBase = baseType;
             }
