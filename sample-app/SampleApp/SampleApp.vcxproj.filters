@@ -18,9 +18,6 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="$(OutputImplCpp)" />
     <ClCompile Include="ViewModel.cpp" />
-    <ClCompile Include="$(OutputImplCpp)" />
-    <ClCompile Include="$(OutputImplCpp)" />
-    <ClCompile Include="$(OutputImplCpp)" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
