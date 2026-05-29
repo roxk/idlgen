@@ -11,9 +11,14 @@ namespace winrt::SampleApp
 
 namespace winrt::SampleApp::author
 {
-	struct IAuthoredInterface : winrt::author::winrt_interface
+	struct IAuthoredInterface : winrt::author::winrt_interface<>
 	{
 		virtual void Method() = 0;
+	};
+
+	struct IDebugPrintable : winrt::author::winrt_interface<winrt::Windows::Foundation::IStringable>
+	{
+		virtual void DebugPrint() = 0;
 	};
 
 	struct ViewModel : winrt::author::runtimeclass<>, winrt::author::static_class
@@ -44,4 +49,9 @@ namespace winrt::SampleApp::author
     {
         void Method(winrt::author::override = {});
     };
+
+	struct DebugableViewModel : winrt::author::runtimeclass<>, IDebugPrintable
+	{
+		winrt::hstring ToString();
+	};
 }

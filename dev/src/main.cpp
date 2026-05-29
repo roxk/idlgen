@@ -1657,7 +1657,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     {
         if (baseIndex == 0)
         {
-            if (std::meta::has_parent(baseType) && isAuthorNamespace(std::meta::parent_of(baseType)))
+            if (std::meta::has_parent(baseType) && isAuthorNamespace(std::meta::parent_of(baseType)) && isRuntimeClass(baseType))
             {
                 authoredBase = baseType;
             }
