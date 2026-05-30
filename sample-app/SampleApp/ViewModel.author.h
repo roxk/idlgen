@@ -52,6 +52,7 @@ namespace winrt::SampleApp::author
 
 	struct DebugableViewModel : winrt::author::runtimeclass<>, IDebugPrintable
 	{
+		void DebugPrint();
 		winrt::hstring ToString();
 	};
 }
