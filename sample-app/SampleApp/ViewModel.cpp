@@ -59,6 +59,9 @@ void winrt::SampleApp::author::ImplementingInternalAuthoredInterface::Method(win
 	int i = 0;
 }
 
+void winrt::SampleApp::author::DebugableViewModel::DebugPrint()
+{}
+
 winrt::hstring winrt::SampleApp::author::DebugableViewModel::ToString()
 {
 	return winrt::hstring();
