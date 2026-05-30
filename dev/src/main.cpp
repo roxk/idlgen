@@ -621,10 +621,10 @@ consteval void printCallFunctionParametersCpp(std::meta::info member, vector_str
     result += ")";
 }
 
-consteval bool findBase(std::meta::info type, std::meta::info target, bool canTypeBeTemplate = false)
+consteval bool findBase(std::meta::info type, std::meta::info target)
 {
     auto ctx = std::meta::access_context::unchecked();
-    if (!(canTypeBeTemplate && std::meta::is_template(type)))
+    if (!std::meta::is_template(type))
     {
         if (!std::meta::is_complete_type(type))
         {
@@ -705,7 +705,7 @@ consteval bool isEnum(std::meta::info type)
 
 consteval bool isAttribute(std::meta::info type)
 {
-    return findBase(type, ^^winrt::author::attribute, true);
+    return findBase(type, ^^winrt::author::attribute);
 }
 
 consteval bool isIgnoredEntity(std::meta::info info)
@@ -1049,7 +1049,7 @@ consteval bool isBaseTypeWinRtBase(std::meta::info type)
     }
     // Bases types that are interfaces or attributes (note: i.e. the type inherit winrt_interface, not that the type is
     // winrt_interface)
-    return isInterface(type) || isAttribute(type);
+    return isInterface(type);
 }
 
 consteval void trimIgnoredBaseType(std::vector<std::meta::info>& bases)
