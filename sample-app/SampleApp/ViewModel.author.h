@@ -45,7 +45,7 @@ namespace winrt::SampleApp::author
 		void Method(winrt::author::override = {});
 	};
 
-    struct ImplementingInternalAuthoredInterface : winrt::author::runtimeclass<winrt::author::internal<SampleApp::IAuthoredInterface>>
+    struct ImplementingInternalAuthoredInterface : winrt::author::runtimeclass<winrt::author::internal<IAuthoredInterface>>
     {
         void Method(winrt::author::override = {});
     };

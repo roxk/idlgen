@@ -197,7 +197,7 @@ struct IListBox : winrt::author::winrt_interface
     virtual void SetItems(winrt::array_view<winrt::hstring> items) = 0;
 };
 
-struct MultiInterface : winrt::author::runtimeclass<>, IControl, IListBox
+struct MultiInterface : winrt::author::runtimeclass<IControl, IListBox>
 {
     void Paint() override;
     void SetItems(winrt::array_view<winrt::hstring> items) override;
@@ -206,18 +206,13 @@ struct MultiInterface : winrt::author::runtimeclass<>, IControl, IListBox
 
 ### Implement internal authored interface
 ```
-namespace winrt::Contoso
-{
-    struct IControl;
-};
 namespace winrt::Contoso::author
 {
     struct IControl : winrt::author::winrt_interface
     {
         virtual void Paint() = 0;
     };
-    // Note: the interface is projected type, not authored type
-    struct ImplementingInternalAuthoredInterface : winrt::author::runtimeclass<winrt::author::internal<winrt::Contoso::IControl>>
+    struct ImplementingInternalAuthoredInterface : winrt::author::runtimeclass<winrt::author::internal<IControl>>
     {
         void Paint(winrt::author::override = {});
     };
