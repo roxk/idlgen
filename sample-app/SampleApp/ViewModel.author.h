@@ -38,11 +38,11 @@ namespace winrt::SampleApp::author
 		winrt::hstring ToString(winrt::author::override = {});
 	};
 
-	struct DerivedViewModel : winrt::author::runtimeclass<ViewModelWithInternalInterface>, IAuthoredInterface
+	struct DerivedViewModel : winrt::author::runtimeclass<ViewModelWithInternalInterface, IAuthoredInterface>
 	{
 		void OverridableMethod(winrt::author::override = {});
 		void MethodWithValueType(Permission permission, winrt::author::override = {});
-		void Method() override;
+		void Method(winrt::author::override = {});
 	};
 
     struct ImplementingInternalAuthoredInterface : winrt::author::runtimeclass<winrt::author::internal<SampleApp::IAuthoredInterface>>

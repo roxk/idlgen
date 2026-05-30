@@ -50,7 +50,7 @@ void winrt::SampleApp::author::DerivedViewModel::MethodWithValueType(Permission 
 	int i = 0;
 }
 
-void winrt::SampleApp::author::DerivedViewModel::Method()
+void winrt::SampleApp::author::DerivedViewModel::Method(winrt::author::override)
 {
 }
 

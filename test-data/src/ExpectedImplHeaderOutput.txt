@@ -18,6 +18,12 @@ using AuthorClassHeap::AuthorClassHeap;
 winrt::App1::Point UseAuthorStruct(winrt::App1::Point point) {
     return std::bit_cast<winrt::App1::Point>(AuthorClassHeap::UseAuthorStruct(std::bit_cast<winrt::App1::author::Point>(point)));
 }
+void Paint() {
+    AuthorClassHeap::Paint(winrt::author::override{});
+}
+void SetText(winrt::hstring const& value) {
+    AuthorClassHeap::SetText(value, winrt::author::override{});
+}
 void OnKeyboardAcceleratorInvoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args) {
     AuthorClassHeap::OnKeyboardAcceleratorInvoked(args, winrt::author::override{});
 }
