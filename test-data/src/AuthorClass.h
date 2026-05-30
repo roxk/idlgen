@@ -49,10 +49,10 @@ namespace winrt::App1::author
     };
     struct AuthorClass : winrt::author::unsealed, winrt::author::runtimeclass<
         winrt::Microsoft::UI::Xaml::FrameworkElement,
-        winrt::Windows::Foundation::IStringable
-        // winrt::Microsoft::UI::Xaml::Data::INotifyPropertyChanged
-    >,
+        winrt::Windows::Foundation::IStringable,
+        // winrt::Microsoft::UI::Xaml::Data::INotifyPropertyChanged,
         ITest
+    >
     {
         enum State
         {
@@ -108,8 +108,8 @@ namespace winrt::App1::author
         winrt::Windows::Foundation::IReference<int> BoxedInt(winrt::author::getter = {});
 
         void Ignored(winrt::author::ignore = {});
-        void Paint() override;
-        void SetText(winrt::hstring const& value) override;
+        void Paint(winrt::author::override = {});
+        void SetText(winrt::hstring const& value, winrt::author::override = {});
         static void StaticMethod();
         void OnKeyboardAcceleratorInvoked(winrt::Microsoft::UI::Xaml::Input::KeyboardAcceleratorInvokedEventArgs const& args, winrt::author::override = {});
         winrt::hstring ToString(winrt::author::override = {});

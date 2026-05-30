@@ -1645,7 +1645,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
             }
             continue;
         }
-        exposedBaseTypes.push_back(baseType);
+        // All other bases are ignored
     }
     if (!exposedBaseTypes.empty())
     {
@@ -1695,11 +1695,6 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
         }
         else if (std::meta::is_special_member_function(member))
         {
-            continue;
-        }
-        if (std::meta::is_override(member))
-        {
-            // In the current idlgen model, only authored interface methods can be overriden
             continue;
         }
         if (std::meta::is_protected(member))
