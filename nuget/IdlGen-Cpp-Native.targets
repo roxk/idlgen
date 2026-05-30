@@ -41,9 +41,6 @@
         <IdlGenCppPch Include="$(IdlGenCppPch)"/>
         <IdlGenCppGetterTemplates Include="$(IdlGenCppGetterTemplate)"/>
         <IdlGenCppPropertyTemplates Include="$(IdlGenCppPropertyTemplate)"/>
-        <ClCompile Include="$(OutputImplCpp)">
-            <CompilerIteration>XamlGenerated</CompilerIteration>
-        </ClCompile>
         <ClInclude Include="$(OutputImplHeader)">
             <DependentUpon>$(OutputIdl)</DependentUpon>
         </ClInclude>
@@ -91,6 +88,12 @@
         <MakeDir Directories="$(IdlgenCppIntDir)" />
     </Target>
     <Target Name="IdlGenCppGenerateIDL" DependsOnTargets="ComputeAdditionalIncludeDirectories;IdlgenCppMakeDependencyProjection" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="$(IdlGenCppGenerateIDLRspFile)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+        <ItemGroup>
+            <ClCompile Remove="$(OutputImplCpp)"/>
+            <ClCompile Include="$(OutputImplCpp)">
+                <CompilerIteration>XamlGenerated</CompilerIteration>
+            </ClCompile>
+        </ItemGroup>
         <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static -v -fmax-errors=100 -include &quot;$(IdlGenCppPch)&quot; -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;$(MSBuildThisFileDirectory)..\..\src\main.cpp&quot; -lole32 -loleaut32 @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;$(ExeFile)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -idl > &quot;$(OutputIdl)&quot; &amp;&amp;  &quot;$(ExeFile)&quot; -implementation-header > &quot;$(OutputImplHeader)&quot; &amp;&amp; &quot;$(ExeFile)&quot; -implementation-cpp > &quot;$(OutputImplCpp)&quot;" />
         <WriteLinesToFile
             File="$(IdlGenCppGenerateIDLRspFile)" Lines="Done"
