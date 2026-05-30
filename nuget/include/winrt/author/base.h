@@ -5,38 +5,38 @@
 namespace winrt::author
 {
     template <typename... Base>
-    struct winrt_interface
+    struct WINRT_IMPL_EMPTY_BASES winrt_interface
     {};
     template <>
-    struct winrt_interface<>
+    struct WINRT_IMPL_EMPTY_BASES winrt_interface<>
     {};
     template <typename... Base>
-    struct runtimeclass
+    struct WINRT_IMPL_EMPTY_BASES runtimeclass
     {
         virtual void use_make_function_to_create_this_object() = 0;
     };
     template <>
-    struct runtimeclass<>
+    struct WINRT_IMPL_EMPTY_BASES runtimeclass<>
     {
         virtual void use_make_function_to_create_this_object() = 0;
     };
-    struct unsealed
+    struct WINRT_IMPL_EMPTY_BASES unsealed
     {};
-    struct setter
+    struct WINRT_IMPL_EMPTY_BASES setter
     {};
-    struct getter
+    struct WINRT_IMPL_EMPTY_BASES getter
     {};
-    struct ignore
+    struct WINRT_IMPL_EMPTY_BASES ignore
     {};
-    struct static_class
+    struct WINRT_IMPL_EMPTY_BASES static_class
     {};
-    struct partial
+    struct WINRT_IMPL_EMPTY_BASES partial
     {};
-    struct delegate
+    struct WINRT_IMPL_EMPTY_BASES delegate
     {};
-    struct winrt_struct
+    struct WINRT_IMPL_EMPTY_BASES winrt_struct WINRT_IMPL_EMPTY_BASES
     {};
-    struct attribute_target
+    struct WINRT_IMPL_EMPTY_BASES attribute_target
     {
     protected:
 
@@ -54,45 +54,45 @@ namespace winrt::author
         friend struct target_struct;
         attribute_target() = default;
     };
-    struct target_all : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_all : attribute_target
     {};
-    struct target_delegate : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_delegate : attribute_target
     {};
-    struct target_enum : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_enum : attribute_target
     {};
-    struct target_event : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_event : attribute_target
     {};
-    struct target_field : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_field : attribute_target
     {};
-    struct target_interface : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_interface : attribute_target
     {};
-    struct target_method : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_method : attribute_target
     {};
-    struct target_parameter : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_parameter : attribute_target
     {};
-    struct target_property : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_property : attribute_target
     {};
-    struct target_runtimeclass : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_runtimeclass : attribute_target
     {};
-    struct target_struct : attribute_target
+    struct WINRT_IMPL_EMPTY_BASES target_struct : attribute_target
     {};
     template<typename T>
     concept AttributeTarget = std::is_base_of_v<winrt::author::attribute_target, T>;
     template<AttributeTarget... Target>
-    struct attributeusage
+    struct WINRT_IMPL_EMPTY_BASES attributeusage
     {};
-    struct allowmultiple
+    struct WINRT_IMPL_EMPTY_BASES allowmultiple
     {};
     // TODO: Constraint parameters to be only attributeusage or allowmultiple
     template<typename... T>
-    struct attribute
+    struct WINRT_IMPL_EMPTY_BASES attribute
     {};
     // TODO: Constraint first param to be an attribute
     template<typename T, auto... Args>
-    struct apply_attr
+    struct WINRT_IMPL_EMPTY_BASES apply_attr
     {};
     template <typename T, size_t N>
-    struct attr_string
+    struct WINRT_IMPL_EMPTY_BASES attr_string
     {
         T data[N];
         constexpr attr_string(T const (&s)[N])
@@ -101,24 +101,24 @@ namespace winrt::author
         }
     };
     template <typename T, size_t N>
-    struct attr_type : attr_string<T, N>
+    struct WINRT_IMPL_EMPTY_BASES attr_type : attr_string<T, N>
     {
         using attr_string<T, N>::attr_string;
     };
-    struct allowforweb
+    struct WINRT_IMPL_EMPTY_BASES allowforweb
     {};
-    struct contentproperty
+    struct WINRT_IMPL_EMPTY_BASES contentproperty
     {};
-    struct contract
+    struct WINRT_IMPL_EMPTY_BASES contract
     {};
-    struct uuid
+    struct WINRT_IMPL_EMPTY_BASES uuid
     {};
-    struct interface_name
+    struct WINRT_IMPL_EMPTY_BASES interface_name
     {};
     template <typename... T>
-    struct internal
+    struct WINRT_IMPL_EMPTY_BASES internal
     {};
-    struct override
+    struct WINRT_IMPL_EMPTY_BASES override
     {
     };
 }
