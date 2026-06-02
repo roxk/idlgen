@@ -126,11 +126,11 @@
         </ItemGroup>
         <PropertyGroup>
             <FileName>%(IdlGenCppInclude.RelativeDir)%(IdlGenCppInclude.Filename)</FileName>
-            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'true'">-v</VerboseFlag>
+            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'true'">-v -ftime-report</VerboseFlag>
             <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'false'"></VerboseFlag>
         </PropertyGroup>
         <MakeDir Directories="%(IdlGenCppInclude.GeneratedFilesDir)" />
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static $(VerboseFlag) -fmax-errors=100 -include &quot;$(IdlGenCppPch)&quot; -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppInclude.MainFile)&quot; -lole32 -loleaut32 @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;%(IdlGenCppInclude.ExeFile)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -idl > &quot;%(IdlGenCppInclude.OutputIdl)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-header > &quot;%(IdlGenCppInclude.OutputImplHeader)&quot; &amp;&amp; &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-cpp > &quot;%(IdlGenCppInclude.OutputImplCpp)&quot;" />
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static $(VerboseFlag) -fmax-errors=100 -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppInclude.MainFile)&quot; -lole32 -loleaut32 @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;%(IdlGenCppInclude.ExeFile)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -idl > &quot;%(IdlGenCppInclude.OutputIdl)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-header > &quot;%(IdlGenCppInclude.OutputImplHeader)&quot; &amp;&amp; &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-cpp > &quot;%(IdlGenCppInclude.OutputImplCpp)&quot;" />
         <OnError ExecuteTargets="IdlGenCppCleanupGenerateIDL"/>
     </Target>
     <Target Name="IdlGenCppComputeImplCppLines">
