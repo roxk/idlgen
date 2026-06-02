@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "ViewModel.author.h"
 #include "winrt/SampleApp.h"
-#include "Generated Files/idlgen.impl.h"
+#include <ViewModel.author.impl.h>
 
 void winrt::SampleApp::author::ViewModel::StaticMethod1()
 {

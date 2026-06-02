@@ -1,4 +1,4 @@
-#include "author_types.h"
+IDLGEN_AUTHOR_TYPE_INCLUDE_PLACEHOLDER
 #include "formatter.h"
 #include "vector_string.h"
 #include "winrt/author/base.h"
@@ -44,7 +44,8 @@ enum class NameFormat
     Idl,
     Cpp,
     CppProjected,
-    CppImplementation
+    CppImplementation,
+    CppIncludeGuard
 };
 
 consteval vector_string fqn(std::meta::info info, bool isParameter = false, NameFormat format = NameFormat::Idl);
@@ -323,7 +324,7 @@ consteval void printParentThenSelfName(
             printParentThenSelfName(parent, result, isParameter, nameFormat, identifierMapper);
             if (!isAuthorNamespaceValue)
             {
-                result += nameFormat == NameFormat::Idl ? "." : "::";
+                result += nameFormat == NameFormat::Idl ? "." : nameFormat == NameFormat::CppIncludeGuard ? "_" : "::";
             }
         }
     }
@@ -1595,6 +1596,30 @@ consteval bool isOverrideMethod(std::meta::info info)
     return false;
 }
 
+consteval void startIncludeGuard(vector_string& implementation, std::meta::info info, std::string_view suffix = "_H")
+{
+    if (!std::meta::has_identifier(info))
+    {
+        throw std::runtime_error(
+            "Only entities with identifier can be included, got "s + std::meta::display_string_of(info)
+        );
+    }
+    auto name = fqnCpp(info, NameFormat::CppIncludeGuard);
+    implementation += "#ifndef ";
+    implementation += name;
+    implementation += suffix;
+    implementation += "\n";
+    implementation += "#define ";
+    implementation += name;
+    implementation += suffix;
+    implementation += "\n";
+}
+
+consteval void endIncludeGuard(vector_string& implementation)
+{
+    implementation += "#endif\n";
+}
+
 template <std::meta::info info>
 consteval void printRuntimeClass(vector_string& idl, vector_string& implementation, vector_string& implementationCpp)
 {
@@ -1751,6 +1776,7 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     idl += "}\n";
     idl += "}\n";
     // Heap implements
+    startIncludeGuard(implementation, type);
     tryInclude(implementation, typeName + ".g.h"s);
     printNamespaceScope(type, implementation, NameFormat::CppImplementation);
     implementation += "struct ";
@@ -1914,8 +1940,11 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     implementation += "*>(self);\n";
     implementation += "}\n";
     implementation += "}\n";
+    endIncludeGuard(implementation);
+    startIncludeGuard(implementationCpp, type, "_G_CPP");
     tryInclude(implementationCpp, typeName + ".g.cpp"s);
     tryInclude(implementationCpp, typeName + ".xaml.g.hpp"s);
+    endIncludeGuard(implementationCpp);
 }
 
 template <std::meta::info type> consteval void printInterface(vector_string& idl, vector_string& implementation)
@@ -2059,6 +2088,7 @@ consteval void printStruct(vector_string& idl, vector_string& implementation, st
     idl += "}\n";
     // Declare category_t
     auto typeName = fqnCpp(info, NameFormat::Cpp);
+    startIncludeGuard(implementation, info);
     implementation += "namespace winrt::impl {\n";
     implementation += "template <> struct category<";
     implementation += typeName;
@@ -2069,6 +2099,7 @@ consteval void printStruct(vector_string& idl, vector_string& implementation, st
     implementation += fqn(info);
     implementation += "\";\n";
     implementation += "}\n";
+    endIncludeGuard(implementation);
 }
 
 template <std::meta::info info> consteval void printEnum(vector_string& idl, vector_string& implementation)
@@ -2103,6 +2134,7 @@ template <std::meta::info info> consteval void printEnum(vector_string& idl, vec
     idl += "}\n";
     // Declare category_t
     auto typeName = fqnCpp(info, NameFormat::Cpp);
+    startIncludeGuard(implementation, info);
     implementation += "namespace winrt::impl {\n";
     implementation += "template <> struct category<";
     implementation += typeName;
@@ -2113,6 +2145,7 @@ template <std::meta::info info> consteval void printEnum(vector_string& idl, vec
     implementation += fqn(info);
     implementation += "\";\n";
     implementation += "}\n";
+    endIncludeGuard(implementation);
 }
 
 consteval void printAttribute(vector_string& result, std::meta::info info)
@@ -2266,17 +2299,17 @@ constexpr auto generated = gen_idl();
 
 int main(int argc, char* argv[])
 {
-    if (argc <= 1)
+    constexpr auto fileNameIndex = 1;
+    constexpr auto argumentIndex = 2;
+    constexpr auto expectedArgumentCount = 3;
+    if (argc != expectedArgumentCount)
     {
-        std::cerr << "expected one argument. usage: .exe -idl|-implementation" << std::endl;
+        std::cerr << "expected two argument. usage: .exe $fileName -idl|-implementation-header|-implementation-cpp"
+                  << std::endl;
         return -1;
     }
-    if (argc > 2)
-    {
-        std::cerr << "unknown argument" << argv[2] << std::endl;
-        return -1;
-    }
-    auto arg = std::string_view(argv[1]);
+    auto fileName = std::string_view(argv[fileNameIndex]);
+    auto arg = std::string_view(argv[argumentIndex]);
     auto& [idl, implementation, implementationCpp] = generated;
     if (arg == "-idl")
     {
@@ -2285,14 +2318,13 @@ int main(int argc, char* argv[])
     else if (arg == "-implementation-header")
     {
         std::cout << "#pragma once" << std::endl;
-        std::cout << "#include \"pch.h\"" << std::endl;
-        std::cout << "#include \"author_types.h\"" << std::endl;
+        std::cout << "#include \"" << fileName << ".h\"" << std::endl;
         std::cout << std::string(implementation.data(), implementation.size()) << std::endl;
     }
     else if (arg == "-implementation-cpp")
     {
         std::cout << "#include \"pch.h\"" << std::endl;
-        std::cout << "#include \"idlgen.impl.h\"" << std::endl;
+        std::cout << "#include \"" << fileName << ".impl.h\"" << std::endl;
         std::cout << std::string(implementationCpp.data(), implementationCpp.size()) << std::endl;
     }
     else

@@ -1,7 +1,8 @@
 ﻿#include "pch.h"
 #include "BlankPage.author.h"
 #include "winrt/SampleApp.h"
-#include "idlgen.impl.h"
+#include <BlankPage.author.impl.h>
+#include <ViewModel.author.impl.h>
 
 using namespace winrt;
 using namespace author;

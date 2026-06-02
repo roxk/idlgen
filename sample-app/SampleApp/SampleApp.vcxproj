@@ -88,6 +88,9 @@
     <Import Project="PropertySheet.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <MultiProcMIDL>true</MultiProcMIDL>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -129,6 +132,7 @@
     <ClInclude Include="App.h">
       <DependentUpon>App.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="SomeFolder\PageType.author.h" />
     <ClInclude Include="SomeFolder\PageType.h" />
     <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h" />
     <ClInclude Include="ViewModel.author.h" />
