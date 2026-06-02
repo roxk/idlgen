@@ -1,9 +1,13 @@
 #pragma once
 
 #include "winrt/author/base.h"
-#include "winrt/Windows.UI.Xaml.Controls.h"
 #include "BlankPage.author.h"
 #include "SomeFolder/PageType.author.h"
+
+namespace winrt::Windows::UI::Xaml::Controls
+{
+    struct Page;
+}
 
 namespace winrt::SampleApp::author
 {
