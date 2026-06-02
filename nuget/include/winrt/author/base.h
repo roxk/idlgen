@@ -2,6 +2,10 @@
 #include <winrt/base.h>
 #include <type_traits>
 
+namespace winrt::Windows::Foundation::Collections
+{
+}
+
 namespace winrt::author
 {
     template <typename... Base>
@@ -34,7 +38,7 @@ namespace winrt::author
     {};
     struct WINRT_IMPL_EMPTY_BASES delegate
     {};
-    struct WINRT_IMPL_EMPTY_BASES winrt_struct WINRT_IMPL_EMPTY_BASES
+    struct WINRT_IMPL_EMPTY_BASES winrt_struct
     {};
     struct WINRT_IMPL_EMPTY_BASES attribute_target
     {
