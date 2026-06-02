@@ -9,6 +9,7 @@
         <Native-Platform Condition="'$(Platform)' == 'Win32'">x86</Native-Platform>
         <Native-Platform Condition="'$(Platform)' != 'Win32'">$(Platform)</Native-Platform>
         <IdlGenCppGenerateIDL Condition="'$(IdlGenCppGenerateIDL)' == ''">true</IdlGenCppGenerateIDL>
+        <IdlGenCppVerboseLogs Condition="'$(IdlGenCppVerboseLogs)' == ''">false</IdlGenCppVerboseLogs>
     </PropertyGroup>
     <PropertyGroup>
         <IdlGenCppIncludeDirs>$(GeneratedFilesDir);$(ProjectDir);$(MSBuildThisFileDirectory)..\..\include</IdlGenCppIncludeDirs>
@@ -87,9 +88,11 @@
     </Target>
     <Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="IdlgenCppCheckPchCount;ComputeAdditionalIncludeDirectories" Inputs="$(MSBuildAllProjects);@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
         <Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
-        <!-- TODO: handle define. Do we still need them in 2.0? -->
-        <!-- @(IdlGenCppAdditionalDefines->'define=&quot;%(Identity)&quot;', ' ') -->
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -v -x c++-header -fmax-errors=100 -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppPch.Identity)&quot; @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
+        <PropertyGroup>
+            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'true'">-v</VerboseFlag>
+            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'false'"></VerboseFlag>
+        </PropertyGroup>
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 $(VerboseFlag) -x c++-header -fmax-errors=100 -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppPch.Identity)&quot; @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
         <OnError ExecuteTargets="IdlGenCppCleanupPCH"/>
     </Target>
     <Target Name="IdlGenCppCleanupPCH">
@@ -101,7 +104,6 @@
             <OutFile>%(IdlGenCppInclude.MainFile)</OutFile>
             <IntDir>%(IdlGenCppInclude.IntDir)</IntDir>
         </PropertyGroup>
-        <Message Text="$(CurrentInput)" Importance="high" />
         <ReadLinesFromFile File="$(MSBuildThisFileDirectory)..\..\src\main.cpp">
             <Output TaskParameter="Lines" ItemName="TemplateLines" />
         </ReadLinesFromFile>
@@ -115,6 +117,7 @@
         <OnError ExecuteTargets="IdlGenCppCleanupGenerateIDL"/>
     </Target>
     <Target Name="IdlGenCppGenerateIDL" DependsOnTargets="ComputeAdditionalIncludeDirectories;IdlgenCppMakeDependencyProjection;IdlGenCppGenerateAuthorTypeMainFile" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(OutputIdl)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+        <Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
         <ItemGroup>
             <Midl Include="%(IdlGenCppInclude.OutputIdl)"/>
             <ClInclude Include="%(IdlGenCppInclude.OutputImplHeader)">
@@ -123,9 +126,11 @@
         </ItemGroup>
         <PropertyGroup>
             <FileName>%(IdlGenCppInclude.RelativeDir)%(IdlGenCppInclude.Filename)</FileName>
+            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'true'">-v</VerboseFlag>
+            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'false'"></VerboseFlag>
         </PropertyGroup>
         <MakeDir Directories="%(IdlGenCppInclude.GeneratedFilesDir)" />
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static -v -fmax-errors=100 -include &quot;$(IdlGenCppPch)&quot; -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppInclude.MainFile)&quot; -lole32 -loleaut32 @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;%(IdlGenCppInclude.ExeFile)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -idl > &quot;%(IdlGenCppInclude.OutputIdl)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-header > &quot;%(IdlGenCppInclude.OutputImplHeader)&quot; &amp;&amp; &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-cpp > &quot;%(IdlGenCppInclude.OutputImplCpp)&quot;" />
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static $(VerboseFlag) -fmax-errors=100 -include &quot;$(IdlGenCppPch)&quot; -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppInclude.MainFile)&quot; -lole32 -loleaut32 @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;%(IdlGenCppInclude.ExeFile)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -idl > &quot;%(IdlGenCppInclude.OutputIdl)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-header > &quot;%(IdlGenCppInclude.OutputImplHeader)&quot; &amp;&amp; &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-cpp > &quot;%(IdlGenCppInclude.OutputImplCpp)&quot;" />
         <OnError ExecuteTargets="IdlGenCppCleanupGenerateIDL"/>
     </Target>
     <Target Name="IdlGenCppComputeImplCppLines">
