@@ -18,34 +18,12 @@ void Test()
         return cur;
     });
     var compilerExe = $"{binDirPath}/g++.exe";
-    var pchPath = $"{fakeProjectRootDirPath}/pch.h";
-    var pchOutputPath = $"{pchPath}.gch";
-    if (File.Exists(pchOutputPath))
-    {
-        Console.WriteLine("pch.h.gch exists, skipping pch.h...");
-    }
-    else
-    {
-        var genPchCmd = $"-std=c++26 -v {includeParam} -x c++-header {pchPath}";
-        var pchP = Process.Start(new ProcessStartInfo
-        {
-            FileName = "powershell",
-            Arguments = $"-c \"{compilerExe}\" {genPchCmd}",
-            UseShellExecute = false,
-        });
-        pchP!.WaitForExit();
-        if (pchP.ExitCode != 0)
-        {
-            Console.WriteLine("Failed to generate pch");
-            throw new InvalidOperationException();
-        }
-    }
     var input = $"{devDirPath}/main.cpp";
     var outputExePath = $"{outDirPath}/main.exe";
     var outputIdlPath = $"{outDirPath}/outputIdl.txt";
     var outputImplHeaderPath = $"{outDirPath}/outputImplHeader.txt";
     var outputImplCppPath = $"{outDirPath}/outputImplCpp.txt";
-    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -include pch.h -ftime-report {input} -fconstexpr-ops-limit=500000000 -o {outputExePath}";
+    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -ftime-report {input} -DIDLGEN_CPP_STATIC_REFLECTION_PHASE -fconstexpr-ops-limit=500000000 -o {outputExePath}";
     Directory.CreateDirectory(outDirPath);
     var cp = Process.Start(new ProcessStartInfo
     {

@@ -1,24 +1,9 @@
 #pragma once
 
-#include <winrt/author/base.h>
-
-namespace winrt::Windows::Foundation
-{
-	struct IStringable;
-	struct IInspectable;
-}
-namespace winrt::Windows::UI::Xaml
-{
-	struct RoutedEventArgs;
-}
-namespace winrt::Windows::UI::Xaml::Controls
-{
-	struct Page;
-}
-namespace winrt::Windows::UI::Xaml::Input
-{
-	struct KeyboardAcceleratorInvokedEventArgs;
-}
+#include "winrt/author/base.h"
+#include <winrt/impl/Windows.Foundation.0.h>
+#include <winrt/impl/Windows.UI.Xaml.Controls.0.h>
+#include <winrt/impl/Windows.UI.Xaml.Input.0.h>
 
 namespace winrt::SampleApp
 {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Microsoft.UI.Xaml.h>
-// #include <winrt/Microsoft.UI.Xaml.Data.h>
 #include "winrt/author/base.h"
+#include <winrt/impl/Windows.Foundation.0.h>
+#include <winrt/impl/Microsoft.UI.Xaml.0.h>
+// #include <winrt/Microsoft.UI.Xaml.Data.h>
 
 namespace winrt::Microsoft::UI::Xaml::Input
 {
