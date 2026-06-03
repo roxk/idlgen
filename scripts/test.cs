@@ -11,19 +11,24 @@ void Test()
     const string nugetInclude = "nuget/include";
     const string fakeWinrtGeneratedProjectDirPath = "test-data/include";
     const string fakeProjectRootDirPath = "test-data/src";
-    List<string> includes = [nugetInclude, fakeWinrtGeneratedProjectDirPath, fakeProjectRootDirPath];
+    List<string> includes = [nugetInclude, devDirPath, fakeWinrtGeneratedProjectDirPath, fakeProjectRootDirPath];
     var includeParam = includes.Aggregate("", (cur, next) =>
     {
         cur += $"-I\"{next}\" ";
         return cur;
     });
+    var fileName = "AuthorClass";
     var compilerExe = $"{binDirPath}/g++.exe";
-    var input = $"{devDirPath}/main.cpp";
+    var inputTemplatePath = $"{devDirPath}/main.cpp";
+    var inputContent = File.ReadAllText(inputTemplatePath);
+    var inputReplaced = inputContent.Replace("IDLGEN_AUTHOR_TYPE_INCLUDE_PLACEHOLDER", $"#include \"{fileName}.h\"");
+    string inputPath = Path.GetFullPath(Path.Combine(outDirPath, "main.cpp"));
+    File.WriteAllText(inputPath, inputReplaced);
     var outputExePath = $"{outDirPath}/main.exe";
     var outputIdlPath = $"{outDirPath}/outputIdl.txt";
     var outputImplHeaderPath = $"{outDirPath}/outputImplHeader.txt";
     var outputImplCppPath = $"{outDirPath}/outputImplCpp.txt";
-    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -ftime-report {input} -DIDLGEN_CPP_STATIC_REFLECTION_PHASE -fconstexpr-ops-limit=500000000 -o {outputExePath}";
+    var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -ftime-report {inputPath} -DIDLGEN_CPP_STATIC_REFLECTION_PHASE -fconstexpr-ops-limit=500000000 -o {outputExePath}";
     Directory.CreateDirectory(outDirPath);
     var cp = Process.Start(new ProcessStartInfo
     {
@@ -44,7 +49,7 @@ void Test()
     var idlp = Process.Start(new ProcessStartInfo
     {
         FileName = "powershell",
-        Arguments = $"-c \"{outputExePath}\" -idl | Out-File {outputIdlPath} -Encoding utf8",
+        Arguments = $"-c \"{outputExePath}\" {fileName} -idl | Out-File {outputIdlPath} -Encoding utf8",
         UseShellExecute = false,
     });
     idlp!.WaitForExit();
@@ -83,7 +88,7 @@ void Test()
     var implHp = Process.Start(new ProcessStartInfo
     {
         FileName = "powershell",
-        Arguments = $"-c \"{outputExePath}\" -implementation-header | Out-File {outputImplHeaderPath} -Encoding utf8",
+        Arguments = $"-c \"{outputExePath}\" {fileName} -implementation-header | Out-File {outputImplHeaderPath} -Encoding utf8",
         UseShellExecute = false,
     });
     implHp!.WaitForExit();
@@ -96,7 +101,7 @@ void Test()
     var implCppP = Process.Start(new ProcessStartInfo
     {
         FileName = "powershell",
-        Arguments = $"-c \"{outputExePath}\" -implementation-cpp | Out-File {outputImplCppPath} -Encoding utf8",
+        Arguments = $"-c \"{outputExePath}\" {fileName} -implementation-cpp | Out-File {outputImplCppPath} -Encoding utf8",
         UseShellExecute = false,
     });
     implCppP!.WaitForExit();
