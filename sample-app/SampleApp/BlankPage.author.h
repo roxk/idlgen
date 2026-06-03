@@ -1,8 +1,9 @@
 #pragma once
 
 #include "winrt/author/base.h"
-#include <winrt/Windows.UI.Xaml.Controls.h>
-#include <winrt/Windows.UI.Xaml.Input.h>
+#include <winrt/impl/Windows.Foundation.0.h>
+#include <winrt/impl/Windows.UI.Xaml.Controls.0.h>
+#include <winrt/impl/Windows.UI.Xaml.Input.0.h>
 
 namespace winrt::SampleApp
 {
