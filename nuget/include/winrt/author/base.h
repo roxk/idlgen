@@ -1,4 +1,7 @@
 #pragma once
+
+#include <windows.h>
+#include <hstring.h>
 #include <winrt/base.h>
 #include <type_traits>
 

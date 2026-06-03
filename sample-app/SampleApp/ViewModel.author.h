@@ -1,7 +1,7 @@
 #pragma once
 
 #include "winrt/author/base.h"
-#include "winrt/Windows.Foundation.h"
+#include "winrt/impl/Windows.Foundation.0.h"
 #include "BlankPage.author.h"
 
 namespace winrt::SampleApp

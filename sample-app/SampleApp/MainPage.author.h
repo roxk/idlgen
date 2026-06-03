@@ -1,7 +1,7 @@
 #pragma once
 
 #include "winrt/author/base.h"
-#include "winrt/Windows.UI.Xaml.Controls.h"
+#include "winrt/impl/Windows.UI.Xaml.Controls.0.h"
 #include "BlankPage.author.h"
 #include "SomeFolder/PageType.author.h"
 
