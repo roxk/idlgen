@@ -35,7 +35,6 @@
         <IdlGenCppAdditionalDefines Include="$(IdlGenCppAdditionalDefines)"/>
     </ItemGroup>
     <ItemGroup>
-        <IdlGenCppPch Include="$(IdlGenCppPch)"/>
         <IdlGenCppGetterTemplates Include="$(IdlGenCppGetterTemplate)"/>
         <IdlGenCppPropertyTemplates Include="$(IdlGenCppPropertyTemplate)"/>
     </ItemGroup>
@@ -43,9 +42,6 @@
         <ClCompile>
             <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)..\..\include;$(MSBuildThisFileDirectory)..\..\src</AdditionalIncludeDirectories>
         </ClCompile>
-        <IdlGenCppPch>
-            <PchOutput>%(RelativeDir)%(Filename)%(Extension).gch</PchOutput>
-        </IdlGenCppPch>
         <IdlGenCppInclude>
             <MainFile>$(IdlgenCppIntDir)%(RelativeDir)%(Filename)_main.cpp</MainFile>
             <ExeFile>$(IdlgenCppIntDir)%(RelativeDir)%(Filename)_main.exe</ExeFile>
@@ -61,15 +57,11 @@
             <_FilesToDelete Include="$(IdlgenCppIntDir)**"/>
             <_FilesToDelete Include="$(IdlgenCppAuthorTypeFile)"/>
             <_FilesToDelete Include="$(OutputIdl)"/>
-            <_FilesToDelete Include="@(IdlGenCppPch->'%(PchOutput)')"/>
         </ItemGroup>
         <Delete Files="@(_FilesToDelete)"/>
     </Target>
     <!-- Before we generate idl, make sure dependency projection is built -->
     <Target Name="IdlgenCppMakeDependencyProjection" DependsOnTargets="CppWinRTResolveReferences;CppWinRTMakePlatformProjection;CppWinRTMakeReferenceProjection;">
-    </Target>
-    <Target Name="IdlgenCppCheckPchCount">
-        <Error Text="More than 1 pch specified. Idlgen only supports 1 pch at a time." Condition="@(IdlGenCppPch->Count()) > 1"/>
     </Target>
     <Target Name="ComputeAdditionalIncludeDirectories" Returns="@(IdlGenCppDistinctIncludeDirs)">
         <PropertyGroup>
@@ -85,18 +77,6 @@
     </Target>
     <Target Name="IdlGenCppGenerateIntDir" BeforeTargets="IdlGenCppGenerateAuthorTypeMainFile" Condition="'$(IdlGenCppGenerateIDL)' == 'true' AND !Exists($(IdlgenCppIntDir))">
         <MakeDir Directories="$(IdlgenCppIntDir)" />
-    </Target>
-    <Target Name="IdlGenCppGeneratePCH" BeforeTargets="IdlGenCppStartGenerateIDL" DependsOnTargets="IdlgenCppCheckPchCount;ComputeAdditionalIncludeDirectories" Inputs="$(MSBuildAllProjects);@(IdlGenCppPch)" Outputs="%(PchOutput)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-        <Message Text="%(IdlGenCppPch.Identity)" Importance="high" />
-        <PropertyGroup>
-            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'true'">-v</VerboseFlag>
-            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'false'"></VerboseFlag>
-        </PropertyGroup>
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 $(VerboseFlag) -x c++-header -fmax-errors=100 -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppPch.Identity)&quot; @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ')" />
-        <OnError ExecuteTargets="IdlGenCppCleanupPCH"/>
-    </Target>
-    <Target Name="IdlGenCppCleanupPCH">
-        <Delete Files="@(IdlGenCppPch->'%(PchOutput)')"/>
     </Target>
     <Target Name="IdlGenCppGenerateAuthorTypeMainFile" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(MainFile)">
         <PropertyGroup>
@@ -163,7 +143,7 @@
     <Target Name="IdlGenCppCleanupGenerateIDL">
         <!-- TODO -->
     </Target>
-    <Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateAuthorTypeMainFiles" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
+    <Target Name="IdlGenCppStartGenerateIDL" BeforeTargets="IdlGenCppGenerateAuthorTypeMainFile" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
         <Message Text="Generating idl from C++/WinRT author types" Importance="high" />
     </Target>
 </Project>
