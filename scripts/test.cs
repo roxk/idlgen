@@ -8,6 +8,7 @@ void Test()
     const string binDirPath = "./winLibs/mingw64/bin";
     const string devDirPath = "dev/src";
     const string outDirPath = "out";
+    Directory.CreateDirectory(outDirPath);
     const string nugetInclude = "nuget/include";
     const string fakeWinrtGeneratedProjectDirPath = "test-data/include";
     const string fakeProjectRootDirPath = "test-data/src";
@@ -29,7 +30,6 @@ void Test()
     var outputImplHeaderPath = $"{outDirPath}/outputImplHeader.txt";
     var outputImplCppPath = $"{outDirPath}/outputImplCpp.txt";
     var compileCmd = $"-std=c++26 -freflection -static -v {includeParam} -ftime-report {inputPath} -DIDLGEN_CPP_STATIC_REFLECTION_PHASE -fconstexpr-ops-limit=500000000 -o {outputExePath}";
-    Directory.CreateDirectory(outDirPath);
     var cp = Process.Start(new ProcessStartInfo
     {
         FileName = "powershell",
