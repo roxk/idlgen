@@ -7,7 +7,13 @@ Write C++, F5, and see your C++/WinRT app running. Git-ignore idl in your codeba
 
 ![idl-free C++/WinRT experience](banner.png)
 
-idlgen is a C\+\+20 library that helps you get rid of idl and implementation type while authoring C++/WinRT types, with the aim of bringing the developer experience on par with C++/CX (regardless of XAML).
+idlgen is a C\+\+20 library that helps you get rid of idl and implementation type while authoring C++/WinRT types, with the aim of bringing the developer experience on par with C++/CX.
+
+## Features
+
+- Writing _authored type_ which are ordinary C++ types with some standard-compliant ergonomic DSL to express WinRT concept
+- Consume WinRT APIs and WinRT component libraries as usual
+- Incremental compilation
 
 ## Pre-requisite
 
@@ -22,25 +28,19 @@ idlgen is a C\+\+20 library that helps you get rid of idl and implementation typ
 
 ## Usage
 
-1. Add `<winrt/Windows.Foundation.h>` to pch.h*
-2. Add `<idlgen.impl.h>` to pch.h
-2. In your pch.h, only include existing implementation type header if `IDLGEN_CPP_STATIC_REFLECTION_PHASE` is NOT defined. i.e. add this block to your pch.h:
-```
-#ifndef IDLGEN_CPP_STATIC_REFLECTION_PHASE
-#include "MyExistingIdlType.h"              // They cannot be included during reflection phase since .g.h is not generated yet
-#endif
-```
-3. Viola! Start writing authored type following rules below
-
-*If you do not want to do that, make sure anywhere you write author type you must include `<winrt/Windows.Foundation.h>`. If you do not include it in pch, and have not written any author type yet, disable generating idl via project property `IdlGenCppGenerateIDL`. 
-
-### Rules Pre-requisite
-
-- C++/WinRT terminology
+1. Add a header file. `#include <winrt/author/base.h>`
+2. Add a namespace in the form `winrt::XX::author`. You can nest `XX` into `XX::YY::ZZ`.
+3. Declare a struct inside the namespace following the rules below. You can declare multiple types in the same header file. Write function definition in cpp files as usual.
+4. Make sure you include all necessary include in your authored type header. Idlgen does NOT use pch due to gcc's abysmal pch performance.
+5. Viola! Hit F5 and you should see your project building. You can inspect generated idl and implementation type files in the Generated Files folder. For an authored type header with the name `Foo.h`, they are named `Foo.idl`, `Foo.impl.h`, and `Foo.impl.cpp`.
 
 ### Cheatsheet
 
 For a "I want to do X, what do I write" kind of cheatsheet, see [here](./Cheatsheet.md).
+
+### Rules Pre-requisite
+
+- C++/WinRT terminology
 
 ### Rules
 
@@ -68,8 +68,8 @@ That's it. That's all the rules.
 
 ```
 #include <winrt/author/base.h>
-#include <winrt/Microsoft.UI.Xaml.Data.h>
-#include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/Microsoft.UI.Xaml.Data.0.h>
+#include <winrt/Microsoft.UI.Xaml.Controls.0.h>
 namespace winrt::MyNamespace::author
 {
 	struct IMyInterface : winrt::author::winrt_interface
@@ -145,11 +145,11 @@ Idlgen is powered by C++26 static reflection and constexpr code generation. Befo
 1. Authored type must define all of their methods in .cpp files, due to [bootstrapping](#Bootstrapping-idlgen).
 2. To speed up generation, idlgen does little to no check on whether what you write is correct. Most errors will only surface as idl error.
 3. Since static reflection is currently only supported in gcc, the library actually ships a complete gcc toolchain, which adds significantly to nuget size.
-4. We have to pay pch.h compilation penalty twice (once in msvc, once in gcc). This and the above limitation can be removed once MVSC supports static reflection and all required constexpr machinary.
+4. Compile time cannot be improved by pch.h. The only way to improve compile time is the usual C++/WinRT tricks: forward declaring type, include only the `.0.h` header, and so on. This and the above limitation can be removed once MVSC supports static reflection and all required constexpr machinary.
 
 ### XAML Related Limitation
 
-XAML Compiler can NOT work with header file that doesn't have ordinary `.h` extension. Do NOT in order to setup `IdlGenCppInclude=*.author.h` change extension to e.g.`.author.h`. If you want to use wildcard, you can put all your authored type in a specific folder and specify `IdlGenCppInclude=author\*.h`.
+XAML Compiler can NOT work with header file that doesn't have ordinary `.h` extension. Do NOT in order to setup `IdlGenCppInclude=*.author.h` change extension to e.g.`.author.h`. If you want to use wildcard in `IdlGenCppInclude`, you can put all your authored type in a specific folder, e.g. `\author`, and specify `IdlGenCppInclude=author\*.h`.
 
 ## Generate IDL for Only One Header
 
