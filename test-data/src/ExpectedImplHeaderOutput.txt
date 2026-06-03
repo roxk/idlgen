@@ -1,10 +1,14 @@
 #pragma once
-#include "pch.h"
-#include "author_types.h"
+#include "AuthorClass.h"
+#ifndef App1_Point_H
+#define App1_Point_H
 namespace winrt::impl {
 template <> struct category<winrt::App1::author::Point>{ using type = struct_category; };
 template <> inline constexpr auto& name_v<winrt::App1::author::Point> = L"App1.Point";
 }
+#endif
+#ifndef App1_AuthorClass_H
+#define App1_AuthorClass_H
 #if __has_include("AuthorClass.g.h")
 #include "AuthorClass.g.h"
 #endif
@@ -43,6 +47,9 @@ inline auto self(winrt::App1::author::AuthorClass* self) {
 return static_cast<implementation::AuthorClass*>(self);
 }
 }
+#endif
+#ifndef App1_Area_H
+#define App1_Area_H
 #if __has_include("Area.g.h")
 #include "Area.g.h"
 #endif
@@ -65,6 +72,9 @@ inline auto self(winrt::App1::author::Area* self) {
 return static_cast<implementation::Area*>(self);
 }
 }
+#endif
+#ifndef App1_StaticArea_H
+#define App1_StaticArea_H
 #if __has_include("StaticArea.g.h")
 #include "StaticArea.g.h"
 #endif
@@ -87,6 +97,9 @@ inline auto self(winrt::App1::author::StaticArea* self) {
 return static_cast<implementation::StaticArea*>(self);
 }
 }
+#endif
+#ifndef App1_PartialClass_H
+#define App1_PartialClass_H
 #if __has_include("PartialClass.g.h")
 #include "PartialClass.g.h"
 #endif
@@ -109,14 +122,23 @@ inline auto self(winrt::App1::author::PartialClass* self) {
 return static_cast<implementation::PartialClass*>(self);
 }
 }
+#endif
+#ifndef App1_Color_H
+#define App1_Color_H
 namespace winrt::impl {
 template <> struct category<winrt::App1::author::Color>{ using type = enum_category; };
 template <> inline constexpr auto& name_v<winrt::App1::author::Color> = L"App1.Color";
 }
+#endif
+#ifndef App1_SetOfBooleanValues_H
+#define App1_SetOfBooleanValues_H
 namespace winrt::impl {
 template <> struct category<winrt::App1::author::SetOfBooleanValues>{ using type = enum_category; };
 template <> inline constexpr auto& name_v<winrt::App1::author::SetOfBooleanValues> = L"App1.SetOfBooleanValues";
 }
+#endif
+#ifndef App1_BookSku_H
+#define App1_BookSku_H
 #if __has_include("BookSku.g.h")
 #include "BookSku.g.h"
 #endif
@@ -142,6 +164,9 @@ inline auto self(winrt::App1::author::BookSku* self) {
 return static_cast<implementation::BookSku*>(self);
 }
 }
+#endif
+#ifndef App1_DerivedBookSku_H
+#define App1_DerivedBookSku_H
 #if __has_include("DerivedBookSku.g.h")
 #include "DerivedBookSku.g.h"
 #endif
@@ -170,6 +195,9 @@ inline auto self(winrt::App1::author::DerivedBookSku* self) {
 return static_cast<implementation::DerivedBookSku*>(self);
 }
 }
+#endif
+#ifndef App1_MyPanel_H
+#define App1_MyPanel_H
 #if __has_include("MyPanel.g.h")
 #include "MyPanel.g.h"
 #endif
@@ -192,6 +220,9 @@ inline auto self(winrt::App1::author::MyPanel* self) {
 return static_cast<implementation::MyPanel*>(self);
 }
 }
+#endif
+#ifndef App1_ImplementingInternalInterface_H
+#define App1_ImplementingInternalInterface_H
 #if __has_include("ImplementingInternalInterface.g.h")
 #include "ImplementingInternalInterface.g.h"
 #endif
@@ -214,6 +245,9 @@ inline auto self(winrt::App1::author::ImplementingInternalInterface* self) {
 return static_cast<implementation::ImplementingInternalInterface*>(self);
 }
 }
+#endif
+#ifndef App1_Area2_H
+#define App1_Area2_H
 #if __has_include("Area2.g.h")
 #include "Area2.g.h"
 #endif
@@ -254,6 +288,9 @@ inline auto self(winrt::App1::author::Area2* self) {
 return static_cast<implementation::Area2*>(self);
 }
 }
+#endif
+#ifndef App1_Sample_H
+#define App1_Sample_H
 #if __has_include("Sample.g.h")
 #include "Sample.g.h"
 #endif
@@ -276,4 +313,5 @@ inline auto self(winrt::App1::author::Sample* self) {
 return static_cast<implementation::Sample*>(self);
 }
 }
+#endif
 

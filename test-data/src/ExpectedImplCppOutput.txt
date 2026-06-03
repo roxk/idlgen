@@ -1,63 +1,93 @@
 #include "pch.h"
-#include "idlgen.impl.h"
+#include "AuthorClass.impl.h"
+#ifndef App1_AuthorClass_G_CPP
+#define App1_AuthorClass_G_CPP
 #if __has_include("AuthorClass.g.cpp")
 #include "AuthorClass.g.cpp"
 #endif
 #if __has_include("AuthorClass.xaml.g.hpp")
 #include "AuthorClass.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_Area_G_CPP
+#define App1_Area_G_CPP
 #if __has_include("Area.g.cpp")
 #include "Area.g.cpp"
 #endif
 #if __has_include("Area.xaml.g.hpp")
 #include "Area.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_StaticArea_G_CPP
+#define App1_StaticArea_G_CPP
 #if __has_include("StaticArea.g.cpp")
 #include "StaticArea.g.cpp"
 #endif
 #if __has_include("StaticArea.xaml.g.hpp")
 #include "StaticArea.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_PartialClass_G_CPP
+#define App1_PartialClass_G_CPP
 #if __has_include("PartialClass.g.cpp")
 #include "PartialClass.g.cpp"
 #endif
 #if __has_include("PartialClass.xaml.g.hpp")
 #include "PartialClass.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_BookSku_G_CPP
+#define App1_BookSku_G_CPP
 #if __has_include("BookSku.g.cpp")
 #include "BookSku.g.cpp"
 #endif
 #if __has_include("BookSku.xaml.g.hpp")
 #include "BookSku.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_DerivedBookSku_G_CPP
+#define App1_DerivedBookSku_G_CPP
 #if __has_include("DerivedBookSku.g.cpp")
 #include "DerivedBookSku.g.cpp"
 #endif
 #if __has_include("DerivedBookSku.xaml.g.hpp")
 #include "DerivedBookSku.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_MyPanel_G_CPP
+#define App1_MyPanel_G_CPP
 #if __has_include("MyPanel.g.cpp")
 #include "MyPanel.g.cpp"
 #endif
 #if __has_include("MyPanel.xaml.g.hpp")
 #include "MyPanel.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_ImplementingInternalInterface_G_CPP
+#define App1_ImplementingInternalInterface_G_CPP
 #if __has_include("ImplementingInternalInterface.g.cpp")
 #include "ImplementingInternalInterface.g.cpp"
 #endif
 #if __has_include("ImplementingInternalInterface.xaml.g.hpp")
 #include "ImplementingInternalInterface.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_Area2_G_CPP
+#define App1_Area2_G_CPP
 #if __has_include("Area2.g.cpp")
 #include "Area2.g.cpp"
 #endif
 #if __has_include("Area2.xaml.g.hpp")
 #include "Area2.xaml.g.hpp"
 #endif
+#endif
+#ifndef App1_Sample_G_CPP
+#define App1_Sample_G_CPP
 #if __has_include("Sample.g.cpp")
 #include "Sample.g.cpp"
 #endif
 #if __has_include("Sample.xaml.g.hpp")
 #include "Sample.xaml.g.hpp"
+#endif
 #endif
 
