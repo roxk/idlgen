@@ -18,7 +18,6 @@
         </CleanDependsOn>
         <IdlgenCppExePath>$(MSBuildThisFileDirectory)..\..\bin\$(Platform)\</IdlgenCppExePath>
         <IdlgenCppIntDir>$(IntDir)idlgen\</IdlgenCppIntDir>
-        <IdlgenCppAuthorTypeFile>$(GeneratedFilesDir)author_types.h</IdlgenCppAuthorTypeFile>
         <!-- Take part in cppwinrt before midl targets -->
         <BeforeMidlCompileTargets>
             IdlGenCppGenerateIDL;$(BeforeMidlCompileTargets);
@@ -55,8 +54,6 @@
         <ItemGroup>
             <_FilesToDelete Remove="@(_FilesToDelete)"/>
             <_FilesToDelete Include="$(IdlgenCppIntDir)**"/>
-            <_FilesToDelete Include="$(IdlgenCppAuthorTypeFile)"/>
-            <_FilesToDelete Include="$(OutputIdl)"/>
         </ItemGroup>
         <Delete Files="@(_FilesToDelete)"/>
     </Target>
@@ -96,21 +93,85 @@
             Overwrite="true" />
         <OnError ExecuteTargets="IdlGenCppCleanupGenerateIDL"/>
     </Target>
-    <Target Name="IdlGenCppGenerateIDL" DependsOnTargets="ComputeAdditionalIncludeDirectories;IdlgenCppMakeDependencyProjection;IdlGenCppGenerateAuthorTypeMainFile" Inputs="$(MSBuildAllProjects);@(IdlGenCppInclude)" Outputs="%(OutputIdl)" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
-        <Message Text="%(IdlGenCppInclude.Identity)" Importance="high" />
+    <UsingTask TaskName="GenerateIdlTask" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <CompilerPath ParameterType="System.String" Required="true" />
+            <IdlGenCppInclude ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+            <IdlGenCppDistinctIncludeDirs ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+            <IdlGenCppVerboseLogs ParameterType="System.Boolean" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System" />
+            <Using Namespace="System.IO" />
+            <Using Namespace="System.Diagnostics" />
+            <Using Namespace="System.Threading.Tasks" />
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+                var includes = IdlGenCppDistinctIncludeDirs.Select(dir => $"-I\"{dir.GetMetadata("Identity")}\"".Replace("\\","/")).Aggregate((current, next) => $"{current} {next}");
+                var verboseFlag = IdlGenCppVerboseLogs ? "-v -ftime-report" : "";
+                ProcessStartInfo failedPsi = null;
+                Log.LogMessage(MessageImportance.High, $"Starting IDL generation for {IdlGenCppInclude.Length} files with {Environment.ProcessorCount} parallel processes.");
+                System.Threading.Tasks.Task.WaitAll(IdlGenCppInclude.Where((input) =>
+                {
+                    var inputHeader = input.GetMetadata("Identity");
+                    var outputIdl = input.GetMetadata("OutputIdl");
+                    if (!File.Exists(outputIdl))
+                    {
+                        return true;
+                    }
+                    var inputTime = File.GetLastWriteTimeUtc(inputHeader);
+                    var outputTime = File.GetLastWriteTimeUtc(outputIdl);
+                    return inputTime > outputTime;
+                }).Select((input) =>
+                {
+                    Log.LogMessage(MessageImportance.High, $"{input.GetMetadata("Identity")}");
+                    var mainFile = input.GetMetadata("MainFile");
+                    var outputIdl = input.GetMetadata("OutputIdl");
+                    var exeFile = input.GetMetadata("ExeFile");
+                    var outputImplHeader = input.GetMetadata("OutputImplHeader");
+                    var outputImplCpp = input.GetMetadata("OutputImplCpp");
+                    var fileName = $"{input.GetMetadata("RelativeDir")}{input.GetMetadata("Filename")}";
+                    var psi = new ProcessStartInfo("cmd")
+                    {
+                        Arguments = $"/c {CompilerPath} -std=c++26 -freflection -static {verboseFlag} -fmax-errors=100 -DIDLGEN_CPP_STATIC_REFLECTION_PHASE \"{mainFile}\" -lole32 -loleaut32 {includes} -o \"{exeFile}\" && \"{exeFile}\" {fileName} -idl > \"{outputIdl}\" && \"{exeFile}\" {fileName} -implementation-header > \"{outputImplHeader}\" && \"{exeFile}\" {fileName} -implementation-cpp > \"{outputImplCpp}\"",
+                        UseShellExecute = false,
+                    };
+                    return (psi, Process.Start(psi));
+                }).Select(async (args) =>
+                {
+                    var (psi, p) = args;
+                    await System.Threading.Tasks.Task.Run(() => {
+                        p.WaitForExit();
+                        if (p.ExitCode != 0 && failedPsi == null)
+                        {
+                            failedPsi = psi;
+                        }
+                    });
+                }).ToArray());
+                if (failedPsi != null)
+                {
+                    Log.LogError($"Failed to generate IDL. Command: {failedPsi.FileName} {failedPsi.Arguments}");
+                    return false;
+                }
+                return true;
+        ]]>
+
+            </Code>
+        </Task>
+    </UsingTask>
+    <Target Name="IdlGenCppGenerateIDL" DependsOnTargets="ComputeAdditionalIncludeDirectories;IdlgenCppMakeDependencyProjection;IdlGenCppGenerateAuthorTypeMainFile" Condition="'$(IdlGenCppGenerateIDL)' == 'true'">
         <ItemGroup>
             <Midl Include="%(IdlGenCppInclude.OutputIdl)"/>
             <ClInclude Include="%(IdlGenCppInclude.OutputImplHeader)">
                 <DependentUpon>%(IdlGenCppInclude.OutputIdl)</DependentUpon>
             </ClInclude>
         </ItemGroup>
-        <PropertyGroup>
-            <FileName>%(IdlGenCppInclude.RelativeDir)%(IdlGenCppInclude.Filename)</FileName>
-            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'true'">-v -ftime-report</VerboseFlag>
-            <VerboseFlag Condition="'$(IdlGenCppVerboseLogs)' == 'false'"></VerboseFlag>
-        </PropertyGroup>
         <MakeDir Directories="%(IdlGenCppInclude.GeneratedFilesDir)" />
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe&quot; -std=c++26 -freflection -static $(VerboseFlag) -fmax-errors=100 -DIDLGEN_CPP_STATIC_REFLECTION_PHASE &quot;%(IdlGenCppInclude.MainFile)&quot; -lole32 -loleaut32 @(IdlGenCppDistinctIncludeDirs->'-I&quot;%(Identity)&quot;'->Replace('\','/'), ' ') -o &quot;%(IdlGenCppInclude.ExeFile)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -idl > &quot;%(IdlGenCppInclude.OutputIdl)&quot; &amp;&amp;  &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-header > &quot;%(IdlGenCppInclude.OutputImplHeader)&quot; &amp;&amp; &quot;%(IdlGenCppInclude.ExeFile)&quot; $(FileName) -implementation-cpp > &quot;%(IdlGenCppInclude.OutputImplCpp)&quot;" />
+        <GenerateIdlTask
+            CompilerPath="$(MSBuildThisFileDirectory)..\..\mingw64\bin\g++.exe"
+            IdlGenCppInclude="@(IdlGenCppInclude)"
+            IdlGenCppDistinctIncludeDirs="@(IdlGenCppDistinctIncludeDirs)"
+            IdlGenCppVerboseLogs="$(IdlGenCppVerboseLogs)" />
         <OnError ExecuteTargets="IdlGenCppCleanupGenerateIDL"/>
     </Target>
     <Target Name="IdlGenCppComputeImplCppLines">
