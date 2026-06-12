@@ -13,3 +13,4 @@ obj
 out
 winLibs
 pch.h.gch
+*.cache
