@@ -6,5 +6,5 @@
 
 ## Getting Started
 
-1. Run `./scripts/build-nuget -version 0.0.1 -testPackage $true` at project root
+1. Run `dotnet ./scripts/BuildNuget --version 0.0.1 --testPackage` at project root
 2. Build `SampleApp` project

@@ -35,7 +35,7 @@ void BuildNuget()
 
     if (string.IsNullOrWhiteSpace(version))
     {
-        Console.Error.WriteLine("Usage: dotnet run build-nuget.cs --version <version> [--testPackage]");
+        Console.Error.WriteLine("Usage: dotnet run BuildNuget.cs --version <version> [--testPackage]");
         Environment.Exit(1);
     }
 

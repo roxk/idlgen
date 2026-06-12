@@ -11,6 +11,6 @@ void Run(string file)
     }
 }
 
-Run("./scripts/format.cs --check");
-Run("./scripts/test.cs");
-Run("./scripts/build-nuget.cs --version 0.0.1");
+Run("./scripts/Format.cs --check");
+Run("./scripts/Test.cs");
+Run("./scripts/BuildNuget.cs --version 0.0.1");
