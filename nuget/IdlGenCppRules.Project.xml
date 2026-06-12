@@ -29,24 +29,9 @@
 						Description="C++ PCH file. Only 1 PCH is supported."
 						Category="General"/>
 
-	<StringListProperty Name="IdlGenCppGetterTemplate"
-						DisplayName="Getter Templates"
-						Description="Qualified names of templates with overloaded operator() which should be treated as getter when declared as non-statc data member"
-						Category="General"/>
-
-	<StringListProperty Name="IdlGenCppPropertyTemplate"
-						DisplayName="Property Templates"
-						Description="Qualified names of templates with overloaded operator() which should be treated as property when declared as non-statc data member"
-						Category="General"/>
-
-	<StringListProperty Name="IdlGenCppAdditionalDefines"
-						  DisplayName="Additional Preprocessor definitions"
-						  Description="Additional preprocessor definitions."
-						  Category="General"/>
-
-	<BoolProperty Name="IdlGenCppDisableUnknownAttributeWarning"
-				  DisplayName="Disable unknown attribute warning"
-				  Description="Disable unknown attribute warning caused by [[idlgen:*]]. Default is true."
+	<BoolProperty Name="IdlGenCppVerboseLogs"
+				  DisplayName="Verbose Logs"
+				  Description="Enable verbose logging. Default is false."
 				  Category="General"/>
 
 </Rule>
