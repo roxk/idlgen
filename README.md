@@ -36,7 +36,7 @@ idlgen is a C\+\+20 library that helps you get rid of idl and implementation typ
 
 ### Cheatsheet
 
-For a "I want to do X, what do I write" kind of cheatsheet, see [here](./Cheatsheet.md).
+For a "I want to do X, what do I write" kind of cheatsheet, see [cheat-sheet.md](./cheat-sheet.md).
 
 ### Rules Pre-requisite
 
@@ -134,7 +134,7 @@ Only public, protected* members are reflected. Private members are never reflect
 
 Contributions are welcome! If you found a bug, please file a bug report.
 
-For more details, such as build instruction, please see [Contribution.md](Contribution.md).
+For more details, such as build instruction, please see [contribution.md](contribution.md).
 
 ## How It Works
 
