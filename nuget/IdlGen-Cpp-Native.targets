@@ -135,12 +135,33 @@
                     {
                         Arguments = $"/c {CompilerPath} -std=c++26 -freflection -static {verboseFlag} -fmax-errors=100 -DIDLGEN_CPP_STATIC_REFLECTION_PHASE \"{mainFile}\" -lole32 -loleaut32 {includes} -o \"{exeFile}\" && \"{exeFile}\" {fileName} -idl > \"{outputIdl}\" && \"{exeFile}\" {fileName} -implementation-header > \"{outputImplHeader}\" && \"{exeFile}\" {fileName} -implementation-cpp > \"{outputImplCpp}\"",
                         UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
                     };
-                    return (psi, Process.Start(psi));
+                    var p = new Process() { StartInfo = psi };
+                    p.OutputDataReceived += (s, e) =>
+                    {
+                        if (e.Data != null)
+                        {
+                            Log.LogMessage(MessageImportance.High, e.Data);
+                        }
+                    };
+                    p.ErrorDataReceived += (s, e) =>
+                    {
+                        if (e.Data != null)
+                        {
+                            Log.LogError(e.Data);
+                        }
+                    };
+                    p.Start();
+                    p.BeginOutputReadLine();
+                    p.BeginErrorReadLine();
+                    return (psi, p);
                 }).Select(async (args) =>
                 {
                     var (psi, p) = args;
-                    await System.Threading.Tasks.Task.Run(() => {
+                    await System.Threading.Tasks.Task.Run(() =>
+                    {
                         p.WaitForExit();
                         if (p.ExitCode != 0 && failedPsi == null)
                         {
