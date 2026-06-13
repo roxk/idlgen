@@ -243,6 +243,8 @@ struct Derived : winrt::author::runtimeclass<Base>
 };
 ```
 
+Note: Must include the header file where `Base` is declared if `Base` is declared in another header file.
+
 ### Declare Protected Methods (the base must be unsealed)
 
 ```
