@@ -168,6 +168,10 @@ Specify `MyClass.h` in VS -> right click project -> Properties -> Idlgen -> Incl
 
 Idlgen ouputs build logs to Output -> Build window. Look at what is failing and see if you need a rebuild. Remove `pch.h.gch`, clean the resolution, and rebuild usually fixes it. Please file a bug report if you have minimal reproducible steps, thank you!
 
+### undefined symbol "InitializeComponent"
+
+Make sure your `.h` file has DependenUpon set to your `.xaml` file. Otherwise XAML compiler would NOT include `.g.hpp` in `XamlTypeInfo.g.cpp`
+
 ## Incremental Adoption in Existing Codebase
 
 1. Know that your existing idl can coexist with idlgen, by simply not touching the relevant .idl and .h files.
