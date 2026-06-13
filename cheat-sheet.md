@@ -199,8 +199,8 @@ struct IListBox : winrt::author::winrt_interface
 
 struct MultiInterface : winrt::author::runtimeclass<IControl, IListBox>
 {
-    void Paint() override;
-    void SetItems(winrt::array_view<winrt::hstring> items) override;
+    void Paint();
+    void SetItems(winrt::array_view<winrt::hstring> items);
 };
 ```
 

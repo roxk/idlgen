@@ -126,9 +126,9 @@ Only public, protected* members are reflected. Private members are never reflect
 
 ### Notes
 
-1. To implement an authored interface, simply inherit it
-2. To declare enum or `[flags]` enum, simply declare enum classes with `int` and `unsigned` as the underlying types respectively.
-3. When value types are passed by values in functions, it's not possible to forward declare them. Therefore, authored value types (struct/enum) as stated in rule (7) can be passed as-is. If you only need to pass authored value type reference/array of value type around, you should forward declare their projected types and pass around their projected types instead.
+1. If you reference another authored type declared in another header file, make sure you include that header file.
+1. To declare enum or `[flags]` enum, simply declare enum classes with `int` and `unsigned` as the underlying types respectively.
+2. When value types are passed by values in functions, it's not possible to forward declare them. Therefore, authored value types (struct/enum) as stated in rule (7) can be passed as-is. If you only need to pass authored value type reference/array of value type around, you should forward declare their projected types and pass around their projected types instead.
 
 ## Contribution
 
