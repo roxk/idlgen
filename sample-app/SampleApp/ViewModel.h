@@ -2,7 +2,7 @@
 
 #include "winrt/author/base.h"
 #include "winrt/impl/Windows.Foundation.0.h"
-#include "BlankPage.author.h"
+#include "BlankPage.h"
 
 namespace winrt::SampleApp
 {

@@ -24,7 +24,9 @@
     <CppWinRTVerbosity>normal</CppWinRTVerbosity>
     <IdlGenCppGetterTemplate>wil::single_threaded_property;wil::prop</IdlGenCppGetterTemplate>
     <IdlGenCppPropertyTemplate>wil::single_threaded_rw_property;wil::rw_prop</IdlGenCppPropertyTemplate>
-    <IdlGenCppInclude>**\*.author.h</IdlGenCppInclude>
+    <IdlGenCppInclude>
+    </IdlGenCppInclude>
+    <IdlGenCppExclude>App.h;pch.h;OldSchoolImplementationType.h;SomeFolder/ShouldNotGenerateIDL.h</IdlGenCppExclude>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -122,8 +124,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="BlankPage.author.h" />
-    <ClInclude Include="MainPage.author.h" />
+      <ClInclude Include="BlankPage.h">
+          <DependentUpon>BlankPage.xaml</DependentUpon>
+      </ClInclude>
+      <ClInclude Include="MainPage.h">
+          <DependentUpon>MainPage.xaml</DependentUpon>
+      </ClInclude>
     <ClInclude Include="OldSchoolImplementationType.h">
       <DependentUpon>OldSchoolImplementationType.idl</DependentUpon>
       <SubType>Code</SubType>
@@ -132,10 +138,13 @@
     <ClInclude Include="App.h">
       <DependentUpon>App.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="SomeFolder\PageType.author.h" />
+    <ClInclude Include="SomeFolder\PageInFolder.h">
+      <DependentUpon>SomeFolder\PageInFolder.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="SomeFolder\PageType.h" />
     <ClInclude Include="SomeFolder\ShouldNotGenerateIDL.h" />
-    <ClInclude Include="ViewModel.author.h" />
+    <ClInclude Include="ViewModel.h" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -145,6 +154,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="MainPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SomeFolder\PageInFolder.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
@@ -181,6 +193,10 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="SomeFolder\PageInFolder.cpp">
+      <DependentUpon>SomeFolder\PageInFolder.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="ViewModel.cpp" />
   </ItemGroup>
   <ItemGroup>

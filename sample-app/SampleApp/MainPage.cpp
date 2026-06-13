@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "MainPage.author.h"
+#include "MainPage.h"
 #include "winrt/SampleApp.h"
 
 using namespace winrt;

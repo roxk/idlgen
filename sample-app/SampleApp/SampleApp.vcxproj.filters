@@ -6,6 +6,7 @@
   <ItemGroup>
     <Page Include="MainPage.xaml" />
     <Page Include="BlankPage.xaml" />
+    <Page Include="SomeFolder\PageInFolder.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />

@@ -2,8 +2,8 @@
 
 #include "winrt/author/base.h"
 #include "winrt/impl/Windows.UI.Xaml.Controls.0.h"
-#include "BlankPage.author.h"
-#include "SomeFolder/PageType.author.h"
+#include "BlankPage.h"
+#include "SomeFolder/PageType.h"
 
 namespace winrt::Windows::UI::Xaml::Controls
 {
