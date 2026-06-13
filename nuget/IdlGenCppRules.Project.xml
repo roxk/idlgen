@@ -24,11 +24,6 @@
 						Description="Exclude C++ header files from generating idl. Override the default behavior where App.h and pch.h are excluded."
 						Category="General"/>
 
-	<StringListProperty Name="IdlGenCppPch"
-						DisplayName="PCH file"
-						Description="C++ PCH file. Only 1 PCH is supported."
-						Category="General"/>
-
 	<BoolProperty Name="IdlGenCppVerboseLogs"
 				  DisplayName="Verbose Logs"
 				  Description="Enable verbose logging. Default is false."
