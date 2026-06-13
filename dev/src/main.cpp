@@ -1892,7 +1892,6 @@ consteval void printRuntimeClass(vector_string& idl, vector_string& implementati
     endIncludeGuard(implementation);
     startIncludeGuard(implementationCpp, type, "_G_CPP");
     tryInclude(implementationCpp, typeName + ".g.cpp"s);
-    tryInclude(implementationCpp, typeName + ".xaml.g.hpp"s);
     endIncludeGuard(implementationCpp);
 }
 
